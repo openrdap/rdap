@@ -1,0 +1,34 @@
+{
+  "description": "RDAP bootstrap file for Domain Name System registrations",
+  "publication": "2017-03-15T21:26:24Z",
+  "services": [
+    [
+      [
+        ""
+      ],
+      [
+        "https://example.root",
+        "http://example.root"
+      ]
+    ],
+    [
+      [
+        "com"
+      ],
+      [
+        "https://example.com",
+        "http://example.com"
+      ]
+    ],
+    [
+      [
+        "sub.example.com"
+      ],
+      [
+        "https://example.com/sub",
+        "http://example.com/sub"
+      ]
+    ]
+  ],
+  "version": "1.0"
+}
