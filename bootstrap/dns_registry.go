@@ -14,6 +14,9 @@ type DNSRegistry struct {
 	DNS map[string][]*url.URL
 }
 
+// NewDNSRegistry creates a queryable DNS registry from a DNS registry JSON document.
+//
+// The document format is specified in https://tools.ietf.org/html/rfc7484#section-4.
 func NewDNSRegistry(json []byte) (*DNSRegistry, error) {
 	var r *registryFile
 	r, err := parse(json)

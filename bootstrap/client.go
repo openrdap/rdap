@@ -77,6 +77,7 @@ import (
 	"github.com/skip2/rdap/bootstrap/cache"
 )
 
+// A RegistryType represents a bootstrap registry type.
 type RegistryType int
 
 const (
@@ -88,9 +89,13 @@ const (
 )
 
 const (
+	// Default location of the IANA bootstrap files.
 	DefaultBaseURL      = "https://data.iana.org/rdap/"
+
+	// Default cache timeout for bootstrap files.
 	DefaultCacheTimeout = time.Hour * 24
 
+	// Location of the experimental service_provider.json.
 	experimentalBaseURL = "https://www.openrdap.org/rdap/"
 )
 
@@ -103,13 +108,24 @@ type Client struct {
 	registries map[RegistryType]Registry
 }
 
+// A Registry performs RDAP bootstrapping.
 type Registry interface {
 	Lookup(input string) (*Result, error)
 }
 
+// Result represents the result of bootstrapping a single query.
 type Result struct {
+	// Query looked up in the bootstrap registry.
+	//
+	// This includes any canonicalisation to match the bootstrap registry
+	// format. e.g. lowercasing of domain names, and removal of "AS" from AS
+	// numbers.
 	Query string
+
+	// Matching bootstrap entry. Empty string if no match.
 	Entry string
+
+	// List of base RDAP URLs.
 	URLs  []*url.URL
 }
 

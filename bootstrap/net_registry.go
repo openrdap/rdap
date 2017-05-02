@@ -39,6 +39,9 @@ func (a netEntrySorter) Less(i int, j int) bool {
 	return bytes.Compare(a[i].Net.IP, a[j].Net.IP) <= 0
 }
 
+// NewNetRegistry creates a queryable Net registry from an IPv4 or IPv6 registry JSON document. ipVersion must be 4 or 6.
+//
+// The document formats are specified in https://tools.ietf.org/html/rfc7484#section-5.1 and https://tools.ietf.org/html/rfc7484#section-5.2.
 func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
 	if ipVersion != 4 && ipVersion != 6 {
 		return nil, fmt.Errorf("Unknown IP version %d", ipVersion)

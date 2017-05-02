@@ -17,13 +17,16 @@ type ASNRegistry struct {
 	ASNs []ASNRange
 }
 
-// ASNRange represents a range of AS numbers (including a range of one, i.e. MinASN=MaxASN).
+// ASNRange represents a range of AS numbers and their RDAP base URLs.
+//
+// An ASNRange represents a single AS number when MinASN==MaxASN.
 type ASNRange struct {
-	MinASN uint32
-	MaxASN uint32
-	URLs   []*url.URL // List of RDAP service URLs for the range.
+	MinASN uint32 // First AS number in the range.
+	MaxASN uint32 // Last AS number in the range.
+	URLs   []*url.URL // RDAP base URLs.
 }
 
+// String returns "ASxxxx" for a single AS, or "ASxxxx-ASyyyy" for a range.
 func (a ASNRange) String() string {
 	if a.MinASN == a.MaxASN {
 		return fmt.Sprintf("AS%d", a.MinASN)
@@ -46,6 +49,9 @@ func (a asnRangeSorter) Less(i int, j int) bool {
 	return a[i].MinASN < a[j].MinASN
 }
 
+// NewASNRegistry creates a queryable ASN registry from an ASN registry JSON document.
+//
+// The document format is specified in https://tools.ietf.org/html/rfc7484#section-5.3.
 func NewASNRegistry(json []byte) (*ASNRegistry, error) {
 	var registry *registryFile
 	registry, err := parse(json)
@@ -77,7 +83,7 @@ func NewASNRegistry(json []byte) (*ASNRegistry, error) {
 
 func (a *ASNRegistry) Lookup(input string) (*Result, error) {
 	var asn uint32
-	asn, err := ParseASN(input)
+	asn, err := parseASN(input)
 
 	if err != nil {
 		return nil, err
@@ -102,7 +108,7 @@ func (a *ASNRegistry) Lookup(input string) (*Result, error) {
 	}, nil
 }
 
-func ParseASN(asn string) (uint32, error) {
+func parseASN(asn string) (uint32, error) {
 	asn = strings.ToLower(asn)
 	asn = strings.TrimLeft(asn, "as")
 	result, err := strconv.ParseUint(asn, 10, 32)
