@@ -15,11 +15,13 @@ import (
 )
 
 type NetRegistry struct {
+	// Map of netmask size (0-32 for IPv4, 0-128 for IPv6) to list of NetEntries.
 	Networks map[int][]NetEntry
 
-	numIPBytes int
+	numIPBytes int // Length in bytes of each IP address (4 for IPv4, 16 for IPv6).
 }
 
+// A NetEntry is a network and its RDAP base URLs.
 type NetEntry struct {
 	Net  *net.IPNet
 	URLs []*url.URL
@@ -39,7 +41,7 @@ func (a netEntrySorter) Less(i int, j int) bool {
 	return bytes.Compare(a[i].Net.IP, a[j].Net.IP) <= 0
 }
 
-// NewNetRegistry creates a queryable Net registry from an IPv4 or IPv6 registry JSON document. ipVersion must be 4 or 6.
+// NewNetRegistry creates a NetRegistry from an IPv4 or IPv6 registry JSON document. ipVersion must be 4 or 6.
 //
 // The document formats are specified in https://tools.ietf.org/html/rfc7484#section-5.1 and https://tools.ietf.org/html/rfc7484#section-5.2.
 func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
@@ -81,6 +83,9 @@ func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
 	return n, nil
 }
 
+// Lookup returns the RDAP base URLs for the IP address or CIDR range |input|.
+//
+// Example |input|s are: "192.0.2.0", "192.0.2.0/25". "2001:db8::", "2001::db8::/62".
 func (n *NetRegistry) Lookup(input string) (*Result, error) {
 	if !strings.ContainsAny(input, "/") {
 		// Convert IP address to CIDR format, with a /32 or /128 mask.

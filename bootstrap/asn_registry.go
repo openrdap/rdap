@@ -14,15 +14,18 @@ import (
 )
 
 type ASNRegistry struct {
+	// List of ASNs & RDAP base URLs.
+	//
+	// Stored in a sorted order for fast search.
 	ASNs []ASNRange
 }
 
 // ASNRange represents a range of AS numbers and their RDAP base URLs.
 //
-// An ASNRange represents a single AS number when MinASN==MaxASN.
+// Represents a single AS number when MinASN==MaxASN.
 type ASNRange struct {
-	MinASN uint32 // First AS number in the range.
-	MaxASN uint32 // Last AS number in the range.
+	MinASN uint32     // First AS number.
+	MaxASN uint32     // Last AS number.
 	URLs   []*url.URL // RDAP base URLs.
 }
 
@@ -49,7 +52,7 @@ func (a asnRangeSorter) Less(i int, j int) bool {
 	return a[i].MinASN < a[j].MinASN
 }
 
-// NewASNRegistry creates a queryable ASN registry from an ASN registry JSON document.
+// NewASNRegistry creates an ASNRegistry from an ASN registry JSON document.
 //
 // The document format is specified in https://tools.ietf.org/html/rfc7484#section-5.3.
 func NewASNRegistry(json []byte) (*ASNRegistry, error) {
@@ -81,6 +84,9 @@ func NewASNRegistry(json []byte) (*ASNRegistry, error) {
 	}, nil
 }
 
+// Lookup returns the RDAP base URLs for the AS number |input|.
+//
+// The |input| formats accepted are "AS1234", "as1234", and "1234".
 func (a *ASNRegistry) Lookup(input string) (*Result, error) {
 	var asn uint32
 	asn, err := parseASN(input)

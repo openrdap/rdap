@@ -5,37 +5,37 @@
 // Package bootstrap implements Registration Data Access Protocol (RDAP) bootstrapping.
 //
 // All RDAP queries are handled by an RDAP server. To help clients discover
-// authoriative RDAP servers, IANA publishes a Service Registry
-// (https://data.iana.org/rdap) for three query types: Domain names, IP
-// addresses, and Autonomous Systems.
+// RDAP servers, IANA publishes a Service Registry (https://data.iana.org/rdap)
+// for several query types: Domain names, IP addresses, and Autonomous Systems.
 //
-// This module implements RDAP bootstrapping: The process of taking a query and
-// returning a list of authoriative RDAP servers which may answer it.
+// Given an RDAP query, this package finds the list of RDAP server URLs which
+// can answer it. This includes downloading & parsing the Service Registry
+// files.
 //
 // Basic usage:
-//   var urls []*url.URL
+//   var result *bootstrap.Result
 //
 //   b := bootstrap.NewClient()
-//   urls, err := b.Lookup(bootstrap.DNS, "google.cz")  // Downloads https://data.iana.org/rdap/dns.json automatically.
+//   result, err := b.Lookup(bootstrap.DNS, "google.cz") // Downloads https://data.iana.org/rdap/dns.json automatically.
 //
 //   if err == nil {
-//     for _, url := range urls {
-//       fmt.Println(url.String()) // Prints https://rdap.nic.cz.
+//     for _, url := range result.URLs {
+//       fmt.Println(url)
 //     }
 //   }
 //
-// Download and list a RDAP Service Registry:
+// Download and list the contents of the DNS Service Registry:
 //   b := bootstrap.NewClient()
 //
-//   // Before you can use a Registry, you need to download it.
-//   err := b.Download(bootstrap.IPv6) // Downloads https://data.iana.org/rdap/ipv6.json.
+//   // Before you can use a Registry, you need to download it first.
+//   err := b.Download(bootstrap.DNS) // Downloads https://data.iana.org/rdap/dns.json.
 //
 //   if err == nil {
-//     ipv6 := b.IPv6()
+//     var dns *DNSRegistry = b.DNS()
 //
-//     // Print IPv6 networks listed in the IPv6 service registry.
-//     for _, net := range ipv6.Nets() {
-//       fmt.Println(net.String()) // e.g. prints "2001:4200::/23".
+//     // Print TLDs with RDAP service.
+//     for _, tld := range dns.DNS {
+//       fmt.Println(tld)
 //     }
 //   }
 //
@@ -43,14 +43,16 @@
 //   - Download()      - download one Service Registry file.
 //   - DownloadAll()   - download all four Service Registry files.
 //
-//   - Lookup() - download one Service Registry file if missing, or if the cached file is over (by default) 24 hours old.
-// Lookup() is intended for repeated usage: A long lived
-// bootstrap.Client will download each of {asn,dns,ipv4,ipv6}.json once per 24 hours only,
-// regardless of the number of calls made to Lookup(). You can still refresh them manually using Download(), if required.
+//   - Lookup()        - download one Service Registry file if missing, or if the cached file is over (by default) 24 hours old.
+//
+// Lookup() is intended for repeated usage: A long lived bootstrap.Client will
+// download each of {asn,dns,ipv4,ipv6}.json once per 24 hours only, regardless
+// of the number of calls made to Lookup(). You can still refresh them manually
+// using Download() if required.
 //
 // As well as the default memory cache, bootstrap.Client also supports caching
 // the Service Registry files on disk. The default cache location is
-// $HOME/.openrdap/{asn,dns,ipv4,ipv6}.json.
+// $HOME/.openrdap/.
 //
 // Disk cache usage:
 //
@@ -64,6 +66,11 @@
 //   b2.Cache = cache.NewDiskCache()
 //
 //   dsr2 := b.DNS()  // Loads dns.json from disk cache.
+//
+// This package also implements the experimental Service Provider registry. Due
+// to the experimental nature, no Service Registry file exists on data.iana.org
+// yet. Instead, an unofficial one is downloaded from
+// https://www.openrdap.org/rdap/.
 //
 // RDAP bootstrapping is defined in https://tools.ietf.org/html/rfc7484.
 package bootstrap
@@ -89,10 +96,10 @@ const (
 )
 
 const (
-	// Default location of the IANA bootstrap files.
-	DefaultBaseURL      = "https://data.iana.org/rdap/"
+	// Default URL of the Service Registry files.
+	DefaultBaseURL = "https://data.iana.org/rdap/"
 
-	// Default cache timeout for bootstrap files.
+	// Default cache timeout of Service Registry files.
 	DefaultCacheTimeout = time.Hour * 24
 
 	// Location of the experimental service_provider.json.
@@ -100,33 +107,35 @@ const (
 )
 
 // Client implements an RDAP bootstrap client.
+//
+// Create a Client using NewClient().
 type Client struct {
 	HTTP    *http.Client        // HTTP client.
-	BaseURL *url.URL            // Base URL of the Service Registry directory. Default is DefaultBaseURL.
+	BaseURL *url.URL            // Base URL of the Service Registry files. Default is DefaultBaseURL.
 	Cache   cache.RegistryCache // Service Registry cache. Default is a MemoryCache.
 
 	registries map[RegistryType]Registry
 }
 
-// A Registry performs RDAP bootstrapping.
+// A Registry implements bootstrap lookups.
 type Registry interface {
 	Lookup(input string) (*Result, error)
 }
 
 // Result represents the result of bootstrapping a single query.
 type Result struct {
-	// Query looked up in the bootstrap registry.
+	// Query looked up in the registry.
 	//
-	// This includes any canonicalisation to match the bootstrap registry
-	// format. e.g. lowercasing of domain names, and removal of "AS" from AS
-	// numbers.
+	// This includes any canonicalisation performed to match the Service
+	// Registry's data format. e.g. lowercasing of domain names, and removal of
+	// "AS" from AS numbers.
 	Query string
 
-	// Matching bootstrap entry. Empty string if no match.
+	// Matching service entry. Empty string if no match.
 	Entry string
 
-	// List of base RDAP URLs.
-	URLs  []*url.URL
+	// List of RDAP base URLs.
+	URLs []*url.URL
 }
 
 // NewClient creates a new bootstrap Client.
@@ -161,7 +170,7 @@ func NewClient() *Client {
 //   if err == nil {
 //     dns := b.DNS()
 //
-//     for _, tld := range dns.TLDs() {
+//     for _, tld := range dns.DNS {
 //       fmt.Println(tld)
 //     }
 //   }
@@ -268,7 +277,7 @@ func newRegistry(registry RegistryType, json []byte) (Registry, error) {
 //
 // On success, all four Registries are refreshed. Use ASN(), DNS(), IPv4(), and IPv6() to access them.
 //
-// This does not refresh the experimental ServiceProvider registry yet.
+// This does not download the experimental ServiceProvider registry yet.
 func (c *Client) DownloadAll() error {
 	registryTypes := []RegistryType{ASN, DNS, IPv4, IPv6}
 
@@ -290,7 +299,10 @@ func (c *Client) IsStale(registry RegistryType) bool {
 	return c.Cache.IsStale(registry.Filename())
 }
 
-func (c *Client) Lookup(registry RegistryType, query string) (*Result, error) {
+// Lookup returns the RDAP base URLs for the query |input| in the registry type |registry|.
+//
+// The Service Registry file is downloaded automatically if missing, or the cached version has expired.
+func (c *Client) Lookup(registry RegistryType, input string) (*Result, error) {
 	if c.IsStale(registry) {
 		err := c.Download(registry)
 		if err != nil {
@@ -299,7 +311,7 @@ func (c *Client) Lookup(registry RegistryType, query string) (*Result, error) {
 	}
 
 	var result *Result
-	result, err := c.registries[registry].Lookup(query)
+	result, err := c.registries[registry].Lookup(input)
 
 	return result, err
 }
@@ -355,6 +367,7 @@ func (c *Client) ServiceProvider() *ServiceProviderRegistry {
 	return s
 }
 
+// Filename returns the JSON document filename: One of {asn,dns,ipv4,ipv6,service_provider}.json.
 func (r RegistryType) Filename() string {
 	switch r {
 	case ASN:

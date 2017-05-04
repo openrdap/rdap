@@ -11,13 +11,14 @@ import (
 )
 
 type ServiceProviderRegistry struct {
-	Services map[string][]*url.URL // Map of service tag (e.g. "VRSN") to RDAP URLs.
+	// Map of service tag (e.g. "VRSN") to RDAP base URLs.
+	Services map[string][]*url.URL
 }
 
-// NewServiceProviderRegistry creates a queryable Service Provider registry
-// from a Service Provider JSON document.
+// NewServiceProviderRegistry creates a ServiceProviderRegistry from a Service
+// Provider JSON document.
 //
-// The JSON bootstrap format is described in
+// The document format is specified in
 // https://datatracker.ietf.org/doc/draft-hollenbeck-regext-rdap-object-tag/.
 func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
 	var r *registryFile
@@ -32,12 +33,12 @@ func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
 	}, nil
 }
 
-// Lookup returns a list of RDAP server URLs for an entity handle.
+// Lookup returns a list of RDAP base URLs for the |input| entity handle.
 //
-// e.g. for the handle "53774930~VRSN", the RDAP URLs for "VRSN" are returned.
+// e.g. for the handle "53774930~VRSN", the RDAP base URLs for "VRSN" are returned.
 //
-// Missing/malformed/unknown service tags are not treated as errors. No URLs
-// are returned in these cases.
+// Missing/malformed/unknown service tags are not treated as errors. An empty
+// list of URLs is returned in these cases.
 func (s *ServiceProviderRegistry) Lookup(input string) (*Result, error) {
 	// Valid input looks like 12345-VRSN.
 	offset := strings.IndexByte(input, '~')

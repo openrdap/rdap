@@ -11,10 +11,11 @@ import (
 )
 
 type DNSRegistry struct {
+	// Map of domain labels (e.g. "br") to RDAP base URLs.
 	DNS map[string][]*url.URL
 }
 
-// NewDNSRegistry creates a queryable DNS registry from a DNS registry JSON document.
+// NewDNSRegistry creates a DNSRegistry from a DNS registry JSON document.
 //
 // The document format is specified in https://tools.ietf.org/html/rfc7484#section-4.
 func NewDNSRegistry(json []byte) (*DNSRegistry, error) {
@@ -30,6 +31,7 @@ func NewDNSRegistry(json []byte) (*DNSRegistry, error) {
 	}, nil
 }
 
+// Lookup returns the RDAP base URLs for the domain name |input|.
 func (d *DNSRegistry) Lookup(input string) (*Result, error) {
 	input = strings.TrimSuffix(input, ".")
 	input = strings.ToLower(input)
