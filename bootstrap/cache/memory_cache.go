@@ -4,7 +4,10 @@
 
 package cache
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
 
 type MemoryCache struct {
 	Timeout time.Duration
@@ -33,17 +36,17 @@ func (m *MemoryCache) Save(filename string, data []byte) error {
 	return nil
 }
 
-func (m *MemoryCache) Load(filename string) ([]byte, bool, error) {
+func (m *MemoryCache) Load(filename string) ([]byte, error) {
 	data, ok := m.cache[filename]
 
 	if !ok {
-		return nil, false, nil
+		return nil, fmt.Errorf("File %s not in cache", filename)
 	}
 
 	result := make([]byte, len(data))
 	copy(result, data)
 
-	return result, false, nil
+	return result, nil
 }
 
 func (m *MemoryCache) State(filename string) FileState {

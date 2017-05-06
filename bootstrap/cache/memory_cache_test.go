@@ -17,12 +17,11 @@ func TestMemoryCache(t *testing.T) {
 	}
 
 	var data []byte
-	var isNew bool
 	var err error
 
-	data, isNew, err = m.Load("not-in-cache.json")
+	data, err = m.Load("not-in-cache.json")
 
-	if len(data) != 0 || isNew || err != nil {
+	if err == nil {
 		t.Fatal("Load of not-in-cache.json unexpected result")
 	}
 
@@ -34,10 +33,10 @@ func TestMemoryCache(t *testing.T) {
 		t.Fatal("Save failed")
 	}
 
-	data, isNew, err = m.Load("file.json")
+	data, err = m.Load("file.json")
 
-	if len(data) == 0 || isNew || err != nil || bytes.Compare(data, testData) != 0 {
-		t.Fatal("Load of not-in-cache.json unexpected result")
+	if len(data) == 0 || err != nil || bytes.Compare(data, testData) != 0 {
+		t.Fatal("Load of file.json unexpected result")
 	}
 
 	testData[0] = 'x'
