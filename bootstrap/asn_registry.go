@@ -14,7 +14,7 @@ import (
 )
 
 type ASNRegistry struct {
-	// List of ASNs & RDAP base URLs.
+	// List of ASNs & their RDAP base URLs.
 	//
 	// Stored in a sorted order for fast search.
 	ASNs []ASNRange

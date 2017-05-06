@@ -5,8 +5,9 @@
 // Package bootstrap implements Registration Data Access Protocol (RDAP) bootstrapping.
 //
 // All RDAP queries are handled by an RDAP server. To help clients discover
-// RDAP servers, IANA publishes a Service Registry (https://data.iana.org/rdap)
-// for several query types: Domain names, IP addresses, and Autonomous Systems.
+// RDAP servers, IANA publishes Service Registry files
+// (https://data.iana.org/rdap) for several query types: Domain names, IP
+// addresses, and Autonomous Systems.
 //
 // Given an RDAP query, this package finds the list of RDAP server URLs which
 // can answer it. This includes downloading & parsing the Service Registry
@@ -99,7 +100,7 @@ const (
 	// Default URL of the Service Registry files.
 	DefaultBaseURL = "https://data.iana.org/rdap/"
 
-	// Default cache timeout of Service Registry files.
+	// Default cache timeout of Service Registries.
 	DefaultCacheTimeout = time.Hour * 24
 
 	// Location of the experimental service_provider.json.
@@ -138,7 +139,7 @@ type Result struct {
 	URLs []*url.URL
 }
 
-// NewClient creates a new bootstrap Client.
+// NewClient creates a new bootstrap.Client.
 func NewClient() *Client {
 	c := &Client{
 		HTTP:  &http.Client{},
@@ -230,13 +231,17 @@ func (c *Client) download(registry RegistryType) ([]byte, Registry, error) {
 	return json, s, nil
 }
 
+func (c *Client) freshenFromCache(registry RegistryType) {
+	if c.Cache.State(registry.Filename()) == cache.ShouldReload {
+		c.reloadFromCache(registry)
+	}
+}
+
 func (c *Client) reloadFromCache(registry RegistryType) error {
-	json, isNew, err := c.Cache.Load(registry.Filename())
+	json, err := c.Cache.Load(registry.Filename())
 
 	if err != nil {
 		return err
-	} else if !isNew {
-		return nil
 	}
 
 	var s Registry
@@ -290,20 +295,20 @@ func (c *Client) DownloadAll() error {
 	return nil
 }
 
-// Returns true if the RegistryType registry is stale (cache time expired) or
-// missing, and thus should be downloaded again.
-//
-// Stale registries remain accessible for use.
-func (c *Client) IsStale(registry RegistryType) bool {
-	c.reloadFromCache(ASN)
-	return c.Cache.IsStale(registry.Filename())
-}
-
 // Lookup returns the RDAP base URLs for the query |input| in the registry type |registry|.
 //
-// The Service Registry file is downloaded automatically if missing, or the cached version has expired.
+// This function will download a Service Registry file if necessary, with each
+// file cached for 24 hours by default. To adjust the cache duration, use
+// c.Cache.SetTimeout().
 func (c *Client) Lookup(registry RegistryType, input string) (*Result, error) {
-	if c.IsStale(registry) {
+	var forceDownload bool = false
+	if c.Cache.State(registry.Filename()) == cache.ShouldReload {
+		if err := c.reloadFromCache(registry); err != nil {
+			forceDownload = true
+		}
+	}
+
+	if c.registries[registry] == nil || forceDownload {
 		err := c.Download(registry)
 		if err != nil {
 			return nil, err
@@ -320,7 +325,7 @@ func (c *Client) Lookup(registry RegistryType, input string) (*Result, error) {
 //
 // This function never initiates a network transfer.
 func (c *Client) ASN() *ASNRegistry {
-	c.reloadFromCache(ASN)
+	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[ASN].(*ASNRegistry)
 	return s
@@ -331,7 +336,7 @@ func (c *Client) ASN() *ASNRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) DNS() *DNSRegistry {
-	c.reloadFromCache(DNS)
+	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[DNS].(*DNSRegistry)
 	return s
@@ -341,7 +346,7 @@ func (c *Client) DNS() *DNSRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) IPv4() *NetRegistry {
-	c.reloadFromCache(IPv4)
+	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[IPv4].(*NetRegistry)
 	return s
@@ -351,7 +356,7 @@ func (c *Client) IPv4() *NetRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) IPv6() *NetRegistry {
-	c.reloadFromCache(IPv6)
+	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[IPv6].(*NetRegistry)
 	return s
@@ -361,7 +366,7 @@ func (c *Client) IPv6() *NetRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) ServiceProvider() *ServiceProviderRegistry {
-	c.reloadFromCache(ServiceProvider)
+	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[ServiceProvider].(*ServiceProviderRegistry)
 	return s
