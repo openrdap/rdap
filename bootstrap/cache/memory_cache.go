@@ -46,18 +46,19 @@ func (m *MemoryCache) Load(filename string) ([]byte, bool, error) {
 	return result, false, nil
 }
 
-func (m *MemoryCache) IsStale(filename string) bool {
+func (m *MemoryCache) State(filename string) FileState {
 	mtime, ok := m.mtime[filename]
 
 	if !ok {
-		return true
+		return Absent
 	}
 
 	expiry := mtime.Add(m.Timeout)
 
 	if expiry.Before(time.Now()) {
-		return true
+		return Expired
 	}
 
-	return false
+	return Good
+
 }

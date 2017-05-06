@@ -12,8 +12,8 @@ import (
 
 func TestMemoryCache(t *testing.T) {
 	m := NewMemoryCache()
-	if !m.IsStale("not-in-cache.json") {
-		t.Fatal("m.IsStale() returned false for non-existent file")
+	if m.State("not-in-cache.json") != Absent {
+		t.Fatal("m.State() returned non-Absent for absent file")
 	}
 
 	var data []byte
@@ -45,16 +45,16 @@ func TestMemoryCache(t *testing.T) {
 		t.Fatalf("Cache doesn't contain a copy, contains %s", data)
 	}
 
-	if m.IsStale("file.json") {
-		t.Fatal("m.IsStale returned true for hot cache")
+	if m.State("file.json") != Good {
+		t.Fatal("m.State() returned non-Good for cached file")
 	}
 
 	m.Timeout = 0
 
 	time.Sleep(time.Millisecond)
 
-	if !m.IsStale("file.json") {
-		t.Fatal("m.IsStale returned false for stale cache")
+	if m.State("file.json") != Expired {
+		t.Fatal("m.State() returned non-Expired for expired file")
 	}
 
 }

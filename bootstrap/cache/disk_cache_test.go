@@ -22,57 +22,83 @@ func TestDiskCache(t *testing.T) {
 
 	rdapDir := filepath.Join(dir, ".openrdap")
 	
-	m := NewDiskCache()
-	t.Logf("Default cache dir is %s, test cache dir is %s\n", m.Dir, rdapDir)
-	m.Dir = rdapDir
+	m1 := NewDiskCache()
+	m1.Dir = rdapDir
 
-	err = m.InitDir()
-	if err != nil {
-		t.Fatalf("InitDir failed: %s\n", err)
+	m2 := NewDiskCache()
+	m2.Dir = rdapDir
+
+	asn1 := []byte(string("file 1"))
+	asn2 := []byte(string("file 2"))
+
+	if m1.State("asn.json") != Absent {
+		t.Fatalf("asn.json expected absent in m1")
+	} else if m2.State("asn.json") != Absent {
+		t.Fatalf("asn.json expected absent in m2")
 	}
 
-	if !m.IsStale("not-in-cache.json") {
-		t.Fatal("m.IsStale() returned false for non-existent file")
+	if err := m1.Save("asn.json", asn1); err != nil {
+		t.Fatalf("Save failed: %s", err)
 	}
 
-	var data []byte
-	var isNew bool
-
-	data, isNew, err = m.Load("not-in-cache.json")
-
-	if len(data) != 0 || isNew || err != nil {
-		t.Fatal("Load of not-in-cache.json unexpected result")
+	if m1.State("asn.json") != Good {
+		t.Fatalf("asn.json expected good in m1")
+	} else if m2.State("asn.json") != ShouldReload {
+		t.Fatalf("asn.json expected shouldreload in m2")
 	}
 
-	var testData []byte = []byte("test")
+	loaded1, err := m1.Load("asn.json")
+	loaded2, err := m2.Load("asn.json")
 
-	err = m.Save("file.json", testData)
-
-	if err != nil {
-		t.Fatal("Save failed")
+	if m1.State("asn.json") != Good {
+		t.Fatalf("asn.json expected good in m1")
+	} else if m2.State("asn.json") != Good {
+		t.Fatalf("asn.json expected good in m2")
 	}
 
-	data, isNew, err = m.Load("file.json")
-
-	if len(data) == 0 || isNew || err != nil || bytes.Compare(data, testData) != 0 {
-		t.Fatal("Load of not-in-cache.json unexpected result")
+	if bytes.Compare(loaded1, asn1) != 0 {
+		t.Fatalf("loaded1(%v) != asn1(%v)", loaded1, asn1)
+	} else if bytes.Compare(loaded2, asn1) != 0 {
+		t.Fatalf("loaded2(%v) != asn1(%v)", loaded2, asn1)
 	}
 
-	testData[0] = 'x'
-	if data[0] != 't' {
-		t.Fatalf("Cache doesn't contain a copy, contains %s", data)
+	time.Sleep(time.Second)
+
+	if err := m2.Save("asn.json", asn2); err != nil {
+		t.Fatalf("Save failed: %s", err)
 	}
 
-	if m.IsStale("file.json") {
-		t.Fatal("m.IsStale returned true for hot cache")
+	if m1.State("asn.json") != ShouldReload {
+		t.Fatalf("asn.json expected shouldreload in m1")
+	} else if m2.State("asn.json") != Good {
+		t.Fatalf("asn.json expected good in m2")
 	}
 
-	m.Timeout = 0
+	m1.Timeout = 0
+	m2.Timeout = 0
 
-	time.Sleep(time.Millisecond)
-
-	if !m.IsStale("file.json") {
-		t.Fatal("m.IsStale returned false for stale cache")
+	if m1.State("asn.json") != Expired {
+		t.Fatal("m1 timeout broken")
+	} else if m2.State("asn.json") != Expired {
+		t.Fatal("m2 timeout broken")
 	}
 
+	m1.Timeout = time.Hour
+	m2.Timeout = time.Hour
+
+	loaded1, err = m1.Load("asn.json")
+	loaded2, err = m2.Load("asn.json")
+
+	if m1.State("asn.json") != Good {
+		t.Fatalf("asn.json expected good in m1")
+	} else if m2.State("asn.json") != Good {
+		t.Fatalf("asn.json expected good in m2")
+	}
+
+	if bytes.Compare(loaded1, asn2) != 0 {
+		t.Fatalf("loaded1(%v) != asn2(%v)", loaded1, asn2)
+	} else if bytes.Compare(loaded2, asn2) != 0 {
+		t.Fatalf("loaded2(%v) != asn2(%v)", loaded2, asn2)
+	}
 }
+

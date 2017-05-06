@@ -6,6 +6,8 @@ package cache
 
 import (
 	"errors"
+	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -14,20 +16,19 @@ import (
 )
 
 const (
-	DefaultCacheDir = ".openrdap"
+	DefaultCacheDirName = ".openrdap"
 )
 
 type DiskCache struct {
 	Timeout time.Duration
 	Dir string
-	cache   map[string][]byte
-	mtime   map[string]time.Time
+
+	lastLoadedModTime map[string]time.Time
 }
 
 func NewDiskCache() *DiskCache {
 	d := &DiskCache{
-		cache: make(map[string][]byte),
-		mtime: make(map[string]time.Time),
+		lastLoadedModTime: make(map[string]time.Time),
 		Timeout: time.Hour * 24,
 	}
 
@@ -37,15 +38,15 @@ func NewDiskCache() *DiskCache {
 		panic("Can't determine your home directory")
 	}
 
-	d.Dir = filepath.Join(dir, DefaultCacheDir)
+	d.Dir = filepath.Join(dir, DefaultCacheDirName)
 
 	return d
 }
 
 func (d *DiskCache) InitDir() error {
-	fileinfo, err := os.Stat(d.Dir)
+	fileInfo, err := os.Stat(d.Dir)
 	if err == nil {
-		if fileinfo.IsDir() {
+		if fileInfo.IsDir() {
 			return nil
 		} else {
 			return errors.New("Cache dir is not a dir")
@@ -69,47 +70,81 @@ func (d *DiskCache) Save(filename string, data []byte) error {
 		return err
 	}
 
-	// Save and copy into place
+	err = ioutil.WriteFile(d.cacheDirPath(filename), data, 0664)
+	if err != nil {
+		return err
+	}
 
-	d.cache[filename] = make([]byte, len(data))
-	copy(d.cache[filename], data)
-
-	d.mtime[filename] = time.Now()
+	fileModTime, err := d.modTime(filename)
+	if err == nil {
+		d.lastLoadedModTime[filename] = fileModTime
+	} else {
+		return fmt.Errorf("File %s failed to save correctly: %s", filename, err)
+	}
 
 	return nil
 }
 
-func (d *DiskCache) Load(filename string) ([]byte, bool, error) {
-	// Stat file
-	// if in cache and mtime the same, return that
-
-	// Otherwise try and reload the file, put into cache, return that
-
-	data, ok := d.cache[filename]
-
-	if !ok {
-		return nil, false, nil
+func (d *DiskCache) Load(filename string) ([]byte, error) {
+	err := d.InitDir()
+	if err != nil {
+		return nil, err
 	}
 
-	result := make([]byte, len(data))
-	copy(result, data)
+	fileModTime, err := d.modTime(filename)
+	if err != nil {
+		return nil, fmt.Errorf("Unable to load %s: %s", filename, err)
+	}
 
-	return result, false, nil
+	var bytes []byte
+	bytes, err = ioutil.ReadFile(d.cacheDirPath(filename))
+
+	if err != nil {
+		return nil, err
+	}
+
+	d.lastLoadedModTime[filename] = fileModTime
+
+	return bytes, nil
 }
 
-func (d *DiskCache) IsStale(filename string) bool {
-	
-	mtime, ok := d.mtime[filename]
-
-	if !ok {
-		return true
+func (d *DiskCache) State(filename string) FileState {
+	err := d.InitDir()
+	if err != nil {
+		return Absent
 	}
 
-	expiry := mtime.Add(d.Timeout)
+	var expiry time.Time = time.Now().Add(-d.Timeout)
+	var state FileState = Absent
 
-	if expiry.Before(time.Now()) {
-		return true
+	fileModTime, err := d.modTime(filename)
+	if err == nil {
+		if fileModTime.After(expiry) {
+			state = ShouldReload
+
+			lastLoadedModTime, haveLoaded := d.lastLoadedModTime[filename]
+			if haveLoaded && !fileModTime.After(lastLoadedModTime) {
+				state = Good
+			}
+		} else {
+			state = Expired
+		}
 	}
 
-	return false
+	return state
+}
+
+func (d *DiskCache) modTime(filename string) (time.Time, error) {
+	var fileInfo os.FileInfo
+	fileInfo, err := os.Stat(d.cacheDirPath(filename))
+
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return fileInfo.ModTime(), nil
+}
+
+func (d *DiskCache) cacheDirPath(filename string) string {
+	return filepath.Join(d.Dir, filename)
 }
