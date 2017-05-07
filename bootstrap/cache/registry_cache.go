@@ -3,6 +3,8 @@
 // MIT License, see the LICENSE file.
 
 // Package cache implements caching of RDAP Service Registry files.
+//
+// There are two separate implementations: MemoryCache and DiskCache.
 package cache
 
 import "time"
@@ -20,10 +22,11 @@ const (
 	// This is used by DiskCache, which uses a shared cache directory.
 	ShouldReload
 
-	// File is in the cache, but has expired.
+	// File is in the cache, but has expired. It still can be Load()'ed.
 	Expired
 )
 
+// A RegistryCache implements a cache of Service Registry files.
 type RegistryCache interface {
 	Load(filename string) ([]byte, error)
 	Save(filename string, data []byte) error

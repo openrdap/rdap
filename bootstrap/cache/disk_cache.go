@@ -16,16 +16,30 @@ import (
 )
 
 const (
-	DefaultCacheDirName = ".openrdap"
+	defaultCacheDirName = ".openrdap"
 )
 
+// A DiskCache caches Service Registry files on disk.
+//
+// By default they're saved as $HOME/.openrdap/{asn,dns,ipv4,ipv6}.json. File
+// mtimes are used to calculate cache expiry.
+//
+// The cache directory is created automatically as needed.
 type DiskCache struct {
+	// Duration files are stored before they're considered expired.
+	//
+	// The default is 24 hours.
 	Timeout time.Duration
+
+	// Directory to store cached files in.
+	//
+	// The default is $HOME/.openrdap.
 	Dir string
 
 	lastLoadedModTime map[string]time.Time
 }
 
+// NewDiskCache creates a new DiskCache.
 func NewDiskCache() *DiskCache {
 	d := &DiskCache{
 		lastLoadedModTime: make(map[string]time.Time),
@@ -38,11 +52,12 @@ func NewDiskCache() *DiskCache {
 		panic("Can't determine your home directory")
 	}
 
-	d.Dir = filepath.Join(dir, DefaultCacheDirName)
+	d.Dir = filepath.Join(dir, defaultCacheDirName)
 
 	return d
 }
 
+// InitDir creates the cache directory if it does not already exist.
 func (d *DiskCache) InitDir() error {
 	fileInfo, err := os.Stat(d.Dir)
 	if err == nil {
@@ -60,10 +75,15 @@ func (d *DiskCache) InitDir() error {
 	}
 }
 
+// SetTimeout sets the duration each Service Registry file can be stored before
+// its State() is Expired.
 func (d *DiskCache) SetTimeout(timeout time.Duration) {
 	d.Timeout = timeout
 }
 
+// Save saves the file |filename| with |data| to disk.
+//
+// The cache directory is created if necessary.
 func (d *DiskCache) Save(filename string, data []byte) error {
 	err := d.InitDir()
 	if err != nil {
@@ -85,12 +105,13 @@ func (d *DiskCache) Save(filename string, data []byte) error {
 	return nil
 }
 
+// Load loads the file |filename| from disk.
+//
+// Since Service Registry files do not change much, the file is returned even
+// if its State() is Expired.
+//
+// An error is returned if the file is not on disk.
 func (d *DiskCache) Load(filename string) ([]byte, error) {
-	err := d.InitDir()
-	if err != nil {
-		return nil, err
-	}
-
 	fileModTime, err := d.modTime(filename)
 	if err != nil {
 		return nil, fmt.Errorf("Unable to load %s: %s", filename, err)
@@ -108,12 +129,10 @@ func (d *DiskCache) Load(filename string) ([]byte, error) {
 	return bytes, nil
 }
 
+// State returns the cache state of the file |filename|.
+//
+// The returned state is one of: Absent, Good, ShouldReload, Expired.
 func (d *DiskCache) State(filename string) FileState {
-	err := d.InitDir()
-	if err != nil {
-		return Absent
-	}
-
 	var expiry time.Time = time.Now().Add(-d.Timeout)
 	var state FileState = Absent
 

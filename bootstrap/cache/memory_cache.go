@@ -9,12 +9,14 @@ import (
 	"time"
 )
 
+// A MemoryCache caches Service Registry files in memory.
 type MemoryCache struct {
 	Timeout time.Duration
 	cache   map[string][]byte
 	mtime   map[string]time.Time
 }
 
+// NewMemoryCache creates a new MemoryCache.
 func NewMemoryCache() *MemoryCache {
 	return &MemoryCache{
 		cache: make(map[string][]byte),
@@ -23,10 +25,13 @@ func NewMemoryCache() *MemoryCache {
 	}
 }
 
+// SetTimeout sets the duration each Service Registry file can be stored before
+// its State() is Expired.
 func (m *MemoryCache) SetTimeout(timeout time.Duration) {
 	m.Timeout = timeout
 }
 
+// Save saves the file |filename| with |data| to the cache.
 func (m *MemoryCache) Save(filename string, data []byte) error {
 	m.cache[filename] = make([]byte, len(data))
 	copy(m.cache[filename], data)
@@ -36,6 +41,12 @@ func (m *MemoryCache) Save(filename string, data []byte) error {
 	return nil
 }
 
+// Load returns the file |filename| from the cache.
+//
+// Since Service Registry files do not change much, the file is returned even
+// if its State() is Expired.
+//
+// An error is returned if the file is not in the cache.
 func (m *MemoryCache) Load(filename string) ([]byte, error) {
 	data, ok := m.cache[filename]
 
@@ -49,6 +60,9 @@ func (m *MemoryCache) Load(filename string) ([]byte, error) {
 	return result, nil
 }
 
+// State returns the cache state of the file |filename|.
+//
+// The returned state is one of: Absent, Good, Expired.
 func (m *MemoryCache) State(filename string) FileState {
 	mtime, ok := m.mtime[filename]
 
