@@ -77,6 +77,7 @@
 package bootstrap
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -215,6 +216,10 @@ func (c *Client) download(registry RegistryType) ([]byte, Registry, error) {
 		return nil, nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
+		return nil, nil, fmt.Errorf("Server returned non-200 status code: %s", resp.Status)
+	}
 
 	json, err := ioutil.ReadAll(resp.Body)
 	if err != nil {

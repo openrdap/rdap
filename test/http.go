@@ -20,6 +20,7 @@ const (
 	BootstrapExperimental
 	BootstrapMalformed
 	BootstrapComplex
+	BootstrapHTTPError
 )
 
 type response struct {
@@ -107,6 +108,12 @@ func loadTestDatasets() {
 
 	// Valid bootstrap files testing more features than yet used by IANA.
 	load(BootstrapComplex, 200, "https://rdap.example.org/dns.json", "bootstrap_complex/dns.json")
+
+	// Bootstrap HTTP errors
+	load(BootstrapHTTPError, 404, "https://data.iana.org/rdap/asn.json", "bootstrap_http_error/404.html")
+	load(BootstrapHTTPError, 404, "https://data.iana.org/rdap/dns.json", "bootstrap_http_error/404.html")
+	load(BootstrapHTTPError, 404, "https://data.iana.org/rdap/ipv4.json", "bootstrap_http_error/404.html")
+	load(BootstrapHTTPError, 404, "https://data.iana.org/rdap/ipv6.json", "bootstrap_http_error/404.html")
 }
 
 func load(set TestDataset, status int, url string, filename string) {

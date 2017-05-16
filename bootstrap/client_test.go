@@ -122,3 +122,18 @@ func TestLookups(t *testing.T) {
 
 	}
 }
+
+func TestLookupWithDownloadError(t *testing.T) {
+	test.Start(test.BootstrapHTTPError)
+	defer test.Finish()
+
+	c := NewClient()
+
+	_, err := c.Lookup(DNS, "example.br")
+
+	if err == nil {
+		t.Errorf("Unexpected success")
+	}
+
+	t.Logf("Error was: %s", err)
+}
