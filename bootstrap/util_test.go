@@ -21,9 +21,11 @@ func runRegistryTests(t *testing.T, tests []registryTest, reg Registry) {
 		r, err := reg.Lookup(test.Query)
 
 		if test.Error && err == nil {
-			t.Fatalf("Query: %s, expected error, didn't get one\n", test.Query)
+			t.Errorf("Query: %s, expected error, didn't get one\n", test.Query)
+			continue
 		} else if !test.Error && err != nil {
-			t.Fatalf("Query: %s, unexpected error: %s\n", test.Query, err)
+			t.Errorf("Query: %s, unexpected error: %s\n", test.Query, err)
+			continue
 		}
 
 		if test.Error {
@@ -31,20 +33,24 @@ func runRegistryTests(t *testing.T, tests []registryTest, reg Registry) {
 		}
 
 		if r == nil {
-			t.Fatalf("Query: %s, unexpected nil Result, err=%v\n", test.Query, err)
+			t.Errorf("Query: %s, unexpected nil Result, err=%v\n", test.Query, err)
+			continue
 		}
 
 		if r.Entry != test.Entry {
-			t.Fatalf("Query: %s, expected Entry %s, got %s\n", test.Query, test.Entry, r.Entry)
+			t.Errorf("Query: %s, expected Entry %s, got %s\n", test.Query, test.Entry, r.Entry)
+			continue
 		}
 
 		if len(r.URLs) != len(test.URLs) {
-			t.Fatalf("Query: %s, expected %d urls, got %d\n", test.Query, len(test.URLs), len(r.URLs))
+			t.Errorf("Query: %s, expected %d urls, got %d\n", test.Query, len(test.URLs), len(r.URLs))
+			continue
 		}
 
 		for i, url := range test.URLs {
 			if r.URLs[i].String() != url {
-				t.Fatalf("Query %s, URL #%d, expected %s, got %s\n", test.Query, i, url, r.URLs[i])
+				t.Errorf("Query %s, URL #%d, expected %s, got %s\n", test.Query, i, url, r.URLs[i])
+				continue
 			}
 		}
 	}
