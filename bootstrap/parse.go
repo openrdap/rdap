@@ -10,13 +10,21 @@ import (
 	"net/url"
 )
 
+// RegistryFile represents a bootstrap registry file (i.e. {asn,dns,ipv4,ipv6}.json).
 type RegistryFile struct {
+	// Fields from the JSON document.
 	Description string
 	Publication string
 	Version     string
 
+	// Map of service entries to RDAP base URLs.
+	//
+	// e.g. in ipv6.json, the following mapping:
+	// "2c00::/12" => https://rdap.afrinic.net/rdap/,
+	//                http://rdap.afrinic.net/rdap/.
 	Entries map[string][]*url.URL
 
+	// The file's JSON document.
 	JSON []byte
 }
 
