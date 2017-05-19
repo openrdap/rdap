@@ -16,7 +16,7 @@ func TestParseValid(t *testing.T) {
 
 	var bytes []byte = test.Get("https://data.iana.org/rdap/dns.json")
 
-	var r *registryFile
+	var r *RegistryFile
 	r, err := parse(bytes)
 
 	if err != nil {
@@ -73,7 +73,7 @@ func TestParseBadURL(t *testing.T) {
 
 	var bytes []byte = test.Get("https://www.example.org/dns_bad_url.json")
 
-	var r *registryFile
+	var r *RegistryFile
 	r, err := parse(bytes)
 
 	if err != nil {

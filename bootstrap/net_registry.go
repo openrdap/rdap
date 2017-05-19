@@ -16,18 +16,20 @@ import (
 
 type NetRegistry struct {
 	// Map of netmask size (0-32 for IPv4, 0-128 for IPv6) to list of NetEntries.
-	Networks map[int][]NetEntry
+	networks map[int][]netEntry
 
 	numIPBytes int // Length in bytes of each IP address (4 for IPv4, 16 for IPv6).
+
+	file *RegistryFile
 }
 
-// A NetEntry is a network and its RDAP base URLs.
-type NetEntry struct {
+// A netEntry is a network and its RDAP base URLs.
+type netEntry struct {
 	Net  *net.IPNet
 	URLs []*url.URL
 }
 
-type netEntrySorter []NetEntry
+type netEntrySorter []netEntry
 
 func (a netEntrySorter) Len() int {
 	return len(a)
@@ -49,7 +51,7 @@ func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
 		return nil, fmt.Errorf("Unknown IP version %d", ipVersion)
 	}
 
-	var registry *registryFile
+	var registry *RegistryFile
 	registry, err := parse(json)
 
 	if err != nil {
@@ -57,8 +59,9 @@ func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
 	}
 
 	n := &NetRegistry{
-		Networks:   map[int][]NetEntry{},
+		networks:   map[int][]netEntry{},
 		numIPBytes: numIPBytesForVersion(ipVersion),
+		file:       registry,
 	}
 
 	var cidr string
@@ -73,10 +76,10 @@ func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
 		}
 
 		size, _ := ipNet.Mask.Size()
-		n.Networks[size] = append(n.Networks[size], NetEntry{Net: ipNet, URLs: urls})
+		n.networks[size] = append(n.networks[size], netEntry{Net: ipNet, URLs: urls})
 	}
 
-	for _, nets := range n.Networks {
+	for _, nets := range n.networks {
 		sort.Sort(netEntrySorter(nets))
 	}
 
@@ -109,8 +112,8 @@ func (n *NetRegistry) Lookup(input string) (*Result, error) {
 	var bestMask int
 
 	var mask int
-	var nets []NetEntry
-	for mask, nets = range n.Networks {
+	var nets []netEntry
+	for mask, nets = range n.networks {
 		if mask < bestMask || mask > lookupMask {
 			continue
 		}
@@ -149,4 +152,9 @@ func numIPBytesForVersion(ipVersion int) int {
 	}
 
 	return len
+}
+
+// File returns a struct describing the registry's JSON document.
+func (n *NetRegistry) File() *RegistryFile {
+	return n.file
 }

@@ -10,15 +10,17 @@ import (
 	"net/url"
 )
 
-type registryFile struct {
+type RegistryFile struct {
 	Description string
 	Publication string
 	Version     string
 
 	Entries map[string][]*url.URL
+
+	JSON []byte
 }
 
-func parse(jsonDocument []byte) (*registryFile, error) {
+func parse(jsonDocument []byte) (*RegistryFile, error) {
 	var doc struct {
 		Description string
 		Publication string
@@ -32,10 +34,11 @@ func parse(jsonDocument []byte) (*registryFile, error) {
 		return nil, err
 	}
 
-	b := &registryFile{}
+	b := &RegistryFile{}
 	b.Description = doc.Description
 	b.Publication = doc.Publication
 	b.Version = doc.Version
+	b.JSON = jsonDocument
 
 	b.Entries = make(map[string][]*url.URL)
 

@@ -35,7 +35,7 @@
 //     var dns *DNSRegistry = b.DNS()
 //
 //     // Print TLDs with RDAP service.
-//     for _, tld := range dns.DNS {
+//     for tld, _ := range dns.File().Entries {
 //       fmt.Println(tld)
 //     }
 //   }
@@ -122,6 +122,7 @@ type Client struct {
 // A Registry implements bootstrap lookups.
 type Registry interface {
 	Lookup(input string) (*Result, error)
+	File() *RegistryFile
 }
 
 // Result represents the result of bootstrapping a single query.
@@ -164,18 +165,6 @@ func NewClient() *Client {
 // Download downloads a single bootstrap registry file.
 //
 // On success, the relevant Registry is refreshed. Use the matching accessor (ASN(), DNS(), IPv4(), or IPv6()) to access it.
-//
-// For example, to download and list the DNS bootstrap registry file:
-//   b := bootstrap.NewClient()
-//   err := b.Download(bootstrap.DNS)
-//
-//   if err == nil {
-//     dns := b.DNS()
-//
-//     for _, tld := range dns.DNS {
-//       fmt.Println(tld)
-//     }
-//   }
 func (c *Client) Download(registry RegistryType) error {
 	var json []byte
 	var s Registry

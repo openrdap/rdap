@@ -17,20 +17,22 @@ type ASNRegistry struct {
 	// List of ASNs & their RDAP base URLs.
 	//
 	// Stored in a sorted order for fast search.
-	ASNs []ASNRange
+	asns []asnRange
+
+	file *RegistryFile
 }
 
-// ASNRange represents a range of AS numbers and their RDAP base URLs.
+// asnRange represents a range of AS numbers and their RDAP base URLs.
 //
 // Represents a single AS number when MinASN==MaxASN.
-type ASNRange struct {
+type asnRange struct {
 	MinASN uint32     // First AS number.
 	MaxASN uint32     // Last AS number.
 	URLs   []*url.URL // RDAP base URLs.
 }
 
 // String returns "ASxxxx" for a single AS, or "ASxxxx-ASyyyy" for a range.
-func (a ASNRange) String() string {
+func (a asnRange) String() string {
 	if a.MinASN == a.MaxASN {
 		return fmt.Sprintf("AS%d", a.MinASN)
 	}
@@ -38,7 +40,7 @@ func (a ASNRange) String() string {
 	return fmt.Sprintf("AS%d-AS%d", a.MinASN, a.MaxASN)
 }
 
-type asnRangeSorter []ASNRange
+type asnRangeSorter []asnRange
 
 func (a asnRangeSorter) Len() int {
 	return len(a)
@@ -56,14 +58,14 @@ func (a asnRangeSorter) Less(i int, j int) bool {
 //
 // The document format is specified in https://tools.ietf.org/html/rfc7484#section-5.3.
 func NewASNRegistry(json []byte) (*ASNRegistry, error) {
-	var registry *registryFile
+	var registry *RegistryFile
 	registry, err := parse(json)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing ASN registry: %s\n", err)
 	}
 
-	a := make([]ASNRange, 0, len(registry.Entries))
+	a := make([]asnRange, 0, len(registry.Entries))
 
 	var asn string
 	var urls []*url.URL
@@ -74,13 +76,14 @@ func NewASNRegistry(json []byte) (*ASNRegistry, error) {
 			continue
 		}
 
-		a = append(a, ASNRange{MinASN: minASN, MaxASN: maxASN, URLs: urls})
+		a = append(a, asnRange{MinASN: minASN, MaxASN: maxASN, URLs: urls})
 	}
 
 	sort.Sort(asnRangeSorter(a))
 
 	return &ASNRegistry{
-		ASNs: a,
+		asns: a,
+		file: registry,
 	}, nil
 }
 
@@ -95,16 +98,16 @@ func (a *ASNRegistry) Lookup(input string) (*Result, error) {
 		return nil, err
 	}
 
-	index := sort.Search(len(a.ASNs), func(i int) bool {
-		return asn <= a.ASNs[i].MaxASN
+	index := sort.Search(len(a.asns), func(i int) bool {
+		return asn <= a.asns[i].MaxASN
 	})
 
 	var entry string
 	var urls []*url.URL
 
-	if index != len(a.ASNs) && (asn >= a.ASNs[index].MinASN && asn <= a.ASNs[index].MaxASN) {
-		entry = a.ASNs[index].String()
-		urls = a.ASNs[index].URLs
+	if index != len(a.asns) && (asn >= a.asns[index].MinASN && asn <= a.asns[index].MaxASN) {
+		entry = a.asns[index].String()
+		urls = a.asns[index].URLs
 	}
 
 	return &Result{
@@ -112,6 +115,11 @@ func (a *ASNRegistry) Lookup(input string) (*Result, error) {
 		Entry: entry,
 		URLs:  urls,
 	}, nil
+}
+
+// File returns a struct describing the registry's JSON document.
+func (a *ASNRegistry) File() *RegistryFile {
+	return a.file
 }
 
 func parseASN(asn string) (uint32, error) {

@@ -12,7 +12,10 @@ import (
 
 type ServiceProviderRegistry struct {
 	// Map of service tag (e.g. "VRSN") to RDAP base URLs.
-	Services map[string][]*url.URL
+	services map[string][]*url.URL
+
+	// The registry's JSON document.
+	file *RegistryFile
 }
 
 // NewServiceProviderRegistry creates a ServiceProviderRegistry from a Service
@@ -21,7 +24,7 @@ type ServiceProviderRegistry struct {
 // The document format is specified in
 // https://datatracker.ietf.org/doc/draft-hollenbeck-regext-rdap-object-tag/.
 func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
-	var r *registryFile
+	var r *RegistryFile
 	r, err := parse(json)
 
 	if err != nil {
@@ -29,7 +32,8 @@ func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
 	}
 
 	return &ServiceProviderRegistry{
-		Services: r.Entries,
+		services: r.Entries,
+		file:     r,
 	}, nil
 }
 
@@ -51,7 +55,7 @@ func (s *ServiceProviderRegistry) Lookup(input string) (*Result, error) {
 
 	service := input[offset+1:]
 
-	urls, ok := s.Services[service]
+	urls, ok := s.services[service]
 
 	if !ok {
 		service = ""
@@ -62,4 +66,9 @@ func (s *ServiceProviderRegistry) Lookup(input string) (*Result, error) {
 		Query: input,
 		Entry: service,
 	}, nil
+}
+
+// File returns a struct describing the registry's JSON document.
+func (s *ServiceProviderRegistry) File() *RegistryFile {
+	return s.file
 }
