@@ -6,3 +6,6 @@ package rdap
 
 type Response struct {
 }
+
+type Domain struct {
+}
