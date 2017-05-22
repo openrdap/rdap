@@ -10,8 +10,8 @@ import (
 	"net/url"
 )
 
-// RegistryFile represents a bootstrap registry file (i.e. {asn,dns,ipv4,ipv6}.json).
-type RegistryFile struct {
+// File represents a bootstrap registry file (i.e. {asn,dns,ipv4,ipv6}.json).
+type File struct {
 	// Fields from the JSON document.
 	Description string
 	Publication string
@@ -28,7 +28,8 @@ type RegistryFile struct {
 	JSON []byte
 }
 
-func parse(jsonDocument []byte) (*RegistryFile, error) {
+// NewFile constructs a File from a bootstrap registry file.
+func NewFile(jsonDocument []byte) (*File, error) {
 	var doc struct {
 		Description string
 		Publication string
@@ -42,13 +43,13 @@ func parse(jsonDocument []byte) (*RegistryFile, error) {
 		return nil, err
 	}
 
-	b := &RegistryFile{}
-	b.Description = doc.Description
-	b.Publication = doc.Publication
-	b.Version = doc.Version
-	b.JSON = jsonDocument
+	f := &File{}
+	f.Description = doc.Description
+	f.Publication = doc.Publication
+	f.Version = doc.Version
+	f.JSON = jsonDocument
 
-	b.Entries = make(map[string][]*url.URL)
+	f.Entries = make(map[string][]*url.URL)
 
 	for _, s := range doc.Services {
 		if len(s) != 2 {
@@ -73,10 +74,10 @@ func parse(jsonDocument []byte) (*RegistryFile, error) {
 
 		if len(urls) > 0 {
 			for _, entry := range entries {
-				b.Entries[entry] = urls
+				f.Entries[entry] = urls
 			}
 		}
 	}
 
-	return b, nil
+	return f, nil
 }

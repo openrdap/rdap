@@ -19,7 +19,7 @@ type ASNRegistry struct {
 	// Stored in a sorted order for fast search.
 	asns []asnRange
 
-	file *RegistryFile
+	file *File
 }
 
 // asnRange represents a range of AS numbers and their RDAP base URLs.
@@ -58,8 +58,8 @@ func (a asnRangeSorter) Less(i int, j int) bool {
 //
 // The document format is specified in https://tools.ietf.org/html/rfc7484#section-5.3.
 func NewASNRegistry(json []byte) (*ASNRegistry, error) {
-	var registry *RegistryFile
-	registry, err := parse(json)
+	var registry *File
+	registry, err := NewFile(json)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing ASN registry: %s\n", err)
@@ -118,7 +118,7 @@ func (a *ASNRegistry) Lookup(input string) (*Result, error) {
 }
 
 // File returns a struct describing the registry's JSON document.
-func (a *ASNRegistry) File() *RegistryFile {
+func (a *ASNRegistry) File() *File {
 	return a.file
 }
 

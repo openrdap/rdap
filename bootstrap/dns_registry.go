@@ -14,15 +14,15 @@ type DNSRegistry struct {
 	// Map of domain labels (e.g. "br") to RDAP base URLs.
 	dns map[string][]*url.URL
 
-	file *RegistryFile
+	file *File
 }
 
 // NewDNSRegistry creates a DNSRegistry from a DNS registry JSON document.
 //
 // The document format is specified in https://tools.ietf.org/html/rfc7484#section-4.
 func NewDNSRegistry(json []byte) (*DNSRegistry, error) {
-	var r *RegistryFile
-	r, err := parse(json)
+	var r *File
+	r, err := NewFile(json)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing DNS bootstrap: %s", err)
@@ -73,6 +73,6 @@ func (d *DNSRegistry) Lookup(input string) (*Result, error) {
 }
 
 // File returns a struct describing the registry's JSON document.
-func (d *DNSRegistry) File() *RegistryFile {
+func (d *DNSRegistry) File() *File {
 	return d.file
 }

@@ -122,7 +122,7 @@ type Client struct {
 // A Registry implements bootstrap lookups.
 type Registry interface {
 	Lookup(input string) (*Result, error)
-	File() *RegistryFile
+	File() *File
 }
 
 // Result represents the result of bootstrapping a single query.

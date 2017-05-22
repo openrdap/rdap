@@ -15,7 +15,7 @@ type ServiceProviderRegistry struct {
 	services map[string][]*url.URL
 
 	// The registry's JSON document.
-	file *RegistryFile
+	file *File
 }
 
 // NewServiceProviderRegistry creates a ServiceProviderRegistry from a Service
@@ -24,8 +24,8 @@ type ServiceProviderRegistry struct {
 // The document format is specified in
 // https://datatracker.ietf.org/doc/draft-hollenbeck-regext-rdap-object-tag/.
 func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
-	var r *RegistryFile
-	r, err := parse(json)
+	var r *File
+	r, err := NewFile(json)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing Service Provider bootstrap: %s", err)
@@ -69,6 +69,6 @@ func (s *ServiceProviderRegistry) Lookup(input string) (*Result, error) {
 }
 
 // File returns a struct describing the registry's JSON document.
-func (s *ServiceProviderRegistry) File() *RegistryFile {
+func (s *ServiceProviderRegistry) File() *File {
 	return s.file
 }

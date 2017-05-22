@@ -20,7 +20,7 @@ type NetRegistry struct {
 
 	numIPBytes int // Length in bytes of each IP address (4 for IPv4, 16 for IPv6).
 
-	file *RegistryFile
+	file *File
 }
 
 // A netEntry is a network and its RDAP base URLs.
@@ -51,8 +51,8 @@ func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
 		return nil, fmt.Errorf("Unknown IP version %d", ipVersion)
 	}
 
-	var registry *RegistryFile
-	registry, err := parse(json)
+	var registry *File
+	registry, err := NewFile(json)
 
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing net registry file: %s", err)
@@ -155,6 +155,6 @@ func numIPBytesForVersion(ipVersion int) int {
 }
 
 // File returns a struct describing the registry's JSON document.
-func (n *NetRegistry) File() *RegistryFile {
+func (n *NetRegistry) File() *File {
 	return n.file
 }
