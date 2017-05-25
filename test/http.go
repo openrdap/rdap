@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"io/ioutil"
 	"log"
-	"path"
-	"runtime"
 
 	"gopkg.in/jarcoal/httpmock.v1"
 )
@@ -31,7 +29,6 @@ type response struct {
 
 var responses map[TestDataset][]response
 var activatedURLs map[string]bool
-var testDataPath string
 
 func Start(set TestDataset) {
 	httpmock.Activate()
@@ -73,20 +70,7 @@ func init() {
 	responses = make(map[TestDataset][]response)
 	activatedURLs = make(map[string]bool)
 
-	testDataPath = findTestDataPath()
-
 	loadTestDatasets()
-}
-
-func findTestDataPath() string {
-	_, filename, _, ok := runtime.Caller(0)
-	if !ok {
-		log.Panic("runtime.Caller() failed")
-	}
-
-	dir, _ := path.Split(filename)
-
-	return path.Join(dir, "testdata")
 }
 
 func loadTestDatasets() {
@@ -117,13 +101,8 @@ func loadTestDatasets() {
 }
 
 func load(set TestDataset, status int, url string, filename string) {
-	var body []byte
-
-	body, err := ioutil.ReadFile(path.Join(testDataPath, filename))
-
-	if err != nil {
-		log.Panic(err)
-	}
+	var body []byte = LoadFile(filename)
 
 	responses[set] = append(responses[set], response{status, url, string(body)})
 }
+
