@@ -51,7 +51,12 @@ type JCard struct {
 //    -----  --------------------------  -----  -----------------------------
 //   ["tel", {"type":["work", "voice"]}, "uri", "tel:+1-555-555-1234;ext=555"]
 type Property struct {
-	Name       string
+	Name string
+
+	// jCard parameters can be a string, or array of strings.
+	//
+	// To simplify our usage, single strings are represented as an array of
+	// length one.
 	Parameters map[string][]string
 	Type       string
 
@@ -90,7 +95,7 @@ func (p *Property) appendValueStrings(v interface{}, strings *[]string) {
 	case bool:
 		*strings = append(*strings, strconv.FormatBool(v))
 	case float64:
-		*strings = append(*strings, strconv.FormatFloat(v, 'e', -1, 64))
+		*strings = append(*strings, strconv.FormatFloat(v, 'f', -1, 64))
 	case string:
 		*strings = append(*strings, v)
 	case []interface{}:
@@ -165,8 +170,8 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 
 		if !ok {
 			return nil, jCardError("JCard property was not an array")
-		} else if len(a) < 3 {
-			return nil, jCardError("JCard property too short (>=3 array elements required)")
+		} else if len(a) < 4 {
+			return nil, jCardError("JCard property too short (>=4 array elements required)")
 		}
 
 		name, ok := a[0].(string)
@@ -212,7 +217,6 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 
 	}
 
-	fmt.Printf("%v\n", j)
 	return j, nil
 }
 
