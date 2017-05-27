@@ -27,7 +27,7 @@
 //   ]
 //
 // This package implements a jCard decoder.
-package jcard
+package rdap
 
 import (
 	"encoding/json"
@@ -39,18 +39,18 @@ import (
 // Type JCard represents a jCard.
 type JCard struct {
 	// List of jCard properties.
-	Properties []*Property
+	Properties []*JCardProperty
 
-	nameLookup map[string][]*Property
+	nameLookup map[string][]*JCardProperty
 }
 
-// Type Property represents a single jCard property.
+// Type JCardProperty represents a single jCard property.
 //
 // Each jCard property has four fields, these are:
 //    Name   Parameters                  Type   Value
 //    -----  --------------------------  -----  -----------------------------
 //   ["tel", {"type":["work", "voice"]}, "uri", "tel:+1-555-555-1234;ext=555"]
-type Property struct {
+type JCardProperty struct {
 	Name string
 
 	// jCard parameters can be a string, or array of strings.
@@ -74,13 +74,13 @@ type Property struct {
 	Value interface{}
 }
 
-// Values returns a simplified representation of the Property value.
+// Values returns a simplified representation of the JCardProperty value.
 //
 // This is convenient for accessing simple unstructured data (e.g. "fn", "tel").
 //
 // The simplified []string representation is created by flattening the
-// (potentially nested) Property value, and converting all values to strings.
-func (p *Property) Values() []string {
+// (potentially nested) JCardProperty value, and converting all values to strings.
+func (p *JCardProperty) Values() []string {
 	strings := make([]string, 0, 1)
 
 	p.appendValueStrings(p.Value, &strings)
@@ -88,7 +88,7 @@ func (p *Property) Values() []string {
 	return strings
 }
 
-func (p *Property) appendValueStrings(v interface{}, strings *[]string) {
+func (p *JCardProperty) appendValueStrings(v interface{}, strings *[]string) {
 	switch v := v.(type) {
 	case nil:
 		*strings = append(*strings, "")
@@ -126,12 +126,12 @@ func (j *JCard) String() string {
 	return "jCard[\n" + strings.Join(s, "\n") + "\n]"
 }
 
-// String returns the Property as a human readable string. For example:
+// String returns the JCardProperty as a human readable string. For example:
 //
 //     mixed (type=text, parameters=map[]): [abc true 42 <nil> [def false 43]]
 //
 // This is intended for debugging only, and is not machine parsable.
-func (p *Property) String() string {
+func (p *JCardProperty) String() string {
 	return fmt.Sprintf("  %s (type=%s, parameters=%v): %v", p.Name, p.Type, p.Parameters, p.Value)
 }
 
@@ -158,8 +158,8 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 	}
 
 	j := &JCard{
-		Properties: make([]*Property, 0, len(properties)),
-		nameLookup: make(map[string][]*Property),
+		Properties: make([]*JCardProperty, 0, len(properties)),
+		nameLookup: make(map[string][]*JCardProperty),
 	}
 
 	var p interface{}
@@ -205,7 +205,7 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 			return nil, err
 		}
 
-		property := &Property{
+		property := &JCardProperty{
 			Name:       name,
 			Type:       propertyType,
 			Parameters: parameters,
@@ -220,9 +220,9 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 	return j, nil
 }
 
-// Get returns a list of the jCard Properties with Property name |name|.
-func (j *JCard) Get(name string) []*Property {
-	var properties []*Property
+// Get returns a list of the jCard Properties with JCardProperty name |name|.
+func (j *JCard) Get(name string) []*JCardProperty {
+	var properties []*JCardProperty
 
 	properties, _ = j.nameLookup[name]
 

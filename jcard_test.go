@@ -2,7 +2,7 @@
 // Copyright 2017 Tom Harwood
 // MIT License, see the LICENSE file.
 
-package jcard
+package rdap
 
 import (
 	"reflect"
@@ -45,7 +45,7 @@ func TestJCardExample(t *testing.T) {
 		t.Errorf("Got %d properties expected %d", len(j.Properties), numProperties)
 	}
 
-	expectedVersion := &Property{
+	expectedVersion := &JCardProperty{
 		Name:       "version",
 		Parameters: make(map[string][]string),
 		Type:       "text",
@@ -56,7 +56,7 @@ func TestJCardExample(t *testing.T) {
 		t.Errorf("version field incorrect")
 	}
 
-	expectedN := &Property{
+	expectedN := &JCardProperty{
 		Name:       "n",
 		Parameters: make(map[string][]string),
 		Type:       "text",
@@ -80,7 +80,7 @@ func TestJCardExample(t *testing.T) {
 		t.Errorf("n flat value incorrect")
 	}
 
-	expectedTel0 := &Property{
+	expectedTel0 := &JCardProperty{
 		Name:       "tel",
 		Parameters: map[string][]string{"type": []string{"work", "voice"}, "pref": []string{"1"}},
 		Type:       "uri",
@@ -98,7 +98,7 @@ func TestJCardMixedDatatypes(t *testing.T) {
 		t.Errorf("jCard parse failed %v %s\n", j, err)
 	}
 
-	expectedMixed := &Property{
+	expectedMixed := &JCardProperty{
 		Name:       "mixed",
 		Parameters: make(map[string][]string),
 		Type:       "text",
