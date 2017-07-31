@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/skip2/rdap/test"
+	"github.com/skip2/openrdap/test"
 )
 
 func TestJCardErrors(t *testing.T) {

@@ -38,10 +38,11 @@
 //
 // The RDAP protocol uses HTTP, with responses in a JSON format. A bootstrapping mechanism (http://data.iana.org/rdap/) is used to determine the server to query.
 // RDAP is documented in RFC7480-4: https://datatracker.ietf.org/wg/weirds/documents/.
-package rdap
+package client
 
 import (
-	"github.com/skip2/rdap/bootstrap"
+	"github.com/skip2/openrdap/client/bootstrap"
+	"github.com/skip2/openrdap/rdap"
 	"net/http"
 )
 
@@ -78,16 +79,16 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Query(q *Query) (*Response, error) {
+func (c *Client) Query(q *rdap.Query) (*rdap.Response, error) {
 	return nil, nil
 }
 
-func (c *Client) QueryDomain(domain string) (*Domain, error) {
+func (c *Client) QueryDomain(domain string) (*rdap.Domain, error) {
 	return nil, nil
 }
-func (c *Client) QueryAutnum(autnum string) (*Response, error) {
+func (c *Client) QueryAutnum(autnum string) (*rdap.Response, error) {
 	return nil, nil
 }
-func (c *Client) QueryIP(ip string) (*Domain, error) {
+func (c *Client) QueryIP(ip string) (*rdap.Domain, error) {
 	return nil, nil
 }
