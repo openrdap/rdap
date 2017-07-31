@@ -2,6 +2,15 @@
 // Copyright 2017 Tom Harwood
 // MIT License, see the LICENSE file.
 
+package rdap
+
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+)
+
 // Type JCard represents a jCard (a JSON formatted vCard), as defined in https://tools.ietf.org/html/rfc7095.
 //
 // A jCard represents information about an individual or entity. It can include a name, telephone number,
@@ -27,16 +36,6 @@
 //   ]
 //
 // This package implements a jCard decoder.
-package rdap
-
-import (
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"strings"
-)
-
-// Type JCard represents a jCard.
 type JCard struct {
 	// List of jCard properties.
 	Properties []*JCardProperty

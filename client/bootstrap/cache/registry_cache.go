@@ -2,7 +2,7 @@
 // Copyright 2017 Tom Harwood
 // MIT License, see the LICENSE file.
 
-// Package cache implements caching of RDAP Service Registry files.
+// Package cache implements RDAP Service Registry file caching.
 //
 // There are two separate implementations: MemoryCache and DiskCache.
 package cache

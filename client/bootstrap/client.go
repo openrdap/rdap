@@ -2,7 +2,7 @@
 // Copyright 2017 Tom Harwood
 // MIT License, see the LICENSE file.
 
-// Package bootstrap implements Registration Data Access Protocol (RDAP) bootstrapping.
+// Package bootstrap implements an RDAP bootstrap client.
 //
 // All RDAP queries are handled by an RDAP server. To help clients discover
 // RDAP servers, IANA publishes Service Registry files
