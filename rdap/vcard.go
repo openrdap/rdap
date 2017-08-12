@@ -11,16 +11,19 @@ import (
 	"strings"
 )
 
-// Type JCard represents a jCard (a JSON formatted vCard), as defined in https://tools.ietf.org/html/rfc7095.
+// VCard represents a vCard.
 //
-// A jCard represents information about an individual or entity. It can include a name, telephone number,
-// e-mail, delivery address, and other information.
+// A vCard represents information about an individual or entity. It can include
+// a name, telephone number, e-mail, delivery address, and other information.
+//
+// There are several vCard text formats. This implementation encodes/decodes the
+// jCard format used by RDAP, as defined in https://tools.ietf.org/html/rfc7095.
 //
 // A jCard consists of an array of properties (e.g. "fn", "tel") describing the
 // individual or entity. Properties may be repeated, e.g. to represent multiple
 // telephone numbers. RFC6350 documents a set of standard properties.
 //
-// RFC7095 describes the jCard JSON document format, which looks like:
+// RFC7095 describes the JSON document format, which looks like:
 //   ["vcard", [
 //     [
 //       ["version", {}, "text", "4.0"],
@@ -34,25 +37,20 @@ import (
 //       ...
 //     ]
 //   ]
-//
-// This package implements a jCard decoder.
-type JCard struct {
-	// List of jCard properties.
-	Properties []*JCardProperty
-
-	nameLookup map[string][]*JCardProperty
+type VCard struct {
+	Properties []*VCardProperty
 }
 
-// Type JCardProperty represents a single jCard property.
+// VCardProperty represents a single vCard property.
 //
-// Each jCard property has four fields, these are:
+// Each vCard property has four fields, these are:
 //    Name   Parameters                  Type   Value
 //    -----  --------------------------  -----  -----------------------------
 //   ["tel", {"type":["work", "voice"]}, "uri", "tel:+1-555-555-1234;ext=555"]
-type JCardProperty struct {
+type VCardProperty struct {
 	Name string
 
-	// jCard parameters can be a string, or array of strings.
+	// vCard parameters can be a string, or array of strings.
 	//
 	// To simplify our usage, single strings are represented as an array of
 	// length one.
@@ -73,13 +71,13 @@ type JCardProperty struct {
 	Value interface{}
 }
 
-// Values returns a simplified representation of the JCardProperty value.
+// Values returns a simplified representation of the VCardProperty value.
 //
 // This is convenient for accessing simple unstructured data (e.g. "fn", "tel").
 //
 // The simplified []string representation is created by flattening the
-// (potentially nested) JCardProperty value, and converting all values to strings.
-func (p *JCardProperty) Values() []string {
+// (potentially nested) VCardProperty value, and converting all values to strings.
+func (p *VCardProperty) Values() []string {
 	strings := make([]string, 0, 1)
 
 	p.appendValueStrings(p.Value, &strings)
@@ -87,7 +85,7 @@ func (p *JCardProperty) Values() []string {
 	return strings
 }
 
-func (p *JCardProperty) appendValueStrings(v interface{}, strings *[]string) {
+func (p *VCardProperty) appendValueStrings(v interface{}, strings *[]string) {
 	switch v := v.(type) {
 	case nil:
 		*strings = append(*strings, "")
@@ -107,35 +105,35 @@ func (p *JCardProperty) appendValueStrings(v interface{}, strings *[]string) {
 
 }
 
-// String returns the jCard as a multiline human readable string. For example:
+// String returns the vCard as a multiline human readable string. For example:
 //
-//   jCard[
+//   vCard[
 //     version (type=text, parameters=map[]): [4.0]
 //     mixed (type=text, parameters=map[]): [abc true 42 <nil> [def false 43]]
 //   ]
 //
 // This is intended for debugging only, and is not machine parsable.
-func (j *JCard) String() string {
+func (j *VCard) String() string {
 	s := make([]string, 0, len(j.Properties))
 
 	for _, s2 := range j.Properties {
 		s = append(s, s2.String())
 	}
 
-	return "jCard[\n" + strings.Join(s, "\n") + "\n]"
+	return "vCard[\n" + strings.Join(s, "\n") + "\n]"
 }
 
-// String returns the JCardProperty as a human readable string. For example:
+// String returns the VCardProperty as a human readable string. For example:
 //
 //     mixed (type=text, parameters=map[]): [abc true 42 <nil> [def false 43]]
 //
 // This is intended for debugging only, and is not machine parsable.
-func (p *JCardProperty) String() string {
+func (p *VCardProperty) String() string {
 	return fmt.Sprintf("  %s (type=%s, parameters=%v): %v", p.Name, p.Type, p.Parameters, p.Value)
 }
 
-// NewJCard creates a JCard from jsonDocument.
-func NewJCard(jsonDocument []byte) (*JCard, error) {
+// NewVCard creates a VCard from jsonDocument.
+func NewVCard(jsonDocument []byte) (*VCard, error) {
 	var top []interface{}
 	err := json.Unmarshal(jsonDocument, &top)
 
@@ -144,21 +142,20 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 	}
 
 	if len(top) != 2 {
-		return nil, jCardError("structure is not a JCard (expected len=2 top level array)")
+		return nil, vCardError("structure is not a jCard (expected len=2 top level array)")
 	} else if s, ok := top[0].(string); !(ok && s == "vcard") {
-		return nil, jCardError("structure is not a JCard (missing 'vcard')")
+		return nil, vCardError("structure is not a jCard (missing 'vcard')")
 	}
 
 	var properties []interface{}
 
 	properties, ok := top[1].([]interface{})
 	if !ok {
-		return nil, jCardError("structure is not a JCard (bad properties array)")
+		return nil, vCardError("structure is not a jCard (bad properties array)")
 	}
 
-	j := &JCard{
-		Properties: make([]*JCardProperty, 0, len(properties)),
-		nameLookup: make(map[string][]*JCardProperty),
+	j := &VCard{
+		Properties: make([]*VCardProperty, 0, len(properties)),
 	}
 
 	var p interface{}
@@ -168,15 +165,15 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 		a, ok = p.([]interface{})
 
 		if !ok {
-			return nil, jCardError("JCard property was not an array")
+			return nil, vCardError("jCard property was not an array")
 		} else if len(a) < 4 {
-			return nil, jCardError("JCard property too short (>=4 array elements required)")
+			return nil, vCardError("jCard property too short (>=4 array elements required)")
 		}
 
 		name, ok := a[0].(string)
 
 		if !ok {
-			return nil, jCardError("JCard property name invalid")
+			return nil, vCardError("jCard property name invalid")
 		}
 
 		var parameters map[string][]string
@@ -190,7 +187,7 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 		propertyType, ok := a[2].(string)
 
 		if !ok {
-			return nil, jCardError("JCard property type invalid")
+			return nil, vCardError("jCard property type invalid")
 		}
 
 		var value interface{}
@@ -204,7 +201,7 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 			return nil, err
 		}
 
-		property := &JCardProperty{
+		property := &VCardProperty{
 			Name:       name,
 			Type:       propertyType,
 			Parameters: parameters,
@@ -212,31 +209,33 @@ func NewJCard(jsonDocument []byte) (*JCard, error) {
 		}
 
 		j.Properties = append(j.Properties, property)
-		j.nameLookup[name] = append(j.nameLookup[name], property)
-
 	}
 
 	return j, nil
 }
 
-// Get returns a list of the jCard Properties with JCardProperty name |name|.
-func (j *JCard) Get(name string) []*JCardProperty {
-	var properties []*JCardProperty
+// Get returns a list of the jCard Properties with VCardProperty name |name|.
+func (j *VCard) Get(name string) []*VCardProperty {
+	var properties []*VCardProperty
 
-	properties, _ = j.nameLookup[name]
+	for _, p := range j.Properties {
+		if p.Name == name {
+			properties = append(properties, p)
+		}
+	}
 
 	return properties
 }
 
-func jCardError(e string) error {
-	return fmt.Errorf("JCard error: %s", e)
+func vCardError(e string) error {
+	return fmt.Errorf("jCard error: %s", e)
 }
 
 func readParameters(p interface{}) (map[string][]string, error) {
 	params := map[string][]string{}
 
 	if _, ok := p.(map[string]interface{}); !ok {
-		return nil, jCardError("JCard parameters invalid")
+		return nil, vCardError("jCard parameters invalid")
 	}
 
 	for k, v := range p.(map[string]interface{}) {
@@ -266,7 +265,7 @@ func readValue(value interface{}, depth int) (interface{}, error) {
 		return value, nil
 	case []interface{}:
 		if depth == 3 {
-			return "", jCardError("Structured value too deep")
+			return "", vCardError("Structured value too deep")
 		}
 
 		result := make([]interface{}, 0, len(value))
@@ -283,6 +282,6 @@ func readValue(value interface{}, depth int) (interface{}, error) {
 
 		return result, nil
 	default:
-		return nil, jCardError("Unknown JSON datatype in JCard value")
+		return nil, vCardError("Unknown JSON datatype in jCard value")
 	}
 }

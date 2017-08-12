@@ -11,7 +11,7 @@ import (
 	"github.com/skip2/openrdap/test"
 )
 
-func TestJCardErrors(t *testing.T) {
+func TestVCardErrors(t *testing.T) {
 	filenames := []string{
 		"jcard/error_invalid_json.json",
 		"jcard/error_bad_top_type.json",
@@ -26,7 +26,7 @@ func TestJCardErrors(t *testing.T) {
 	}
 
 	for _, filename := range filenames {
-		j, err := NewJCard(test.LoadFile(filename))
+		j, err := NewVCard(test.LoadFile(filename))
 
 		if j != nil || err == nil {
 			t.Errorf("jCard with error unexpectedly parsed %s %v %s\n", filename, j, err)
@@ -34,8 +34,8 @@ func TestJCardErrors(t *testing.T) {
 	}
 }
 
-func TestJCardExample(t *testing.T) {
-	j, err := NewJCard(test.LoadFile("jcard/example.json"))
+func TestVCardExample(t *testing.T) {
+	j, err := NewVCard(test.LoadFile("jcard/example.json"))
 	if j == nil || err != nil {
 		t.Errorf("jCard parse failed %v %s\n", j, err)
 	}
@@ -45,7 +45,7 @@ func TestJCardExample(t *testing.T) {
 		t.Errorf("Got %d properties expected %d", len(j.Properties), numProperties)
 	}
 
-	expectedVersion := &JCardProperty{
+	expectedVersion := &VCardProperty{
 		Name:       "version",
 		Parameters: make(map[string][]string),
 		Type:       "text",
@@ -56,7 +56,7 @@ func TestJCardExample(t *testing.T) {
 		t.Errorf("version field incorrect")
 	}
 
-	expectedN := &JCardProperty{
+	expectedN := &VCardProperty{
 		Name:       "n",
 		Parameters: make(map[string][]string),
 		Type:       "text",
@@ -80,7 +80,7 @@ func TestJCardExample(t *testing.T) {
 		t.Errorf("n flat value incorrect")
 	}
 
-	expectedTel0 := &JCardProperty{
+	expectedTel0 := &VCardProperty{
 		Name:       "tel",
 		Parameters: map[string][]string{"type": []string{"work", "voice"}, "pref": []string{"1"}},
 		Type:       "uri",
@@ -92,13 +92,13 @@ func TestJCardExample(t *testing.T) {
 	}
 }
 
-func TestJCardMixedDatatypes(t *testing.T) {
-	j, err := NewJCard(test.LoadFile("jcard/mixed.json"))
+func TestVCardMixedDatatypes(t *testing.T) {
+	j, err := NewVCard(test.LoadFile("jcard/mixed.json"))
 	if j == nil || err != nil {
 		t.Errorf("jCard parse failed %v %s\n", j, err)
 	}
 
-	expectedMixed := &JCardProperty{
+	expectedMixed := &VCardProperty{
 		Name:       "mixed",
 		Parameters: make(map[string][]string),
 		Type:       "text",
