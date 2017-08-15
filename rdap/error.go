@@ -4,5 +4,6 @@
 
 package rdap
 
-type Response struct {
+type Error struct {
+	ErrorCode int
 }

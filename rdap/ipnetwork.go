@@ -4,5 +4,5 @@
 
 package rdap
 
-type Response struct {
+type IPNetwork struct {
 }
