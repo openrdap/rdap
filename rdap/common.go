@@ -94,3 +94,8 @@ type PublicID struct {
 // ObjectClassName string
 //
 // https://tools.ietf.org/html/rfc7483#section-4.9
+
+// Common contains fields which may appear anywhere in an RDAP response.
+type Common struct {
+	Lang string
+}
