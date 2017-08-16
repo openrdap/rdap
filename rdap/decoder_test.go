@@ -14,9 +14,39 @@ import (
 func TestDecodeEmpty(t *testing.T) {
 	type Empty struct {
 	}
-	runDecodeTest(t, &Empty{}, `
+	runDecodeAndCompareTest(t, &Empty{}, `
 	{}
 `, &Empty{})
+}
+
+func TestDecodeVCard(t *testing.T) {
+	type XYZ struct {
+		VCard *VCard
+	}
+
+	result, ok := runDecode(t, &XYZ{}, `
+	{
+		"vCard": [
+			"vcard",
+			[
+				["version", {}, "text", "4.0"],
+				["fn", {}, "text", "First Last"]
+			]
+		]
+	}
+	`)
+
+	if !ok {
+		return
+	}
+
+	x := result.(*XYZ)
+
+	if x.VCard == nil {
+		t.Errorf("VCard not decoded")
+	} else if len(x.VCard.Properties) != 2 {
+		t.Errorf("VCard properties not decoded")
+	}
 }
 
 func TestDecodeSlice(t *testing.T) {
@@ -24,7 +54,7 @@ func TestDecodeSlice(t *testing.T) {
 		S []string
 	}
 
-	runDecodeTest(t, &XYZ{}, `
+	runDecodeAndCompareTest(t, &XYZ{}, `
 	{
 		"s": ["a", "b"]
 	}
@@ -39,7 +69,7 @@ func TestDecodeData(t *testing.T) {
 		M          map[string]string
 	}
 
-	runDecodeTest(t, &XYZ{}, `
+	runDecodeAndCompareTest(t, &XYZ{}, `
 	{
 		"m": {"a": "av", "b": "bv"}
 	}
@@ -53,7 +83,7 @@ func TestDecodeMap(t *testing.T) {
 		M map[string]string
 	}
 
-	runDecodeTest(t, &XYZ{}, `
+	runDecodeAndCompareTest(t, &XYZ{}, `
 	{
 		"m": {"a": "av", "b": "bv"}
 	}
@@ -76,7 +106,7 @@ func TestDecodeUints(t *testing.T) {
 		N  uint8
 	}
 
-	runDecodeTest(t, &XYZ{}, `
+	runDecodeAndCompareTest(t, &XYZ{}, `
 	{
 		"a": 100,
 		"aOverflow": 256,
@@ -116,7 +146,7 @@ func TestDecodeInts(t *testing.T) {
 		N  int8
 	}
 
-	runDecodeTest(t, &XYZ{}, `
+	runDecodeAndCompareTest(t, &XYZ{}, `
 	{
 		"a": 100,
 		"aUnderflow": -129,
@@ -159,7 +189,7 @@ func TestDecodeFloat64(t *testing.T) {
 
 	fptr := 1.5
 
-	runDecodeTest(t, &XYZ{}, `
+	runDecodeAndCompareTest(t, &XYZ{}, `
 	{
 		"f": 1.5,
 		"fPtr": 1.5,
@@ -196,7 +226,7 @@ func TestDecodeBool(t *testing.T) {
 
 	bptr := true
 
-	runDecodeTest(t, &XYZ{}, `
+	runDecodeAndCompareTest(t, &XYZ{}, `
 	{
 		"b": true,
 		"bPtr": true,
@@ -233,7 +263,7 @@ func TestDecodeString(t *testing.T) {
 
 	sptr := "sptr"
 
-	runDecodeTest(t, &XYZ{}, `
+	runDecodeAndCompareTest(t, &XYZ{}, `
 	{
 		"s": "test", 
 		"sPtr": "sptr", 
@@ -254,7 +284,7 @@ func TestDecodeString(t *testing.T) {
 	})
 }
 
-func runDecodeTest(t *testing.T, target interface{}, jsonDocument string, expected interface{}) {
+func runDecode(t *testing.T, target interface{}, jsonDocument string) (interface{}, bool) {
 	d := NewDecoder([]byte(jsonDocument))
 	d.target = target
 	d.skipDecodeData = true
@@ -263,6 +293,16 @@ func runDecodeTest(t *testing.T, target interface{}, jsonDocument string, expect
 
 	if err != nil {
 		t.Errorf("While decoding '%s', got error: %s", jsonDocument, err)
+		return result, false
+	}
+
+	return result, true
+}
+
+func runDecodeAndCompareTest(t *testing.T, target interface{}, jsonDocument string, expected interface{}) {
+	result, ok := runDecode(t, target, jsonDocument)
+
+	if !ok {
 		return
 	}
 

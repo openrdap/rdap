@@ -141,7 +141,16 @@ func NewVCard(jsonDocument []byte) (*VCard, error) {
 		return nil, err
 	}
 
-	if len(top) != 2 {
+	var vcard *VCard
+	vcard, err = newVCardImpl(top)
+
+	return vcard, err
+}
+
+func newVCardImpl(src interface{}) (*VCard, error) {
+	top, ok := src.([]interface{})
+
+	if !ok || len(top) != 2 {
 		return nil, vCardError("structure is not a jCard (expected len=2 top level array)")
 	} else if s, ok := top[0].(string); !(ok && s == "vcard") {
 		return nil, vCardError("structure is not a jCard (missing 'vcard')")
@@ -149,7 +158,7 @@ func NewVCard(jsonDocument []byte) (*VCard, error) {
 
 	var properties []interface{}
 
-	properties, ok := top[1].([]interface{})
+	properties, ok = top[1].([]interface{})
 	if !ok {
 		return nil, vCardError("structure is not a jCard (bad properties array)")
 	}

@@ -679,12 +679,23 @@ func (d *Decoder) decodePtr(keyName string, src interface{}, dst reflect.Value, 
 	var success bool
 	var err error
 
-	if dst.IsNil() {
-		value := reflect.New(dst.Type().Elem())
-		dst.Set(value)
-	}
+	if dst.Type().Elem().Name() == "VCard" {
+		vcard, vcardError := newVCardImpl(src)
 
-	success, err = d.decode(keyName, src, reflect.Indirect(dst), decodeData)
+		if vcardError == nil {
+			dst.Set(reflect.ValueOf(vcard))
+			success = true
+		} else {
+			d.addDecodeNote(decodeData, keyName, vcardError.Error())
+		}
+	} else {
+		if dst.IsNil() {
+			value := reflect.New(dst.Type().Elem())
+			dst.Set(value)
+		}
+
+		success, err = d.decode(keyName, src, reflect.Indirect(dst), decodeData)
+	}
 
 	return success, err
 }
