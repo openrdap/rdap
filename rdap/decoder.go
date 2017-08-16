@@ -24,9 +24,8 @@ import (
 //  - rdap.Nameserver{} - Responses with objectClassName="nameserver".
 //  - rdap.Help{}       - All other valid JSON responses.
 type Decoder struct {
-	data           []byte
-	target         interface{}
-	skipDecodeData bool
+	data   []byte
+	target interface{}
 }
 
 type DecoderOption func(*Decoder)
@@ -585,7 +584,7 @@ func (d *Decoder) chooseFields(v reflect.Value) (map[string]reflect.Value, *Deco
 		if structField.Type.Kind() == reflect.Ptr && structField.Type.Elem().Name() == "DecodeData" {
 			if decodeData != nil {
 				panic("BUG: Multiple DecodeData fields in struct")
-			} else if !d.skipDecodeData {
+			} else {
 				decodeData = &DecodeData{}
 				decodeData.init()
 				v.Field(i).Set(reflect.ValueOf(decodeData))

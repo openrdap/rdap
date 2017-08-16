@@ -19,6 +19,46 @@ func TestDecodeEmpty(t *testing.T) {
 `, &Empty{})
 }
 
+func TestDecodeDecodeData(t *testing.T) {
+	type XYZ struct {
+		DecodeData *DecodeData
+
+		S1 string
+		S2 string `rdap:"s2Name"`
+		SF string
+	}
+
+	result, ok := runDecode(t, &XYZ{}, `
+	{
+		"s1": "S1",
+		"s2Name": "S2",
+		"sF": 1.5,
+		"unknown" : "value"
+	}`)
+
+	if !ok {
+		return
+	}
+
+	x := result.(*XYZ)
+
+	if x.S1 != "S1" || x.S2 != "S2" || x.SF != "1.5" {
+		t.Errorf("Decode values bad %v", x)
+	}
+
+	if x.DecodeData == nil {
+		t.Errorf("DecodeData not instantiated")
+	} else if len(x.DecodeData.Notes("sF")) != 1 {
+		t.Errorf("DecodeData notes not added")
+	} else if len(x.DecodeData.Fields()) != 4 {
+		t.Errorf("DecodeData Fields() bad")
+	} else if len(x.DecodeData.UnknownFields()) != 1 {
+		t.Errorf("DecodeData UnknownFields() bad")
+	} else if !reflect.DeepEqual(x.DecodeData.Value("unknown"), "value") {
+		t.Errorf("DecodeData bad Value()")
+	}
+}
+
 func TestDecodeVCard(t *testing.T) {
 	type XYZ struct {
 		VCard *VCard
@@ -60,21 +100,6 @@ func TestDecodeSlice(t *testing.T) {
 	}
 	`, &XYZ{
 		S: []string{"a", "b"},
-	})
-}
-
-func TestDecodeData(t *testing.T) {
-	type XYZ struct {
-		DecodeData *DecodeData
-		M          map[string]string
-	}
-
-	runDecodeAndCompareTest(t, &XYZ{}, `
-	{
-		"m": {"a": "av", "b": "bv"}
-	}
-	`, &XYZ{
-		M: map[string]string{"a": "av", "b": "bv"},
 	})
 }
 
@@ -287,7 +312,6 @@ func TestDecodeString(t *testing.T) {
 func runDecode(t *testing.T, target interface{}, jsonDocument string) (interface{}, bool) {
 	d := NewDecoder([]byte(jsonDocument))
 	d.target = target
-	d.skipDecodeData = true
 
 	result, err := d.Decode()
 
