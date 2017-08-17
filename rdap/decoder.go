@@ -12,20 +12,7 @@ import (
 	"strings"
 )
 
-// Decoder decodes an RDAP response (a JSON document) into an appropriate Go
-// struct.
-//
-// The possible results are:
-//  - rdap.Error{}                   - Responses with an errorCode value.
-//  - rdap.Autnum{}                  - Responses with objectClassName="autnum".
-//  - rdap.Domain{}                  - Responses with objectClassName="domain".
-//  - rdap.Entity{}                  - Responses with objectClassName="entity".
-//  - rdap.IPNetwork{}               - Responses with objectClassName="ip network".
-//  - rdap.Nameserver{}              - Responses with objectClassName="nameserver".
-//  - rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
-//  - rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
-//  - rdap.NameserverSearchResults{} - Responses with a NameserverSearchResults array.
-//  - rdap.Help{}                    - All other valid JSON responses.
+// Decoder decodes an RDAP response (a JSON document) into a Go value.
 type Decoder struct {
 	data   []byte
 	target interface{}
@@ -43,6 +30,7 @@ func (d DecoderError) Error() string {
 	return d.text
 }
 
+// Decode decodes the RDAP response |jsonBlob|.
 func Decode(jsonBlob []byte) (interface{}, error) {
 	d := NewDecoder(jsonBlob)
 	result, err := d.Decode()
@@ -66,19 +54,20 @@ func NewDecoder(jsonBlob []byte, opts ...DecoderOption) *Decoder {
 	return d
 }
 
-// Decode decodes the JSON document. On success, one of several structs is
+// Decode decodes the JSON document. On success, one of several values is
 // returned.
 //
 // The possible results are:
-//  - rdap.Error{}                   - Responses with an errorCode value.
-//  - rdap.Autnum{}                  - Responses with objectClassName="autnum".
-//  - rdap.Domain{}                  - Responses with objectClassName="domain".
-//  - rdap.Entity{}                  - Responses with objectClassName="entity".
-//  - rdap.IPNetwork{}               - Responses with objectClassName="ip network".
-//  - rdap.Nameserver{}              - Responses with objectClassName="nameserver".
-//  - rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
-//  - rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
-//  - rdap.NameserverSearchResults{} - Responses with a NameserverSearchResults array.
+//  &rdap.Error{}                   - Responses with an errorCode value.
+//  &rdap.Autnum{}                  - Responses with objectClassName="autnum".
+//  &rdap.Domain{}                  - Responses with objectClassName="domain".
+//  &rdap.Entity{}                  - Responses with objectClassName="entity".
+//  &rdap.IPNetwork{}               - Responses with objectClassName="ip network".
+//  &rdap.Nameserver{}              - Responses with objectClassName="nameserver".
+//  &rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
+//  &rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
+//  &rdap.NameserverSearchResults{} - Responses with a nameserverSearchResults array.
+//  &rdap.Help{}                    - All other valid JSON responses.
 //
 // On serious errors (e.g. JSON syntax error) an error is returned. Otherwise,
 // decoding is performed on a best-effort basis, and "minor errors" (such as
