@@ -41,9 +41,10 @@
 package client
 
 import (
+	"net/http"
+
 	"github.com/skip2/openrdap/client/bootstrap"
 	"github.com/skip2/openrdap/rdap"
-	"net/http"
 )
 
 type ClientOptions uint64
@@ -79,7 +80,7 @@ func NewClient() *Client {
 	}
 }
 
-func (c *Client) Query(q *rdap.Query) (*rdap.Response, error) {
+func (c *Client) Query(q *Query) (*rdap.Response, error) {
 	return nil, nil
 }
 
