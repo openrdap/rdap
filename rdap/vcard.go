@@ -132,10 +132,10 @@ func (p *VCardProperty) String() string {
 	return fmt.Sprintf("  %s (type=%s, parameters=%v): %v", p.Name, p.Type, p.Parameters, p.Value)
 }
 
-// NewVCard creates a VCard from jsonDocument.
-func NewVCard(jsonDocument []byte) (*VCard, error) {
+// NewVCard creates a VCard from jsonBlob.
+func NewVCard(jsonBlob []byte) (*VCard, error) {
 	var top []interface{}
-	err := json.Unmarshal(jsonDocument, &top)
+	err := json.Unmarshal(jsonBlob, &top)
 
 	if err != nil {
 		return nil, err

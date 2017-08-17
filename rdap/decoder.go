@@ -43,12 +43,19 @@ func (d DecoderError) Error() string {
 	return d.text
 }
 
-// NewDecoder creates a new Decoder to decode the RDAP response |jsonDocument|.
+func Decode(jsonBlob []byte) (interface{}, error) {
+	d := NewDecoder(jsonBlob)
+	result, err := d.Decode()
+
+	return result, err
+}
+
+// NewDecoder creates a new Decoder to decode the RDAP response |jsonBlob|.
 //
 // |opts| is an optional list of DecoderOptions.
-func NewDecoder(jsonDocument []byte, opts ...DecoderOption) *Decoder {
+func NewDecoder(jsonBlob []byte, opts ...DecoderOption) *Decoder {
 	d := &Decoder{
-		data: jsonDocument,
+		data: jsonBlob,
 	}
 
 	// Run the DecoderOption func()s.

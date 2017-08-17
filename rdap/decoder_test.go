@@ -309,22 +309,22 @@ func TestDecodeString(t *testing.T) {
 	})
 }
 
-func runDecode(t *testing.T, target interface{}, jsonDocument string) (interface{}, bool) {
-	d := NewDecoder([]byte(jsonDocument))
+func runDecode(t *testing.T, target interface{}, jsonBlob string) (interface{}, bool) {
+	d := NewDecoder([]byte(jsonBlob))
 	d.target = target
 
 	result, err := d.Decode()
 
 	if err != nil {
-		t.Errorf("While decoding '%s', got error: %s", jsonDocument, err)
+		t.Errorf("While decoding '%s', got error: %s", jsonBlob, err)
 		return result, false
 	}
 
 	return result, true
 }
 
-func runDecodeAndCompareTest(t *testing.T, target interface{}, jsonDocument string, expected interface{}) {
-	result, ok := runDecode(t, target, jsonDocument)
+func runDecodeAndCompareTest(t *testing.T, target interface{}, jsonBlob string, expected interface{}) {
+	result, ok := runDecode(t, target, jsonBlob)
 
 	if !ok {
 		return
@@ -332,7 +332,7 @@ func runDecodeAndCompareTest(t *testing.T, target interface{}, jsonDocument stri
 
 	if !reflect.DeepEqual(expected, result) {
 		t.Errorf("While decoding '%s':\nexpected %s\ngot %s",
-			jsonDocument,
+			jsonBlob,
 			spew.Sdump(expected),
 			spew.Sdump(result))
 	}
