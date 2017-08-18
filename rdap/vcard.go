@@ -113,10 +113,10 @@ func (p *VCardProperty) appendValueStrings(v interface{}, strings *[]string) {
 //   ]
 //
 // This is intended for debugging only, and is not machine parsable.
-func (j *VCard) String() string {
-	s := make([]string, 0, len(j.Properties))
+func (v *VCard) String() string {
+	s := make([]string, 0, len(v.Properties))
 
-	for _, s2 := range j.Properties {
+	for _, s2 := range v.Properties {
 		s = append(s, s2.String())
 	}
 
@@ -163,7 +163,7 @@ func newVCardImpl(src interface{}) (*VCard, error) {
 		return nil, vCardError("structure is not a jCard (bad properties array)")
 	}
 
-	j := &VCard{
+	v := &VCard{
 		Properties: make([]*VCardProperty, 0, len(properties)),
 	}
 
@@ -217,23 +217,36 @@ func newVCardImpl(src interface{}) (*VCard, error) {
 			Value:      value,
 		}
 
-		j.Properties = append(j.Properties, property)
+		v.Properties = append(v.Properties, property)
 	}
 
-	return j, nil
+	return v, nil
 }
 
-// Get returns a list of the jCard Properties with VCardProperty name |name|.
-func (j *VCard) Get(name string) []*VCardProperty {
+// Get returns a list of the vCard Properties with VCardProperty name |name|.
+func (v *VCard) Get(name string) []*VCardProperty {
 	var properties []*VCardProperty
 
-	for _, p := range j.Properties {
+	for _, p := range v.Properties {
 		if p.Name == name {
 			properties = append(properties, p)
 		}
 	}
 
 	return properties
+}
+
+// GetFirst returns the first vCard Property with name |name|.
+//
+// TODO(tfh): Implement "pref" ordering, instead of taking the first listed property?
+func (v *VCard) GetFirst(name string) *VCardProperty {
+	properties := v.Get(name)
+
+	if len(properties) == 0 {
+		return nil
+	}
+
+	return properties[0]
 }
 
 func vCardError(e string) error {
@@ -293,4 +306,142 @@ func readValue(value interface{}, depth int) (interface{}, error) {
 	default:
 		return nil, vCardError("Unknown JSON datatype in jCard value")
 	}
+}
+
+func (v *VCard) getFirstPropertySingleString(name string) string {
+	property := v.GetFirst(name)
+
+	if property == nil {
+		return ""
+	}
+
+	return strings.Join(property.Values(), " ")
+}
+
+// Name returns the VCard's name. e.g. "John Smith".
+func (v *VCard) Name() string {
+	return v.getFirstPropertySingleString("fn")
+}
+
+// POBox returns the address's PO Box.
+//
+// Returns empty string if no address is present.
+func (v *VCard) POBox() string {
+	return v.getFirstAddressField(0)
+}
+
+// ExtendedAddress returns the "extended address", e.g. an apartment
+// or suite number.
+//
+// Returns empty string if no address is present.
+func (v *VCard) ExtendedAddress() string {
+	return v.getFirstAddressField(1)
+}
+
+// StreetAddress returns the street address.
+//
+// Returns empty string if no address is present.
+func (v *VCard) StreetAddress() string {
+	return v.getFirstAddressField(2)
+}
+
+// Locality returns the address locality.
+//
+// Returns empty string if no address is present.
+func (v *VCard) Locality() string {
+	return v.getFirstAddressField(3)
+}
+
+// Region returns the address region (e.g. state or province).
+//
+// Returns empty string if no address is present.
+func (v *VCard) Region() string {
+	return v.getFirstAddressField(4)
+}
+
+// PostalCode returns the address postal code (e.g. zip code).
+//
+// Returns empty string if no address is present.
+func (v *VCard) PostalCode() string {
+	return v.getFirstAddressField(5)
+}
+
+// Country returns the address country name.
+//
+// This is the full country name.
+//
+// Returns empty string if no address is present.
+func (v *VCard) Country() string {
+	return v.getFirstAddressField(6)
+}
+
+// Tel returns the VCard's first (voice) telephone number.
+//
+// Returns empty string if the VCard contains no suitable telephone number.
+func (v *VCard) Tel() string {
+	properties := v.Get("tel")
+
+	for _, p := range properties {
+		isVoice := false
+
+		if types, ok := p.Parameters["type"]; ok {
+			for _, t := range types {
+				if t == "voice" {
+					isVoice = true
+					break
+				}
+			}
+		} else {
+			isVoice = true
+		}
+
+		if isVoice && len(p.Values()) > 0 {
+			return (p.Values())[0]
+		}
+	}
+
+	return ""
+}
+
+// Fax returns the VCard's first fax number.
+//
+// Returns empty string if the VCard contains no fax number.
+func (v *VCard) Fax() string {
+	properties := v.Get("tel")
+
+	for _, p := range properties {
+		if types, ok := p.Parameters["type"]; ok {
+			for _, t := range types {
+				if t == "fax" {
+					if len(p.Values()) > 0 {
+						return (p.Values())[0]
+					}
+				}
+			}
+		}
+	}
+
+	return ""
+}
+
+// Email returns the VCard's first email address.
+//
+// Returns empty string if the VCard contains no email addresses.
+func (v *VCard) Email() string {
+	return v.getFirstPropertySingleString("email")
+}
+
+func (v *VCard) getFirstAddressField(index int) string {
+	adr := v.GetFirst("adr")
+	if adr == nil {
+		return ""
+	}
+
+	values := adr.Values()
+
+	if index >= len(values) {
+		return ""
+	}
+
+	return values[index]
 }

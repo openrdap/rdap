@@ -124,3 +124,42 @@ func TestVCardMixedDatatypes(t *testing.T) {
 		t.Errorf("mixed flat value incorrect %v", flattened)
 	}
 }
+
+func TestVCardQuickAccessors(t *testing.T) {
+	j, err := NewVCard(test.LoadFile("jcard/example.json"))
+	if j == nil || err != nil {
+		t.Errorf("jCard parse failed %v %s\n", j, err)
+	}
+
+	got := []string{
+		j.Name(),
+		j.POBox(),
+		j.ExtendedAddress(),
+		j.StreetAddress(),
+		j.Locality(),
+		j.Region(),
+		j.PostalCode(),
+		j.Country(),
+		j.Tel(),
+		j.Fax(),
+		j.Email(),
+	}
+
+	expected := []string{
+		"Simon Perreault",
+		"",
+		"Suite D2-630",
+		"2875 Laurier",
+		"Quebec",
+		"QC",
+		"G1V 2M2",
+		"Canada",
+		"tel:+1-418-656-9254;ext=102",
+		"",
+		"simon.perreault@viagenie.ca",
+	}
+
+	if !reflect.DeepEqual(got, expected) {
+		t.Errorf("Got %v expected %v\n", got, expected)
+	}
+}

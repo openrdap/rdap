@@ -2,7 +2,7 @@
 // Copyright 2017 Tom Harwood
 // MIT License, see the LICENSE file.
 
-package rdap
+package rdap_test
 
 import (
 	"fmt"
@@ -53,13 +53,13 @@ func PrintDomain(d *rdap.Domain) {
 			fmt.Printf("  Name    : %s\n", v.Name())
 
 			// Address.
-			fmt.Printf("  POBox   : %s\n", v.POBox())
-			fmt.Printf("  Ext     : %s\n", v.Ext())
-			fmt.Printf("  Street  : %s\n", v.Street())
-			fmt.Printf("  Locality: %s\n", v.Locality())
-			fmt.Printf("  Region  : %s\n", v.Region())
-			fmt.Printf("  Code    : %s\n", v.Code())
-			fmt.Printf("  Country : %s\n", v.Country())
+			fmt.Printf("  POBox     : %s\n", v.POBox())
+			fmt.Printf("  Ext       : %s\n", v.ExtendedAddress())
+			fmt.Printf("  Street    : %s\n", v.StreetAddress())
+			fmt.Printf("  Locality  : %s\n", v.Locality())
+			fmt.Printf("  Region    : %s\n", v.Region())
+			fmt.Printf("  PostalCode: %s\n", v.PostalCode())
+			fmt.Printf("  Country   : %s\n", v.Country())
 
 			// Phone numbers.
 			fmt.Printf("  Tel     : %s\n", v.Tel())
