@@ -30,14 +30,6 @@ func (d DecoderError) Error() string {
 	return d.text
 }
 
-// Decode decodes the RDAP response |jsonBlob|.
-func Decode(jsonBlob []byte) (interface{}, error) {
-	d := NewDecoder(jsonBlob)
-	result, err := d.Decode()
-
-	return result, err
-}
-
 // NewDecoder creates a new Decoder to decode the RDAP response |jsonBlob|.
 //
 // |opts| is an optional list of DecoderOptions.
@@ -71,8 +63,8 @@ func NewDecoder(jsonBlob []byte, opts ...DecoderOption) *Decoder {
 //
 // On serious errors (e.g. JSON syntax error) an error is returned. Otherwise,
 // decoding is performed on a best-effort basis, and "minor errors" (such as
-// incorrect JSON types) are ignored. This avoids minor errors rending the whole
-// response undecodable.
+// incorrect JSON types) are ignored. This avoids minor errors rendering the
+// whole response undecodable.
 //
 // Minor error messages (e.g. type conversions, type errors) are embedded within
 // each result struct, see the DecodeData fields.
