@@ -43,7 +43,7 @@ package rdap
 import (
 	"net/http"
 
-	"github.com/skip2/openrdap/rdap/bootstrap"
+	"github.com/openrdap/rdap/bootstrap"
 )
 
 type ClientOptions uint64
