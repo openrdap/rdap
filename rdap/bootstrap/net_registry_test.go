@@ -7,7 +7,7 @@ package bootstrap
 import (
 	"testing"
 
-	"github.com/skip2/openrdap/test"
+	"github.com/skip2/openrdap/rdap/test"
 )
 
 func TestNetRegistryLookupsIPv4(t *testing.T) {
