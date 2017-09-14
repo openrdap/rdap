@@ -27,14 +27,16 @@ Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL
        rdap -s https://rdap.nic.cz -t help
 
 Options:
-  -h, --help          Show this help message.
-  -H, --help-advanced Show this help message with advanced options.
+  -h, --help          Show help message.
+  -H, --help-advanced Show help message with advanced options.
   -v, --verbose       Print verbose messages on STDERR.
-
-  -E, --experimental  Use the bootstrap service URL https://test.rdap.net/rdap.
 
   -T, --timeout=SECS  Timeout after SECS seconds (default: 120).
   -k, --insecure      Disable SSL certificate verification.
+
+  -E, --experimental  Enable experimental options:
+                      - Use the bootstrap service https://test.rdap.net/rdap
+                      - Enable object tag support
 
 Contact Information Fetch Options:
   -f, --fetch=all     Fetch all available contact information (default).
@@ -51,24 +53,26 @@ Output Options:
 	advancedUsageText = `Advanced options (query):
   -s  --server=URL    RDAP server to query.
   -t  --type=TYPE     RDAP query type. Normally auto-detected. The types are:
-                        ip
-                        domain
-                        autnum
-                        nameserver
-                        entity
-                        help
-                        url
-                        entity-search-by-handle
-                        domain-search
-                        domain-search-by-nameserver
-                        domain-search-by-nameserver-ip
-                        nameserver-search
-                        nameserver-search-by-ip
-                        entity-search
-                        entity-search-by-handle
+                      - ip
+                      - domain
+                      - autnum
+                      - nameserver
+                      - entity
+                      - help
+                      - url
+                      - entity-search-by-handle
+                      - domain-search
+                      - domain-search-by-nameserver
+                      - domain-search-by-nameserver-ip
+                      - nameserver-search
+                      - nameserver-search-by-ip
+                      - entity-search
+                      - entity-search-by-handle
                       The servers for domain, ip, autnum, url queries can be
                       determined automatically. Otherwise, the RDAP server
-                      (--server=) must be specified.
+                      (--server=URL) must be specified.
+      --strict-fetch  Exit with an error when a contact information fetch
+                      (--fetch=) fails. By default these errors are ignored.
 
 Advanced options (bootstrapping):
       --cache-dir=DIR Bootstrap cache directory to use. Specify empty string
@@ -76,9 +80,11 @@ Advanced options (bootstrapping):
                       automatically as needed. (default: $HOME/.openrdap).
       --bs-url=URL    Bootstrap service URL (default: https://data.iana.org/rdap)
       --bs-ttl=SECS   Bootstrap cache time in seconds (default: 3600)
-  -E, --experimental  Use the bootstrap service URL https://test.rdap.net/rdap.
-  -S, --must-fetch    Exit with an error when a contact information fetch
-                      (--fetch=) fails. By default these errors are ignored.
+
+Advanced options (experiments):
+      --exp=test_rdap_net  Use the bootstrap service https://test.rdap.net/rdap
+      --exp=object_tag     Enable object tag support
+                           (draft-hollenbeck-regext-rdap-object-tag)
 `
 )
 

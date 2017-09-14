@@ -2,58 +2,39 @@
 // Copyright 2017 Tom Harwood
 // MIT License, see the LICENSE file.
 
-// Package rdap implements decoding of RDAP responses.
+// Package rdap implements a client for the Registration Data Access Protocol (RDAP).
 //
-// An RDAP response describes an object such as a Domain (data resembling "whois
-// example.com"), or an IP Network (data resembling "whois 2001:db8::"). For a
-// live example, see https://rdap.nic.cz/domain/ctk.cz.
+// RDAP is a modern replacement for the text-based WHOIS (port 43) protocol. It provides registration data for domain names/IP addresses/AS numbers, and more, in a structured format.
 //
-// RDAP responses are JSON documents, as defined in RFC7483. This package
-// decodes RDAP responses into Go values.
+// This client executes RDAP queries and returns the responses as Go values.
 //
-// To decode an RDAP response:
+// Example quick usage:
+//   client := rdap.NewClient()
+//   domain, err := client.QueryDomain("google.cz")
 //
-//  jsonBlob := []byte(`
-//    {
-//      "objectClassName": "domain",
-//      "rdapConformance": ["rdap_level_0"],
-//      "handle":          "EXAMPLECOM",
-//      "ldhName":         "example.com",
-//      "entities":        []
-//    }
-//  `)
+//   if err != nil {
+//     fmt.Printf("name=%s, address=%s\n", domain.Registrant.Name, domain.Registrant.Address)
+//   }
 //
-//  d := rdap.NewDecoder(jsonBlob)
-//  result, err := d.Decode()
+// Manual query construction, with options to fetch specific data (if available):
+//  client := rdap.NewClient()
+//  client.Options = FetchRegistrant | FetchTechnical | FetchNOC
 //
-//  if err != nil {
-//    if domain, ok := result.(*rdap.Domain); ok {
-//      fmt.Printf("Domain name = %s\n", domain.LDHName)
-//    }
-//  }
+//  query := rdap.NewAutnumQuery(5400)
+//  response, err := client.Query(query)
 //
-// RDAP responses are decoded into the following types:
-//  &rdap.Error{}                   - Responses with an errorCode value.
-//  &rdap.Autnum{}                  - Responses with objectClassName="autnum".
-//  &rdap.Domain{}                  - Responses with objectClassName="domain".
-//  &rdap.Entity{}                  - Responses with objectClassName="entity".
-//  &rdap.IPNetwork{}               - Responses with objectClassName="ip network".
-//  &rdap.Nameserver{}              - Responses with objectClassName="nameserver".
-//  &rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
-//  &rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
-//  &rdap.NameserverSearchResults{} - Responses with a nameserverSearchResults array.
-//  &rdap.Help{}                    - All other valid JSON responses.
+// The above examples If you are running lots of RDAP queries, enable the bootstrap data disk cache ($HOME/.openrdap or %UserData%\openrdap):
 //
-// Note that an RDAP server may return a different response type than expected.
+//  - text based query for google.cz
+//  - client options
+//  - use of bootstrap cache, custom http, timeout
 //
-// The decoder supports unknown RDAP fields (such as "fred_nsset" in the
-// rdap.nic.cz example above). These are stored in each result struct, see the
-// DecodeData documentation for accessing them.
+//  - success/partial success
+//  - timeouts
 //
-// Decoding is performed on a best-effort basis, with "minor error"s ignored.
-// This avoids minor errors rendering a response undecodable.
+// As of June 2017, all five number registries (AFRINIC, ARIN, APNIC, LANIC,
+// RIPE) run RDAP servers. A small number of TLDs (top level domains) support
+// RDAP so far, listed on https://data.iana.org/rdap/dns.json.
 //
-// This package does not perform any network connections.
-//
-// For RFC7483, see https://tools.ietf.org/html/rfc7483.
+// The RDAP protocol uses HTTP, with responses in a JSON format. A bootstrapping mechanism (http://data.iana.org/rdap/) is used to determine the server to query.
 package rdap
