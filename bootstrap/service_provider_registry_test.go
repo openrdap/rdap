@@ -14,7 +14,7 @@ func TestServiceProviderRegistryLookups(t *testing.T) {
 	test.Start(test.BootstrapExperimental)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://www.openrdap.org/rdap/service_provider.json")
+	var bytes []byte = test.Get("https://test.rdap.net/rdap/serviceprovider-draft-03.json")
 
 	var s *ServiceProviderRegistry
 	s, err := NewServiceProviderRegistry(bytes)

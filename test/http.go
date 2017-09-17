@@ -5,14 +5,15 @@
 package test
 
 import (
-	"net/http"
 	"io/ioutil"
 	"log"
+	"net/http"
 
 	"gopkg.in/jarcoal/httpmock.v1"
 )
 
 type TestDataset int
+
 const (
 	Bootstrap TestDataset = iota
 	BootstrapExperimental
@@ -23,8 +24,8 @@ const (
 
 type response struct {
 	Status int
-	URL string
-	Body string
+	URL    string
+	Body   string
 }
 
 var responses map[TestDataset][]response
@@ -82,7 +83,7 @@ func loadTestDatasets() {
 
 	// Experimental bootstrap file for service providers.
 	// https://datatracker.ietf.org/doc/draft-hollenbeck-regext-rdap-object-tag/ .
-	load(BootstrapExperimental, 200, "https://www.openrdap.org/rdap/service_provider.json", "bootstrap_experimental/service_provider.json")
+	load(BootstrapExperimental, 200, "https://test.rdap.net/rdap/serviceprovider-draft-03.json", "bootstrap_experimental/service_provider.json")
 
 	// Malformed bootstrap files.
 	load(BootstrapMalformed, 200, "https://www.example.org/dns_bad_services.json", "bootstrap_malformed/dns_bad_services.json")
@@ -105,4 +106,3 @@ func load(set TestDataset, status int, url string, filename string) {
 
 	responses[set] = append(responses[set], response{status, url, string(body)})
 }
-

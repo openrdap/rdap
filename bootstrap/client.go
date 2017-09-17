@@ -105,7 +105,7 @@ const (
 	DefaultCacheTimeout = time.Hour * 24
 
 	// Location of the experimental service_provider.json.
-	experimentalBaseURL = "https://www.openrdap.org/rdap/"
+	experimentalBaseURL = "https://test.rdap.net/rdap/"
 )
 
 // Client implements an RDAP bootstrap client.
@@ -379,7 +379,7 @@ func (r RegistryType) Filename() string {
 		return "ipv6.json"
 	case ServiceProvider:
 		// This is a guess and will need fixing to match whatever IANA chooses.
-		return "service_provider.json"
+		return "serviceprovider-draft-03.json"
 	default:
 		panic("Unknown RegistryType")
 	}
