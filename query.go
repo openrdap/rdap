@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/openrdap/rdap/bootstrap"
 )
 
 // A SearchType specifies an RDAP search query type. Used with NewSearchQuery().
@@ -429,6 +431,32 @@ func (q *Query) Type() string {
 		return "domain"
 	default:
 		return q.queryType
+	}
+}
+
+// BootstrapType returns the bootstrap registry type
+//
+// Returns nil if the Query cannot be bootstrapped.
+func (q *Query) BootstrapType() *bootstrap.RegistryType {
+	var b bootstrap.RegistryType
+	switch q.queryType {
+	case "autnum":
+		b = bootstrap.ASN
+		return &b
+	case "dns":
+		b = bootstrap.DNS
+		return &b
+	case "ipv4":
+		b = bootstrap.IPv4
+		return &b
+	case "ipv6":
+		b = bootstrap.IPv6
+		return &b
+	case "entity":
+		b = bootstrap.ServiceProvider
+		return &b
+	default:
+		return nil
 	}
 }
 

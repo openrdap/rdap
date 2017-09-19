@@ -4,7 +4,10 @@
 
 package rdap
 
-type Response struct {
-	Response interface{}
-	Error    error
+type ClientError struct {
+	Text string
+}
+
+func (c ClientError) Error() string {
+	return c.Text
 }
