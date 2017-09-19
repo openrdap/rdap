@@ -70,8 +70,8 @@
 //
 // This package also implements the experimental Service Provider registry. Due
 // to the experimental nature, no Service Registry file exists on data.iana.org
-// yet. Instead, an unofficial one is downloaded from
-// https://www.openrdap.org/rdap/.
+// yet, additionally the filename isn't known. The current filename used is
+// serviceprovider-draft-03.json.
 //
 // RDAP bootstrapping is defined in https://tools.ietf.org/html/rfc7484.
 package bootstrap
@@ -103,9 +103,6 @@ const (
 
 	// Default cache timeout of Service Registries.
 	DefaultCacheTimeout = time.Hour * 24
-
-	// Location of the experimental service_provider.json.
-	experimentalBaseURL = "https://test.rdap.net/rdap/"
 )
 
 // Client implements an RDAP bootstrap client.
@@ -191,14 +188,7 @@ func (c *Client) download(registry RegistryType) ([]byte, Registry, error) {
 		return nil, nil, err
 	}
 
-	var fetchURL *url.URL
-
-	if registry == ServiceProvider && c.BaseURL.String() == DefaultBaseURL {
-		experimentalURL, _ := url.Parse(experimentalBaseURL)
-		fetchURL = experimentalURL.ResolveReference(u)
-	} else {
-		fetchURL = c.BaseURL.ResolveReference(u)
-	}
+	var fetchURL *url.URL = c.BaseURL.ResolveReference(u)
 
 	resp, err := c.HTTP.Get(fetchURL.String())
 	if err != nil {

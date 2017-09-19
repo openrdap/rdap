@@ -5,6 +5,7 @@
 package bootstrap
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/openrdap/rdap/test"
@@ -100,6 +101,10 @@ func TestLookups(t *testing.T) {
 
 	for _, test := range tests {
 		var r *Result
+
+		if test.Registry == ServiceProvider {
+			c.BaseURL, _ = url.Parse("https://test.rdap.net/rdap/")
+		}
 
 		r, err := c.Lookup(test.Registry, test.Input)
 
