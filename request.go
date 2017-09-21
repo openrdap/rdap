@@ -71,7 +71,7 @@ const (
 //
 // Requests are executed by a Client. To execute a Request, an RDAP server is
 // required. The servers for Autnum, IP, and Domain queries are determined
-// automatically via bootstrapping (a lookup at http://data.iana.org/rdap/).
+// automatically via bootstrapping (a lookup at https://data.iana.org/rdap/).
 //
 // For other Request types, you must specify the RDAP server:
 //
@@ -172,7 +172,7 @@ func (r *Request) pathAndValues() (string, url.Values) {
 // As an example:
 //   server, _ := url.Parse("https://rdap.nic.cz")
 //   req := &rdap.Request{
-//     Type: NameserverRequest,
+//     Type: rdap.NameserverRequest,
 //     Query: "a.ns.nic.cz",
 //
 //     Server: server,
