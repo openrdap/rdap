@@ -4,7 +4,14 @@
 
 package rdap
 
+type ClientErrorType uint
+
+const (
+	BootstrapNotSupported ClientErrorType = iota
+)
+
 type ClientError struct {
+	Type ClientErrorType
 	Text string
 }
 

@@ -118,7 +118,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	experimentsFlag := app.Flag("exp", "").Strings()
 
 	cacheDirFlag := app.Flag("cache-dir", "").String()
-	bootstrapURLFlag := app.Flag("bs-url", "").String()
+	bootstrapURLFlag := app.Flag("bs-url", "").Default("default").String()
 	bootstrapTimeoutFlag := app.Flag("bs-ttl", "").Uint16()
 
 	// Command line query (any remaining non-option arguments).
@@ -240,6 +240,13 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 
 	var client *rdap.Client = rdap.NewClient()
 
+	// Print verbose messages on STDERR?
+	if *verboseFlag {
+		client.Verbose = func(text string) {
+			fmt.Fprintf(stderr, "# %s\n", text)
+		}
+	}
+
 	// Custom bootstrap cache type/directory?
 	if cacheDirFlag == nil {
 		// Disk cache, default location.
@@ -257,7 +264,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	}
 
 	// Custom bootstrap service URL?
-	if bootstrapURLFlag != nil {
+	if *bootstrapURLFlag != "default" {
 		baseURL, err := url.Parse(*bootstrapURLFlag)
 		if err != nil {
 			printError(stderr, fmt.Sprintf("Bootstrap URL error: %s", err))
@@ -291,5 +298,5 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 }
 
 func printError(stderr io.Writer, text string) {
-	fmt.Fprintf(stderr, "%s\n", text)
+	fmt.Fprintf(stderr, "# %s\n", text)
 }
