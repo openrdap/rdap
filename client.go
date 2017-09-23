@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/openrdap/rdap/bootstrap"
 )
@@ -16,15 +15,6 @@ import (
 type Client struct {
 	HTTP      *http.Client
 	Bootstrap *bootstrap.Client
-
-	// A list of contact roles to additinoal fetch & merge into resuts.
-	// Default is no extra fetches, set special string "all" to try fetching all of them
-	FetchRoles []string
-
-	// Timeout to complete a fetch.
-	// Includes bootstrapping, sub-fetches...
-	// Default is no timeout
-	Timeout time.Duration
 
 	// Enable experimental Service Provider bootstrapping.
 	//
@@ -37,10 +27,9 @@ type Client struct {
 
 func NewClient() *Client {
 	return &Client{
-		HTTP:       &http.Client{},
-		Bootstrap:  bootstrap.NewClient(),
-		FetchRoles: []string{},
-		Verbose:    defaultVerboseFunc,
+		HTTP:      &http.Client{},
+		Bootstrap: bootstrap.NewClient(),
+		Verbose:   defaultVerboseFunc,
 	}
 }
 

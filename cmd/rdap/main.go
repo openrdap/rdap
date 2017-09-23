@@ -163,15 +163,15 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		queryText = (*queryArgs)[0]
 	}
 
-	// Construct the query.
-	var query *rdap.Query
+	// Construct the request.
+	var req *rdap.Request
 	switch *queryType {
 	case "":
-		query = rdap.NewAutoQuery(queryText)
+		req = rdap.NewAutoRequest(queryText)
 	case "help":
-		query = rdap.NewHelpQuery()
+		req = rdap.NewHelpRequest()
 	case "domain", "dns":
-		query = rdap.NewDomainQuery(queryText)
+		req = rdap.NewDomainRequest(queryText)
 	case "autnum", "as", "asn":
 		autnum := strings.ToUpper(queryText)
 		autnum = strings.TrimPrefix(autnum, "AS")
@@ -181,61 +181,62 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 			printError(stderr, "Invalid ASN")
 			return 1
 		}
-		query = rdap.NewAutnumQuery(uint32(result))
+		req = rdap.NewAutnumRequest(uint32(result))
 	case "ip":
 		ip := net.ParseIP(queryText)
 		if ip == nil {
 			printError(stderr, "Invalid IP")
 			return 1
 		}
-		query = rdap.NewIPQuery(ip)
+		req = rdap.NewIPRequest(ip)
 	case "nameserver", "ns":
-		query = rdap.NewNameserverQuery(queryText)
+		req = rdap.NewNameserverRequest(queryText)
 	case "entity":
-		query = rdap.NewEntityQuery(queryText)
+		req = rdap.NewEntityRequest(queryText)
 	case "url":
 		fullURL, err := url.Parse(queryText)
 		if err != nil {
 			printError(stderr, fmt.Sprintf("Unable to parse URL: %s", err))
 			return 1
 		}
-		query = rdap.NewURLQuery(fullURL)
+		req = rdap.NewRawRequest(fullURL)
 	case "entity-search":
-		query = rdap.NewSearchQuery(rdap.EntitySearch, queryText)
+		req = rdap.NewRequest(rdap.EntitySearchRequest, queryText)
 	case "entity-search-by-handle":
-		query = rdap.NewSearchQuery(rdap.EntitySearchByHandle, queryText)
+		req = rdap.NewRequest(rdap.EntitySearchByHandleRequest, queryText)
 	case "domain-search":
-		query = rdap.NewSearchQuery(rdap.DomainSearch, queryText)
+		req = rdap.NewRequest(rdap.DomainSearchRequest, queryText)
 	case "domain-search-by-nameserver":
-		query = rdap.NewSearchQuery(rdap.DomainSearchByNameserver, queryText)
+		req = rdap.NewRequest(rdap.DomainSearchByNameserverRequest, queryText)
 	case "domain-search-by-nameserver-ip":
-		query = rdap.NewSearchQuery(rdap.DomainSearchByNameserverIP, queryText)
+		req = rdap.NewRequest(rdap.DomainSearchByNameserverIPRequest, queryText)
 	case "nameserver-search":
-		query = rdap.NewSearchQuery(rdap.NameserverSearch, queryText)
+		req = rdap.NewRequest(rdap.NameserverSearchRequest, queryText)
 	case "nameserver-search-by-nameserver-ip":
-		query = rdap.NewSearchQuery(rdap.NameserverSearchByNameserverIP, queryText)
+		req = rdap.NewRequest(rdap.NameserverSearchByNameserverIPRequest, queryText)
 	default:
 		printError(stderr, fmt.Sprintf("Unknown query type %s", queryType))
 		return 1
 	}
 
-	// Determine the query server.
-	if query.HasServer() {
+	// Determine the server.
+	if req.Server != nil {
 		if *serverFlag != "" {
-			printError(stderr, fmt.Sprintf("--server option cannot be used with query type %s", query.Type()))
+			printError(stderr, fmt.Sprintf("--server option cannot be used with query type %s", req.Type))
 			return 1
 		}
 	}
 
 	// Server URL specified (--server)?
 	if *serverFlag != "" {
-		var err error
-		query, err = query.UsingServerURL(*serverFlag)
+		serverURL, err := url.Parse(*serverFlag)
 
 		if err != nil {
 			printError(stderr, fmt.Sprintf("--server error: %s", err))
 			return 1
 		}
+
+		req = req.WithServer(serverURL)
 	}
 
 	var client *rdap.Client = rdap.NewClient()
@@ -280,7 +281,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	}
 
 	var resp *rdap.Response
-	resp, err = client.Query(query)
+	resp, err = client.Do(req)
 
 	if err != nil {
 		printError(stderr, fmt.Sprintf("Error: %s", err))
@@ -292,7 +293,6 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	_ = queryType
 	_ = verboseFlag
 	_ = fetchRolesFlag
-	_ = query
 
 	return 0
 }
