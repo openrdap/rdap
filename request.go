@@ -111,6 +111,26 @@ type Request struct {
 	// Query/Params fields not used).
 	Server *url.URL
 
+	// Optional list of contact roles. This enables additional HTTP requests for
+	// these contact roles, to obtain full contact information.
+	//
+	// The common WHOIS contact roles are "registrant", "administrative", and
+	// "billing".
+	//
+	// RDAP responses may contain full contact information (such as domain
+	// registrant name & address), or just a URL to it. For convenience,
+	// applications may prefer to receive the full contact information.
+	//
+	// The FetchRoles option enables additional HTTP requests for contact
+	// information. Additional HTTP requests are made for URL-only contact roles
+	// matching the FetchRoles list. Additional information is then merged into
+	// the Response.
+	//
+	// Specify a list of contact roles for which additional HTTP requests may be
+	// made. The default is no extra fetches. Use the special string "all" to
+	// fetch all available contact information.
+	FetchRoles []string
+
 	// Maximum request duration before timeout.
 	//
 	// The default is no timeout.
@@ -277,6 +297,15 @@ func shouldPathEscape(b byte) bool {
 	}
 
 	return true
+}
+
+// NewHelpRequest creates a new help Request.
+//
+// The RDAP server must be specified.
+func NewHelpRequest() *Request {
+	return &Request{
+		Type: HelpRequest,
+	}
 }
 
 // NewAutnumRequest creates a new Request for the AS number |asn|.
