@@ -103,6 +103,12 @@ func TestNewEntityRequest(t *testing.T) {
 	}
 }
 
+func TestNewHelpRequest(t *testing.T) {
+	r := NewHelpRequest()
+
+	testRequestURL(t, r, "help")
+}
+
 func TestNewRawRequest(t *testing.T) {
 	urlString := "https://example.com/domain/example.com"
 	url, _ := url.Parse(urlString)
