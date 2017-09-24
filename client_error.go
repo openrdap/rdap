@@ -7,7 +7,10 @@ package rdap
 type ClientErrorType uint
 
 const (
-	BootstrapNotSupported ClientErrorType = iota
+	_ ClientErrorType = iota
+
+	BootstrapNotSupported
+	WrongResponseType
 )
 
 type ClientError struct {

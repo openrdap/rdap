@@ -258,6 +258,17 @@ func (r *Request) WithContext(ctx context.Context) *Request {
 	return r2
 }
 
+// Context returns the Request's context.
+//
+// The returned context is always non-nil; it defaults to the background context.
+func (r *Request) Context() context.Context {
+	if r.ctx == nil {
+		return context.Background()
+	}
+
+	return r.ctx
+}
+
 // WithServer returns a copy of the Request, with the Server set to |server|.
 func (r *Request) WithServer(server *url.URL) *Request {
 	r2 := new(Request)
