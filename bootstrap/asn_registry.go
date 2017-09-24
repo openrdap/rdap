@@ -87,12 +87,12 @@ func NewASNRegistry(json []byte) (*ASNRegistry, error) {
 	}, nil
 }
 
-// Lookup returns the RDAP base URLs for the AS number |input|.
+// Lookup returns the RDAP base URLs for the AS number question |question|.
 //
-// The |input| formats accepted are "AS1234", "as1234", and "1234".
-func (a *ASNRegistry) Lookup(input string) (*Result, error) {
+// Example queries are: "AS1234", "as1234", and "1234".
+func (a *ASNRegistry) Lookup(question *Question) (*Answer, error) {
 	var asn uint32
-	asn, err := parseASN(input)
+	asn, err := parseASN(question.Query)
 
 	if err != nil {
 		return nil, err
@@ -110,7 +110,7 @@ func (a *ASNRegistry) Lookup(input string) (*Result, error) {
 		urls = a.asns[index].URLs
 	}
 
-	return &Result{
+	return &Answer{
 		Query: string(asn),
 		Entry: entry,
 		URLs:  urls,

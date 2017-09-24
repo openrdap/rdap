@@ -86,10 +86,12 @@ func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
 	return n, nil
 }
 
-// Lookup returns the RDAP base URLs for the IP address or CIDR range |input|.
+// Lookup returns the RDAP base URLs for the IP address or CIDR range question |Question|.
 //
-// Example |input|s are: "192.0.2.0", "192.0.2.0/25". "2001:db8::", "2001::db8::/62".
-func (n *NetRegistry) Lookup(input string) (*Result, error) {
+// Example queries are: "192.0.2.0", "192.0.2.0/25". "2001:db8::", "2001::db8::/62".
+func (n *NetRegistry) Lookup(question *Question) (*Answer, error) {
+	input := question.Query
+
 	if !strings.ContainsAny(input, "/") {
 		// Convert IP address to CIDR format, with a /32 or /128 mask.
 		input = fmt.Sprintf("%s/%d", input, n.numIPBytes*8)
@@ -132,7 +134,7 @@ func (n *NetRegistry) Lookup(input string) (*Result, error) {
 		bestURLs = nets[index].URLs
 	}
 
-	return &Result{
+	return &Answer{
 		Query: input,
 		Entry: bestEntry,
 		URLs:  bestURLs,

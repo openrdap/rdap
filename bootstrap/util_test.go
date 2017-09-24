@@ -17,8 +17,12 @@ type registryTest struct {
 
 func runRegistryTests(t *testing.T, tests []registryTest, reg Registry) {
 	for _, test := range tests {
-		var r *Result
-		r, err := reg.Lookup(test.Query)
+		question := &Question{
+			Query: test.Query,
+		}
+
+		var r *Answer
+		r, err := reg.Lookup(question)
 
 		if test.Error && err == nil {
 			t.Errorf("Query: %s, expected error, didn't get one\n", test.Query)
@@ -33,7 +37,7 @@ func runRegistryTests(t *testing.T, tests []registryTest, reg Registry) {
 		}
 
 		if r == nil {
-			t.Errorf("Query: %s, unexpected nil Result, err=%v\n", test.Query, err)
+			t.Errorf("Query: %s, unexpected nil Answer, err=%v\n", test.Query, err)
 			continue
 		}
 

@@ -14,19 +14,24 @@
 // files.
 //
 // Basic usage:
-//   var result *bootstrap.Result
+//   question := &bootstrap.Question{
+//     RegistryType: bootstrap.DNS,
+//     Query: "google.cz",
+//   }
 //
-//   b := bootstrap.NewClient()
-//   result, err := b.Lookup(bootstrap.DNS, "google.cz") // Downloads https://data.iana.org/rdap/dns.json automatically.
+//   b := &bootstrap.Client{}
+//
+//   var answer *bootstrap.Answer
+//   answer, err := b.Lookup(question)
 //
 //   if err == nil {
-//     for _, url := range result.URLs {
+//     for _, url := range answer.URLs {
 //       fmt.Println(url)
 //     }
 //   }
 //
 // Download and list the contents of the DNS Service Registry:
-//   b := bootstrap.NewClient()
+//   b := &bootstrap.Client{}
 //
 //   // Before you can use a Registry, you need to download it first.
 //   err := b.Download(bootstrap.DNS) // Downloads https://data.iana.org/rdap/dns.json.
@@ -40,19 +45,25 @@
 //     }
 //   }
 //
-// A bootstrap.Client caches the Service Registry files in memory for both performance, and courtesy to data.iana.org. The functions which make network requests are:
-//   - Download()      - download one Service Registry file.
-//   - DownloadAll()   - download all four Service Registry files.
+// You can configure bootstrap.Client{} with a custom http.Client, base URL
+// (default https://data.iana.org/rdap), and custom cache. bootstrap.Question{}
+// support Contexts (for timeout, etc.).
 //
-//   - Lookup()        - download one Service Registry file if missing, or if the cached file is over (by default) 24 hours old.
+// A bootstrap.Client caches the Service Registry files in memory for both
+// performance, and courtesy to data.iana.org. The functions which make network
+// requests are:
+//   - Download()            - force download one of Service Registry file.
+//   - DownloadWithContext() - force download one of Service Registry file.
+//   - Lookup()              - download one Service Registry file if missing, or if the cached file is over (by default) 24 hours old.
 //
 // Lookup() is intended for repeated usage: A long lived bootstrap.Client will
 // download each of {asn,dns,ipv4,ipv6}.json once per 24 hours only, regardless
 // of the number of calls made to Lookup(). You can still refresh them manually
 // using Download() if required.
 //
-// As well as the default memory cache, bootstrap.Client also supports caching
-// the Service Registry files on disk. The default cache location is
+// By default, Service Registry files are cached in memory. bootstrap.Client
+// also supports caching the Service Registry files on disk. The default cache
+// location is
 // $HOME/.openrdap/.
 //
 // Disk cache usage:
@@ -77,6 +88,7 @@
 package bootstrap
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -106,8 +118,6 @@ const (
 )
 
 // Client implements an RDAP bootstrap client.
-//
-// Create a Client using NewClient().
 type Client struct {
 	HTTP    *http.Client        // HTTP client.
 	BaseURL *url.URL            // Base URL of the Service Registry files. Default is DefaultBaseURL.
@@ -118,55 +128,46 @@ type Client struct {
 
 // A Registry implements bootstrap lookups.
 type Registry interface {
-	Lookup(input string) (*Result, error)
+	Lookup(question *Question) (*Answer, error)
 	File() *File
 }
 
-// Result represents the result of bootstrapping a single query.
-type Result struct {
-	// Query looked up in the registry.
-	//
-	// This includes any canonicalisation performed to match the Service
-	// Registry's data format. e.g. lowercasing of domain names, and removal of
-	// "AS" from AS numbers.
-	Query string
-
-	// Matching service entry. Empty string if no match.
-	Entry string
-
-	// List of RDAP base URLs.
-	URLs []*url.URL
-}
-
-// NewClient creates a new bootstrap.Client.
-func NewClient() *Client {
-	c := &Client{
-		HTTP:  &http.Client{},
-		Cache: cache.NewMemoryCache(),
-
-		registries: make(map[RegistryType]Registry),
+func (c *Client) init() {
+	if c.HTTP == nil {
+		c.HTTP = &http.Client{}
 	}
 
-	c.BaseURL, _ = url.Parse(DefaultBaseURL)
-	c.Cache.SetTimeout(DefaultCacheTimeout)
+	if c.Cache == nil {
+		c.Cache = cache.NewMemoryCache()
+		c.Cache.SetTimeout(DefaultCacheTimeout)
+	}
 
-	c.registries[ASN] = nil
-	c.registries[DNS] = nil
-	c.registries[IPv4] = nil
-	c.registries[IPv6] = nil
-	c.registries[ServiceProvider] = nil
+	if c.registries == nil {
+		c.registries = make(map[RegistryType]Registry)
+	}
 
-	return c
+	if c.BaseURL == nil {
+		c.BaseURL, _ = url.Parse(DefaultBaseURL)
+	}
 }
 
 // Download downloads a single bootstrap registry file.
 //
 // On success, the relevant Registry is refreshed. Use the matching accessor (ASN(), DNS(), IPv4(), or IPv6()) to access it.
 func (c *Client) Download(registry RegistryType) error {
+	return c.DownloadWithContext(context.Background(), registry)
+}
+
+// DownloadWithContext downloads a single bootstrap registry file, with context |context|.
+//
+// On success, the relevant Registry is refreshed. Use the matching accessor (ASN(), DNS(), IPv4(), or IPv6()) to access it.
+func (c *Client) DownloadWithContext(ctx context.Context, registry RegistryType) error {
+	c.init()
+
 	var json []byte
 	var s Registry
 
-	json, s, err := c.download(registry)
+	json, s, err := c.download(ctx, registry)
 
 	if err != nil {
 		return err
@@ -180,9 +181,10 @@ func (c *Client) Download(registry RegistryType) error {
 	c.registries[registry] = s
 
 	return nil
+
 }
 
-func (c *Client) download(registry RegistryType) ([]byte, Registry, error) {
+func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, Registry, error) {
 	u, err := url.Parse(registry.Filename())
 	if err != nil {
 		return nil, nil, err
@@ -190,7 +192,13 @@ func (c *Client) download(registry RegistryType) ([]byte, Registry, error) {
 
 	var fetchURL *url.URL = c.BaseURL.ResolveReference(u)
 
-	resp, err := c.HTTP.Get(fetchURL.String())
+	req, err := http.NewRequest("GET", fetchURL.String(), nil)
+	if err != nil {
+		return nil, nil, err
+	}
+	req = req.WithContext(ctx)
+
+	resp, err := c.HTTP.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -262,29 +270,11 @@ func newRegistry(registry RegistryType, json []byte) (Registry, error) {
 	return s, err
 }
 
-// DownloadAll downloads all four bootstrap registry files ({asn,dns,ipv4,ipv6}.json).
-//
-// On success, all four Registries are refreshed. Use ASN(), DNS(), IPv4(), and IPv6() to access them.
-//
-// This does not download the experimental ServiceProvider registry yet.
-func (c *Client) DownloadAll() error {
-	registryTypes := []RegistryType{ASN, DNS, IPv4, IPv6}
+// Lookup returns the RDAP base URLs for the bootstrap question |question|.
+func (c *Client) Lookup(question *Question) (*Answer, error) {
+	c.init()
+	registry := question.RegistryType
 
-	for _, registryType := range registryTypes {
-		err := c.Download(registryType)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// Lookup returns the RDAP base URLs for the query |input| in the registry type |registry|.
-//
-// This function will download a Service Registry file if necessary, with each
-// file cached for 24 hours by default. To adjust the cache duration, use
-// c.Cache.SetTimeout().
-func (c *Client) Lookup(registry RegistryType, input string) (*Result, error) {
 	var forceDownload bool = false
 	if c.Cache.State(registry.Filename()) == cache.ShouldReload {
 		if err := c.reloadFromCache(registry); err != nil {
@@ -293,14 +283,14 @@ func (c *Client) Lookup(registry RegistryType, input string) (*Result, error) {
 	}
 
 	if c.registries[registry] == nil || forceDownload {
-		err := c.Download(registry)
+		err := c.DownloadWithContext(question.Context(), registry)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	var result *Result
-	result, err := c.registries[registry].Lookup(input)
+	var result *Answer
+	result, err := c.registries[registry].Lookup(question)
 
 	return result, err
 }
@@ -309,6 +299,7 @@ func (c *Client) Lookup(registry RegistryType, input string) (*Result, error) {
 //
 // This function never initiates a network transfer.
 func (c *Client) ASN() *ASNRegistry {
+	c.init()
 	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[ASN].(*ASNRegistry)
@@ -320,6 +311,7 @@ func (c *Client) ASN() *ASNRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) DNS() *DNSRegistry {
+	c.init()
 	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[DNS].(*DNSRegistry)
@@ -330,6 +322,7 @@ func (c *Client) DNS() *DNSRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) IPv4() *NetRegistry {
+	c.init()
 	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[IPv4].(*NetRegistry)
@@ -340,6 +333,7 @@ func (c *Client) IPv4() *NetRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) IPv6() *NetRegistry {
+	c.init()
 	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[IPv6].(*NetRegistry)
@@ -350,6 +344,7 @@ func (c *Client) IPv6() *NetRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) ServiceProvider() *ServiceProviderRegistry {
+	c.init()
 	c.freshenFromCache(ServiceProvider)
 
 	s, _ := c.registries[ServiceProvider].(*ServiceProviderRegistry)

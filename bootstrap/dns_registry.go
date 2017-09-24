@@ -34,8 +34,9 @@ func NewDNSRegistry(json []byte) (*DNSRegistry, error) {
 	}, nil
 }
 
-// Lookup returns the RDAP base URLs for the domain name |input|.
-func (d *DNSRegistry) Lookup(input string) (*Result, error) {
+// Lookup returns the RDAP base URLs for the domain name question |question|.
+func (d *DNSRegistry) Lookup(question *Question) (*Answer, error) {
+	input := question.Query
 	input = strings.TrimSuffix(input, ".")
 	input = strings.ToLower(input)
 	fqdn := input
@@ -65,7 +66,7 @@ func (d *DNSRegistry) Lookup(input string) (*Result, error) {
 		}
 	}
 
-	return &Result{
+	return &Answer{
 		URLs:  urls,
 		Query: input,
 		Entry: fqdn,

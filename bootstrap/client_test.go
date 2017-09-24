@@ -11,32 +11,11 @@ import (
 	"github.com/openrdap/rdap/test"
 )
 
-func TestDownloadAll(t *testing.T) {
-	test.Start(test.Bootstrap)
-	defer test.Finish()
-
-	c := NewClient()
-
-	if c.ASN() != nil || c.DNS() != nil || c.IPv4() != nil || c.IPv6() != nil {
-		t.Fatalf("Registr(y|ies) not nil initially")
-	}
-
-	err := c.DownloadAll()
-
-	if err != nil {
-		t.Fatalf("DownloadAll() error: %s", err)
-	}
-
-	if c.ASN() == nil || c.DNS() == nil || c.IPv4() == nil || c.IPv6() == nil {
-		t.Fatalf("Registr(y|ies) nil after DownloadAll()")
-	}
-}
-
 func TestDownload(t *testing.T) {
 	test.Start(test.Bootstrap)
 	defer test.Finish()
 
-	c := NewClient()
+	c := &Client{}
 
 	err := c.Download(DNS)
 
@@ -97,16 +76,21 @@ func TestLookups(t *testing.T) {
 	test.Start(test.BootstrapExperimental)
 	defer test.Finish()
 
-	c := NewClient()
+	c := &Client{}
 
 	for _, test := range tests {
-		var r *Result
+		var r *Answer
 
 		if test.Registry == ServiceProvider {
 			c.BaseURL, _ = url.Parse("https://test.rdap.net/rdap/")
 		}
 
-		r, err := c.Lookup(test.Registry, test.Input)
+		question := &Question{
+			RegistryType: test.Registry,
+			Query:        test.Input,
+		}
+
+		r, err := c.Lookup(question)
 
 		if test.Success != (err == nil) {
 			t.Errorf("Lookup %s: expected success=%v, got opposite, err=%v", test.Input, test.Success, err)
@@ -132,9 +116,14 @@ func TestLookupWithDownloadError(t *testing.T) {
 	test.Start(test.BootstrapHTTPError)
 	defer test.Finish()
 
-	c := NewClient()
+	c := &Client{}
 
-	_, err := c.Lookup(DNS, "example.br")
+	question := &Question{
+		RegistryType: DNS,
+		Query:        "example.br",
+	}
+
+	_, err := c.Lookup(question)
 
 	if err == nil {
 		t.Errorf("Unexpected success")

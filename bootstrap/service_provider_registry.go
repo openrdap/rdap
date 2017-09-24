@@ -37,18 +37,20 @@ func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
 	}, nil
 }
 
-// Lookup returns a list of RDAP base URLs for the |input| entity handle.
+// Lookup returns a list of RDAP base URLs for the entity question |question|.
 //
 // e.g. for the handle "53774930~VRSN", the RDAP base URLs for "VRSN" are returned.
 //
 // Missing/malformed/unknown service tags are not treated as errors. An empty
 // list of URLs is returned in these cases.
-func (s *ServiceProviderRegistry) Lookup(input string) (*Result, error) {
+func (s *ServiceProviderRegistry) Lookup(question *Question) (*Answer, error) {
+	input := question.Query
+
 	// Valid input looks like 12345-VRSN.
 	offset := strings.IndexByte(input, '~')
 
 	if offset == -1 || offset == len(input)-1 {
-		return &Result{
+		return &Answer{
 			Query: input,
 		}, nil
 	}
@@ -61,7 +63,7 @@ func (s *ServiceProviderRegistry) Lookup(input string) (*Result, error) {
 		service = ""
 	}
 
-	return &Result{
+	return &Answer{
 		URLs:  urls,
 		Query: input,
 		Entry: service,
