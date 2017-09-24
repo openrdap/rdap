@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -11,14 +14,15 @@ import (
 	"time"
 
 	"github.com/openrdap/rdap"
+	"github.com/openrdap/rdap/bootstrap"
 	"github.com/openrdap/rdap/bootstrap/cache"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	version   = "0.0.1"
-	usageText = `OpenRDAP v` + version + ` (www.openrdap.org)
+	version   = "OpenRDAP v0.0.1 (www.openrdap.org)"
+	usageText = version + `
 
 Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL
   e.g. rdap google.cz
@@ -33,13 +37,12 @@ Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL
 
 Options:
   -h, --help          Show help message.
-  -H, --help-advanced Show help message with advanced options.
   -v, --verbose       Print verbose messages on STDERR.
 
-  -T, --timeout=SECS  Timeout after SECS seconds (default: 120).
+  -T, --timeout=SECS  Timeout after SECS seconds (default: 30).
   -k, --insecure      Disable SSL certificate verification.
 
-  -E, --experimental  Enable experimental options:
+  -E, --experimental  Enable some experimental options:
                       - Use the bootstrap service https://test.rdap.net/rdap
                       - Enable object tag support
 
@@ -54,8 +57,8 @@ Output Options:
   -j, --json          Output JSON, pretty-printed format.
   -J, --compact       Output JSON, compact (one line) format.
   -r, --raw           Output the raw server response. Forces --fetch=none.
-`
-	advancedUsageText = `Advanced options (query):
+
+Advanced options (query):
   -s  --server=URL    RDAP server to query.
   -t  --type=TYPE     RDAP query type. Normally auto-detected. The types are:
                       - ip
@@ -93,6 +96,10 @@ Advanced options (experiments):
 `
 )
 
+const (
+	ExperimentalBootstrapURL = "https://test.rdap.net/test"
+)
+
 func main() {
 	exitCode := run(os.Args[1:], os.Stdout, os.Stderr)
 
@@ -107,8 +114,8 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	app.UsageWriter(stderr)
 
 	// Command line options.
-	advancedHelpFlag := app.Flag("help-advanced", "").Short('H').Bool()
 	verboseFlag := app.Flag("verbose", "").Short('v').Bool()
+	timeoutFlag := app.Flag("timeout", "").Short('T').Default("30").Uint16()
 	insecureFlag := app.Flag("insecure", "").Short('k').Bool()
 
 	queryType := app.Flag("type", "").Short('t').String()
@@ -117,7 +124,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 
 	experimentsFlag := app.Flag("exp", "").Strings()
 
-	cacheDirFlag := app.Flag("cache-dir", "").String()
+	cacheDirFlag := app.Flag("cache-dir", "").Default("default").String()
 	bootstrapURLFlag := app.Flag("bs-url", "").Default("default").String()
 	bootstrapTimeoutFlag := app.Flag("bs-ttl", "").Uint16()
 
@@ -130,9 +137,10 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	if err != nil {
 		printError(stderr, fmt.Sprintf("Error: %s\n\n%s", err, usageText))
 		return 1
-	} else if *advancedHelpFlag {
-		printError(stderr, fmt.Sprintf("%s\n%s", usageText, advancedUsageText))
-		return 0
+	}
+
+	if *verboseFlag {
+		defer printElapsedTime(stderr, time.Now())
 	}
 
 	// Supported experimental options.
@@ -141,7 +149,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		"object_tag":    false,
 	}
 
-	// Enable any experimental options required.
+	// Enable any experimental options.
 	for _, e := range *experimentsFlag {
 		if _, ok := experiments[e]; ok {
 			experiments[e] = true
@@ -158,6 +166,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return 1
 	}
 
+	// Grab the query text.
 	queryText := ""
 	if len(*queryArgs) > 0 {
 		queryText = (*queryArgs)[0]
@@ -239,29 +248,28 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		req = req.WithServer(serverURL)
 	}
 
-	var client *rdap.Client = rdap.NewClient()
-
-	// Print verbose messages on STDERR?
-	if *verboseFlag {
-		client.Verbose = func(text string) {
-			fmt.Fprintf(stderr, "# %s\n", text)
-		}
-	}
+	bs := &bootstrap.Client{}
 
 	// Custom bootstrap cache type/directory?
-	if cacheDirFlag == nil {
+	if *cacheDirFlag == "default" {
 		// Disk cache, default location.
-		client.Bootstrap.Cache = cache.NewDiskCache()
+		bs.Cache = cache.NewDiskCache()
 	} else {
 		if *cacheDirFlag != "" {
 			// Disk cache with custom directory.
 			dc := cache.NewDiskCache()
 			dc.Dir = *cacheDirFlag
 
-			client.Bootstrap.Cache = dc
+			bs.Cache = dc
 		} else {
-			// Disk cache disabled, use default memory cache.
+			// Disk cache disabled, use memory cache.
+			bs.Cache = cache.NewMemoryCache()
 		}
+	}
+
+	// Use experimental bootstrap service URL?
+	if experiments["test_rdap_net"] && *bootstrapURLFlag == "default" {
+		*bootstrapURLFlag = ExperimentalBootstrapURL
 	}
 
 	// Custom bootstrap service URL?
@@ -272,14 +280,43 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 			return 1
 		}
 
-		client.Bootstrap.BaseURL = baseURL
+		bs.BaseURL = baseURL
 	}
 
 	// Custom bootstrap cache timeout?
 	if bootstrapTimeoutFlag != nil {
-		client.Bootstrap.Cache.SetTimeout(time.Duration(*bootstrapTimeoutFlag) * time.Second)
+		bs.Cache.SetTimeout(time.Duration(*bootstrapTimeoutFlag) * time.Second)
 	}
 
+	// Custom HTTP client. Used to disable TLS certificate verification.
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: *insecureFlag},
+	}
+	httpClient := &http.Client{
+		Transport: transport,
+	}
+
+	client := &rdap.Client{
+		HTTP:      httpClient,
+		Bootstrap: bs,
+
+		UserAgent:                 version,
+		ServiceProviderExperiment: experiments["object_tag"],
+	}
+
+	// Print verbose messages on STDERR?
+	if *verboseFlag {
+		client.Verbose = func(text string) {
+			fmt.Fprintf(stderr, "# %s\n", text)
+		}
+	}
+
+	// Set the request timeout.
+	ctx, cancelFunc := context.WithTimeout(context.Background(), time.Duration(*timeoutFlag)*time.Second)
+	defer cancelFunc()
+	req = req.WithContext(ctx)
+
+	// Run the request.
 	var resp *rdap.Response
 	resp, err = client.Do(req)
 
@@ -299,4 +336,8 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 
 func printError(stderr io.Writer, text string) {
 	fmt.Fprintf(stderr, "# %s\n", text)
+}
+
+func printElapsedTime(out io.Writer, t time.Time) {
+	printError(out, fmt.Sprintf("client: elapsed time: %s\n", time.Since(t)))
 }

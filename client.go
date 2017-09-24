@@ -72,6 +72,7 @@ type Client struct {
 	Bootstrap *bootstrap.Client
 
 	ServiceProviderExperiment bool
+	UserAgent                 string
 
 	// Optional callback function for verbose messages.
 	Verbose func(text string)
@@ -135,6 +136,8 @@ func (c *Client) Do(req *Request) (*Response, error) {
 
 		fmt.Printf("ok bootstrap ok %v\n", *answer)
 	}
+
+	fmt.Printf("Querying with UA %s\n", c.UserAgent)
 
 	// main issues are raw response, timeout working correctly, *Response or interface{}?
 	return nil, nil
@@ -228,7 +231,7 @@ func defaultVerboseFunc(text string) {
 }
 
 func bootstrapTypeFor(req *Request) *bootstrap.RegistryType {
-	var b *bootstrap.RegistryType
+	b := new(bootstrap.RegistryType)
 
 	switch req.Type {
 	case DomainRequest:

@@ -38,6 +38,41 @@ const (
 	RawRequest
 )
 
+func (r RequestType) String() string {
+	switch r {
+	case AutnumRequest:
+		return "autnum"
+	case DomainRequest:
+		return "domain"
+	case EntityRequest:
+		return "entity"
+	case HelpRequest:
+		return "help"
+	case IPRequest:
+		return "ip"
+	case NameserverRequest:
+		return "nameserver"
+	case DomainSearchRequest:
+		return "domain-search"
+	case DomainSearchByNameserverRequest:
+		return "domain-search-by-nameserver"
+	case DomainSearchByNameserverIPRequest:
+		return "domain-search-by-nameserver-ip"
+	case NameserverSearchRequest:
+		return "nameserver-search"
+	case NameserverSearchByNameserverIPRequest:
+		return "nameserver-search-by-nameserver-ip"
+	case EntitySearchRequest:
+		return "entity-search"
+	case EntitySearchByHandleRequest:
+		return "entity-search-by-handle"
+	case RawRequest:
+		return "raw-request"
+	default:
+		panic("Unknown RequestType")
+	}
+}
+
 // A Request represents an RDAP request.
 //
 //   req := &rdap.Request{
