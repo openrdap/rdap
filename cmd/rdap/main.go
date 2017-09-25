@@ -107,6 +107,9 @@ func main() {
 }
 
 func run(args []string, stdout io.Writer, stderr io.Writer) int {
+	// For duration timer (in --verbose output).
+	start := time.Now()
+
 	// Setup command line arguments parser.
 	app := kingpin.New("rdap", "RDAP command-line client")
 	app.HelpFlag.Short('h')
@@ -122,11 +125,12 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	fetchRolesFlag := app.Flag("fetch", "").Short('f').Strings()
 	serverFlag := app.Flag("server", "").Short('s').String()
 
+	experimentalFlag := app.Flag("experimental", "").Short('E').Bool()
 	experimentsFlag := app.Flag("exp", "").Strings()
 
 	cacheDirFlag := app.Flag("cache-dir", "").Default("default").String()
 	bootstrapURLFlag := app.Flag("bs-url", "").Default("default").String()
-	bootstrapTimeoutFlag := app.Flag("bs-ttl", "").Uint16()
+	bootstrapTimeoutFlag := app.Flag("bs-ttl", "").Default("3600").Uint32()
 
 	// Command line query (any remaining non-option arguments).
 	var queryArgs *[]string = app.Arg("", "").Strings()
@@ -139,9 +143,20 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		return 1
 	}
 
+	var verbose func(text string)
 	if *verboseFlag {
-		defer printElapsedTime(stderr, time.Now())
+		verbose = func(text string) {
+			fmt.Fprintf(stderr, "# %s\n", text)
+		}
+	} else {
+		verbose = func(text string) {
+		}
 	}
+
+	verbose(version)
+	verbose("")
+
+	verbose("rdap: Configuring query...")
 
 	// Supported experimental options.
 	experiments := map[string]bool{
@@ -149,14 +164,22 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		"object_tag":    false,
 	}
 
-	// Enable any experimental options.
+	// Enable experimental options.
 	for _, e := range *experimentsFlag {
 		if _, ok := experiments[e]; ok {
 			experiments[e] = true
+			verbose(fmt.Sprintf("rdap: Enabled experiment '%s'", e))
 		} else {
 			printError(stderr, fmt.Sprintf("Error: unknown experiment '%s'", e))
 			return 1
 		}
+	}
+
+	// Enable the -E selection of experiments?
+	if *experimentalFlag {
+		verbose("rdap: Enabled -E/--experiments: test_rdap_net, object_tag")
+		experiments["test_rdap_net"] = true
+		experiments["object_tag"] = true
 	}
 
 	// Exactly one argument is required (i.e. the domain/ip/url/etc), unless
@@ -187,14 +210,14 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		result, err := strconv.ParseUint(autnum, 10, 32)
 
 		if err != nil {
-			printError(stderr, "Invalid ASN")
+			printError(stderr, fmt.Sprintf("Invalid ASN '%s'", queryText))
 			return 1
 		}
 		req = rdap.NewAutnumRequest(uint32(result))
 	case "ip":
 		ip := net.ParseIP(queryText)
 		if ip == nil {
-			printError(stderr, "Invalid IP")
+			printError(stderr, fmt.Sprintf("Invalid IP '%s'", queryText))
 			return 1
 		}
 		req = rdap.NewIPRequest(ip)
@@ -205,7 +228,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	case "url":
 		fullURL, err := url.Parse(queryText)
 		if err != nil {
-			printError(stderr, fmt.Sprintf("Unable to parse URL: %s", err))
+			printError(stderr, fmt.Sprintf("Unable to parse URL '%s': %s", queryText, err))
 			return 1
 		}
 		req = rdap.NewRawRequest(fullURL)
@@ -224,9 +247,11 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	case "nameserver-search-by-nameserver-ip":
 		req = rdap.NewRequest(rdap.NameserverSearchByNameserverIPRequest, queryText)
 	default:
-		printError(stderr, fmt.Sprintf("Unknown query type %s", queryType))
+		printError(stderr, fmt.Sprintf("Unknown query type '%s'", queryType))
 		return 1
 	}
+
+	req.Verbose = verbose
 
 	// Determine the server.
 	if req.Server != nil {
@@ -246,6 +271,8 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		}
 
 		req = req.WithServer(serverURL)
+
+		verbose(fmt.Sprintf("rdap: Using server '%s'", serverURL))
 	}
 
 	bs := &bootstrap.Client{}
@@ -254,6 +281,8 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	if *cacheDirFlag == "default" {
 		// Disk cache, default location.
 		bs.Cache = cache.NewDiskCache()
+
+		verbose("rdap: Using disk cache (default dir)")
 	} else {
 		if *cacheDirFlag != "" {
 			// Disk cache with custom directory.
@@ -261,15 +290,21 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 			dc.Dir = *cacheDirFlag
 
 			bs.Cache = dc
+
+			verbose(fmt.Sprintf("rdap: Using disk cache (dir=%s)", *cacheDirFlag))
 		} else {
 			// Disk cache disabled, use memory cache.
 			bs.Cache = cache.NewMemoryCache()
+
+			verbose("rdap: Using in-memory cache")
 		}
 	}
 
 	// Use experimental bootstrap service URL?
 	if experiments["test_rdap_net"] && *bootstrapURLFlag == "default" {
 		*bootstrapURLFlag = ExperimentalBootstrapURL
+
+		verbose("rdap: Using test.rdap.net bootstrap service (test_rdap_net experiment)")
 	}
 
 	// Custom bootstrap service URL?
@@ -281,11 +316,17 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		}
 
 		bs.BaseURL = baseURL
+
+		verbose(fmt.Sprintf("rdap: Bootstrap URL set to '%s'", baseURL))
+	} else {
+		verbose(fmt.Sprintf("rdap: Bootstrap URL is default '%s'", bootstrap.DefaultBaseURL))
 	}
 
 	// Custom bootstrap cache timeout?
 	if bootstrapTimeoutFlag != nil {
 		bs.Cache.SetTimeout(time.Duration(*bootstrapTimeoutFlag) * time.Second)
+
+		verbose(fmt.Sprintf("rdap: Bootstrap cache TTL set to %d seconds", *bootstrapTimeoutFlag))
 	}
 
 	// Custom HTTP client. Used to disable TLS certificate verification.
@@ -304,11 +345,8 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		ServiceProviderExperiment: experiments["object_tag"],
 	}
 
-	// Print verbose messages on STDERR?
-	if *verboseFlag {
-		client.Verbose = func(text string) {
-			fmt.Fprintf(stderr, "# %s\n", text)
-		}
+	if *insecureFlag {
+		verbose(fmt.Sprintf("rdap: SSL certificate validation disabled"))
 	}
 
 	// Set the request timeout.
@@ -316,9 +354,14 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	defer cancelFunc()
 	req = req.WithContext(ctx)
 
+	verbose(fmt.Sprintf("rdap: Timeout is %d seconds", *timeoutFlag))
+
 	// Run the request.
 	var resp *rdap.Response
 	resp, err = client.Do(req)
+
+	verbose("")
+	verbose(fmt.Sprintf("rdap: Finished in %s", time.Since(start)))
 
 	if err != nil {
 		printError(stderr, fmt.Sprintf("Error: %s", err))
@@ -336,8 +379,4 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 
 func printError(stderr io.Writer, text string) {
 	fmt.Fprintf(stderr, "# %s\n", text)
-}
-
-func printElapsedTime(out io.Writer, t time.Time) {
-	printError(out, fmt.Sprintf("client: elapsed time: %s\n", time.Since(t)))
 }

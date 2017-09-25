@@ -38,6 +38,8 @@ const (
 	RawRequest
 )
 
+// String returns the RequestType as a string.
+// e.g. "autnum", "domain", "help".
 func (r RequestType) String() string {
 	switch r {
 	case AutnumRequest:
@@ -170,6 +172,9 @@ type Request struct {
 	//
 	// The default is no timeout.
 	Timeout time.Duration
+
+	// Optional callback function for verbose messages.
+	Verbose func(text string)
 
 	ctx context.Context
 }

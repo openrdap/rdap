@@ -109,6 +109,23 @@ const (
 	ServiceProvider
 )
 
+func (r RegistryType) String() string {
+	switch r {
+	case DNS:
+		return "dns"
+	case IPv4:
+		return "ipv4"
+	case IPv6:
+		return "ipv6"
+	case ASN:
+		return "asn"
+	case ServiceProvider:
+		return "serviceprovider"
+	default:
+		panic("Unknown RegistryType")
+	}
+}
+
 const (
 	// Default URL of the Service Registry files.
 	DefaultBaseURL = "https://data.iana.org/rdap/"
@@ -273,6 +290,15 @@ func newRegistry(registry RegistryType, json []byte) (Registry, error) {
 // Lookup returns the RDAP base URLs for the bootstrap question |question|.
 func (c *Client) Lookup(question *Question) (*Answer, error) {
 	c.init()
+	if question.Verbose == nil {
+		question.Verbose = func(text string) {}
+	}
+
+	question.Verbose("")
+	question.Verbose("bootstrap: Looking up...")
+	question.Verbose(fmt.Sprintf("bootstrap: Question type : %s", question.RegistryType))
+	question.Verbose(fmt.Sprintf("bootstrap: Question query: %s", question.Query))
+
 	registry := question.RegistryType
 
 	var forceDownload bool = false
@@ -283,10 +309,14 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 	}
 
 	if c.registries[registry] == nil || forceDownload {
+		question.Verbose("bootstrap: Downloading Service Registry file...")
+
 		err := c.DownloadWithContext(question.Context(), registry)
 		if err != nil {
 			return nil, err
 		}
+	} else {
+		question.Verbose("bootstrap: Service Registry file already loaded")
 	}
 
 	var result *Answer

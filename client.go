@@ -73,15 +73,15 @@ type Client struct {
 
 	ServiceProviderExperiment bool
 	UserAgent                 string
-
-	// Optional callback function for verbose messages.
-	Verbose func(text string)
 }
 
 func (c *Client) Do(req *Request) (*Response, error) {
 	// Bad query?
 	if req == nil {
-		return nil, &ClientError{Text: "nil Request"}
+		return nil, &ClientError{
+			Type: InputError,
+			Text: "nil Request",
+		}
 	}
 
 	// Init HTTP client?
@@ -95,17 +95,21 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	}
 
 	// Init Verbose callback?
-	if c.Verbose == nil {
-		c.Verbose = defaultVerboseFunc
+	if req.Verbose == nil {
+		req.Verbose = defaultVerboseFunc
 	}
 
-	c.Verbose(fmt.Sprintf("client: running request type %s (client: text=%s url=%s)",
-		req.Type,
-		req.Query,
-		req.URL()))
+	req.Verbose("")
+	req.Verbose(fmt.Sprintf("client: Running..."))
+	req.Verbose(fmt.Sprintf("client: Request type  : %s", req.Type))
+	req.Verbose(fmt.Sprintf("client: Request query : %s", req.Query))
 
 	// Need to bootstrap the query?
-	if req.Server == nil {
+	if req.Server != nil {
+		req.Verbose(fmt.Sprintf("client: Request URL   : %s", req.URL()))
+	} else if req.Server == nil {
+		req.Verbose("client: Request URL   : TBD, bootstrap required")
+
 		var bootstrapType *bootstrap.RegistryType = bootstrapTypeFor(req)
 
 		if bootstrapType == nil || (*bootstrapType == bootstrap.ServiceProvider && !c.ServiceProviderExperiment) {
@@ -117,11 +121,11 @@ func (c *Client) Do(req *Request) (*Response, error) {
 			}
 		}
 
-		c.Verbose(fmt.Sprintf("client: bootstrap required, running..."))
-
 		question := &bootstrap.Question{
 			RegistryType: *bootstrapType,
 			Query:        req.Query,
+
+			Verbose: req.Verbose,
 		}
 		question = question.WithContext(req.Context())
 

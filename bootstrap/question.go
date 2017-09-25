@@ -10,11 +10,17 @@ import "context"
 //
 //  question := &bootstrap.Question{
 //    RegistryType: bootstrap.DNS,
-//    Query: "google.cz",
+//    Query: "example.cz",
 //  }
 type Question struct {
+	// Bootstrap registry to query.
 	RegistryType
+
+	// Query text.
 	Query string
+
+	// Optional callback function for verbose messages.
+	Verbose func(text string)
 
 	ctx context.Context
 }

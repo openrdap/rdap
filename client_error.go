@@ -9,6 +9,7 @@ type ClientErrorType uint
 const (
 	_ ClientErrorType = iota
 
+	InputError
 	BootstrapNotSupported
 	WrongResponseType
 )
