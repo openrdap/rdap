@@ -185,7 +185,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	// Exactly one argument is required (i.e. the domain/ip/url/etc), unless
 	// we're making a help query.
 	if *queryType != "help" && len(*queryArgs) == 0 {
-		printError(stderr, "Query object required, e.g. rdap google.cz")
+		printError(stderr, fmt.Sprintf("Error: %s\n\n%s", "Query object required, e.g. rdap google.cz", usageText))
 		return 1
 	}
 
