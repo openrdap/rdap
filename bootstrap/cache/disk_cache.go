@@ -43,7 +43,7 @@ type DiskCache struct {
 func NewDiskCache() *DiskCache {
 	d := &DiskCache{
 		lastLoadedModTime: make(map[string]time.Time),
-		Timeout: time.Hour * 24,
+		Timeout:           time.Hour * 24,
 	}
 
 	dir, err := homedir.Dir()
@@ -58,20 +58,28 @@ func NewDiskCache() *DiskCache {
 }
 
 // InitDir creates the cache directory if it does not already exist.
-func (d *DiskCache) InitDir() error {
+//
+// Returns true if the directory was created, or false if it already exists/or
+// on error.
+func (d *DiskCache) InitDir() (bool, error) {
 	fileInfo, err := os.Stat(d.Dir)
 	if err == nil {
 		if fileInfo.IsDir() {
-			return nil
+			return false, nil
 		} else {
-			return errors.New("Cache dir is not a dir")
+			return false, errors.New("Cache dir is not a dir")
 		}
 	}
 
 	if os.IsNotExist(err) {
-		return os.Mkdir(d.Dir, 0775)
+		err := os.Mkdir(d.Dir, 0775)
+		if err == nil {
+			return true, nil
+		} else {
+			return false, err
+		}
 	} else {
-		return err
+		return false, err
 	}
 }
 
@@ -85,7 +93,7 @@ func (d *DiskCache) SetTimeout(timeout time.Duration) {
 //
 // The cache directory is created if necessary.
 func (d *DiskCache) Save(filename string, data []byte) error {
-	err := d.InitDir()
+	_, err := d.InitDir()
 	if err != nil {
 		return err
 	}

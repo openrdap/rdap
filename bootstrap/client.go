@@ -89,6 +89,8 @@ package bootstrap
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -190,7 +192,7 @@ func (c *Client) DownloadWithContext(ctx context.Context, registry RegistryType)
 		return err
 	}
 
-	err = c.Cache.Save(registry.Filename(), json)
+	err = c.Cache.Save(c.filenameFor(registry), json)
 	if err != nil {
 		return err
 	}
@@ -207,8 +209,15 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 		return nil, nil, err
 	}
 
-	var fetchURL *url.URL = c.BaseURL.ResolveReference(u)
+	baseURL := new(url.URL)
+	*baseURL = *c.BaseURL
 
+	if baseURL.Path != "" && baseURL.Path[len(baseURL.Path)-1] != '/' {
+		baseURL.Path += "/"
+	}
+
+	var fetchURL *url.URL = baseURL.ResolveReference(u)
+	fmt.Printf("url = %s\n", fetchURL.String())
 	req, err := http.NewRequest("GET", fetchURL.String(), nil)
 	if err != nil {
 		return nil, nil, err
@@ -241,13 +250,13 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 }
 
 func (c *Client) freshenFromCache(registry RegistryType) {
-	if c.Cache.State(registry.Filename()) == cache.ShouldReload {
+	if c.Cache.State(c.filenameFor(registry)) == cache.ShouldReload {
 		c.reloadFromCache(registry)
 	}
 }
 
 func (c *Client) reloadFromCache(registry RegistryType) error {
-	json, err := c.Cache.Load(registry.Filename())
+	json, err := c.Cache.Load(c.filenameFor(registry))
 
 	if err != nil {
 		return err
@@ -294,35 +303,51 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 		question.Verbose = func(text string) {}
 	}
 
-	question.Verbose("")
-	question.Verbose("bootstrap: Looking up...")
-	question.Verbose(fmt.Sprintf("bootstrap: Question type : %s", question.RegistryType))
-	question.Verbose(fmt.Sprintf("bootstrap: Question query: %s", question.Query))
+	question.Verbose("  bootstrap: Looking up...")
+	question.Verbose(fmt.Sprintf("  bootstrap: Question type : %s", question.RegistryType))
+	question.Verbose(fmt.Sprintf("  bootstrap: Question query: %s", question.Query))
 
 	registry := question.RegistryType
 
+	var state cache.FileState = c.Cache.State(c.filenameFor(registry))
+	question.Verbose(fmt.Sprintf("  bootstrap: Cache state: %s: %s", c.filenameFor(registry), state))
+
 	var forceDownload bool = false
-	if c.Cache.State(registry.Filename()) == cache.ShouldReload {
+	if state == cache.ShouldReload {
 		if err := c.reloadFromCache(registry); err != nil {
 			forceDownload = true
+
+			question.Verbose(fmt.Sprintf("  bootstrap: Cache load error (%s), downloading...", err))
 		}
 	}
 
 	if c.registries[registry] == nil || forceDownload {
-		question.Verbose("bootstrap: Downloading Service Registry file...")
+		question.Verbose(fmt.Sprintf("  bootstrap: Downloading %s", registry.Filename()))
 
 		err := c.DownloadWithContext(question.Context(), registry)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		question.Verbose("bootstrap: Service Registry file already loaded")
+		question.Verbose("  bootstrap: Using cached Service Registry file")
 	}
 
-	var result *Answer
-	result, err := c.registries[registry].Lookup(question)
+	answer, err := c.registries[registry].Lookup(question)
 
-	return result, err
+	if answer != nil {
+		question.Verbose(fmt.Sprintf("  bootstrap: Looked up '%s'", answer.Query))
+		if answer.Entry != "" {
+			question.Verbose(fmt.Sprintf("  bootstrap: Matching entry '%s'", answer.Entry))
+		} else {
+			question.Verbose(fmt.Sprintf("  bootstrap: No match"))
+		}
+
+		for i, url := range answer.URLs {
+			question.Verbose(fmt.Sprintf("  bootstrap: Service URL #%d: '%s'", i+1, url))
+		}
+	}
+
+	return answer, err
 }
 
 // ASN returns the current ASN Registry (or nil if the registry file hasn't been Download()ed).
@@ -379,6 +404,28 @@ func (c *Client) ServiceProvider() *ServiceProviderRegistry {
 
 	s, _ := c.registries[ServiceProvider].(*ServiceProviderRegistry)
 	return s
+}
+
+// fileFor returns a filename to save the bootstrap registry file |r| as.
+//
+// For the official IANA bootstrap service, this is the exact filename, e.g.
+// dns.json.
+//
+// For custom bootstrap services, a 6 character hash of the bootstrap service
+// URL is prepended to the filename (e.g. 012def_dns.json), to prevent mixing
+// them up.
+func (c *Client) filenameFor(r RegistryType) string {
+	filename := r.Filename()
+
+	if c.BaseURL.String() != DefaultBaseURL {
+		hasher := sha256.New()
+		hasher.Write([]byte(c.BaseURL.String()))
+		sha256Hash := hex.EncodeToString(hasher.Sum(nil))
+
+		filename = sha256Hash[0:6] + "_" + filename
+	}
+
+	return filename
 }
 
 // Filename returns the JSON document filename: One of {asn,dns,ipv4,ipv6,service_provider}.json.

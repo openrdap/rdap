@@ -10,6 +10,7 @@ package cache
 import "time"
 
 type FileState int
+
 const (
 	// File is not in the cache.
 	Absent FileState = iota
@@ -26,6 +27,19 @@ const (
 	Expired
 )
 
+func (f FileState) String() string {
+	switch f {
+	case Absent:
+		return "not cached"
+	case Good, ShouldReload:
+		return "good"
+	case Expired:
+		return "expired"
+	default:
+		panic("Unknown FileState")
+	}
+}
+
 // A RegistryCache implements a cache of Service Registry files.
 type RegistryCache interface {
 	Load(filename string) ([]byte, error)
@@ -35,4 +49,3 @@ type RegistryCache interface {
 
 	SetTimeout(timeout time.Duration)
 }
-

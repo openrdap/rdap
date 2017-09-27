@@ -42,7 +42,7 @@ Options:
   -T, --timeout=SECS  Timeout after SECS seconds (default: 30).
   -k, --insecure      Disable SSL certificate verification.
 
-  -E, --experimental  Enable some experimental options:
+  -e, --experimental  Enable some experimental options:
                       - Use the bootstrap service https://test.rdap.net/rdap
                       - Enable object tag support
 
@@ -97,7 +97,7 @@ Advanced options (experiments):
 )
 
 const (
-	ExperimentalBootstrapURL = "https://test.rdap.net/test"
+	ExperimentalBootstrapURL = "https://test.rdap.net/rdap"
 )
 
 func main() {
@@ -125,7 +125,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	fetchRolesFlag := app.Flag("fetch", "").Short('f').Strings()
 	serverFlag := app.Flag("server", "").Short('s').String()
 
-	experimentalFlag := app.Flag("experimental", "").Short('E').Bool()
+	experimentalFlag := app.Flag("experimental", "").Short('e').Bool()
 	experimentsFlag := app.Flag("exp", "").Strings()
 
 	cacheDirFlag := app.Flag("cache-dir", "").Default("default").String()
@@ -175,9 +175,9 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 		}
 	}
 
-	// Enable the -E selection of experiments?
+	// Enable the -e selection of experiments?
 	if *experimentalFlag {
-		verbose("rdap: Enabled -E/--experiments: test_rdap_net, object_tag")
+		verbose("rdap: Enabled -e/--experiments: test_rdap_net, object_tag")
 		experiments["test_rdap_net"] = true
 		experiments["object_tag"] = true
 	}
@@ -278,26 +278,28 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	bs := &bootstrap.Client{}
 
 	// Custom bootstrap cache type/directory?
-	if *cacheDirFlag == "default" {
-		// Disk cache, default location.
-		bs.Cache = cache.NewDiskCache()
+	if *cacheDirFlag == "" {
+		// Disk cache disabled, use memory cache.
+		bs.Cache = cache.NewMemoryCache()
 
-		verbose("rdap: Using disk cache (default dir)")
+		verbose("rdap: Using in-memory cache")
 	} else {
-		if *cacheDirFlag != "" {
-			// Disk cache with custom directory.
-			dc := cache.NewDiskCache()
+		dc := cache.NewDiskCache()
+		if *cacheDirFlag != "default" {
 			dc.Dir = *cacheDirFlag
-
-			bs.Cache = dc
-
-			verbose(fmt.Sprintf("rdap: Using disk cache (dir=%s)", *cacheDirFlag))
-		} else {
-			// Disk cache disabled, use memory cache.
-			bs.Cache = cache.NewMemoryCache()
-
-			verbose("rdap: Using in-memory cache")
 		}
+
+		verbose(fmt.Sprintf("rdap: Using disk cache (%s)", dc.Dir))
+
+		created, err := dc.InitDir()
+		if created {
+			verbose(fmt.Sprintf("rdap: Cache dir %s mkdir'ed", dc.Dir))
+		} else if err != nil {
+			printError(stderr, fmt.Sprintf("rdap: Error making cache dir %s", dc.Dir))
+			return 1
+		}
+
+		bs.Cache = dc
 	}
 
 	// Use experimental bootstrap service URL?
