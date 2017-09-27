@@ -217,7 +217,6 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 	}
 
 	var fetchURL *url.URL = baseURL.ResolveReference(u)
-	fmt.Printf("url = %s\n", fetchURL.String())
 	req, err := http.NewRequest("GET", fetchURL.String(), nil)
 	if err != nil {
 		return nil, nil, err
