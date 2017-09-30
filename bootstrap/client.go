@@ -16,7 +16,7 @@
 // Basic usage:
 //   question := &bootstrap.Question{
 //     RegistryType: bootstrap.DNS,
-//     Query: "google.cz",
+//     Query: "example.cz",
 //   }
 //
 //   b := &bootstrap.Client{}
@@ -141,6 +141,9 @@ type Client struct {
 	HTTP    *http.Client        // HTTP client.
 	BaseURL *url.URL            // Base URL of the Service Registry files. Default is DefaultBaseURL.
 	Cache   cache.RegistryCache // Service Registry cache. Default is a MemoryCache.
+
+	// Optional callback function for verbose messages.
+	Verbose func(text string)
 
 	registries map[RegistryType]Registry
 }
@@ -298,51 +301,51 @@ func newRegistry(registry RegistryType, json []byte) (Registry, error) {
 // Lookup returns the RDAP base URLs for the bootstrap question |question|.
 func (c *Client) Lookup(question *Question) (*Answer, error) {
 	c.init()
-	if question.Verbose == nil {
-		question.Verbose = func(text string) {}
+	if c.Verbose == nil {
+		c.Verbose = func(text string) {}
 	}
 
-	question.Verbose("  bootstrap: Looking up...")
-	question.Verbose(fmt.Sprintf("  bootstrap: Question type : %s", question.RegistryType))
-	question.Verbose(fmt.Sprintf("  bootstrap: Question query: %s", question.Query))
+	c.Verbose("  bootstrap: Looking up...")
+	c.Verbose(fmt.Sprintf("  bootstrap: Question type : %s", question.RegistryType))
+	c.Verbose(fmt.Sprintf("  bootstrap: Question query: %s", question.Query))
 
 	registry := question.RegistryType
 
 	var state cache.FileState = c.Cache.State(c.filenameFor(registry))
-	question.Verbose(fmt.Sprintf("  bootstrap: Cache state: %s: %s", c.filenameFor(registry), state))
+	c.Verbose(fmt.Sprintf("  bootstrap: Cache state: %s: %s", c.filenameFor(registry), state))
 
-	var forceDownload bool = false
+	var forceDownload bool
 	if state == cache.ShouldReload {
 		if err := c.reloadFromCache(registry); err != nil {
 			forceDownload = true
 
-			question.Verbose(fmt.Sprintf("  bootstrap: Cache load error (%s), downloading...", err))
+			c.Verbose(fmt.Sprintf("  bootstrap: Cache load error (%s), downloading...", err))
 		}
 	}
 
 	if c.registries[registry] == nil || forceDownload {
-		question.Verbose(fmt.Sprintf("  bootstrap: Downloading %s", registry.Filename()))
+		c.Verbose(fmt.Sprintf("  bootstrap: Downloading %s", registry.Filename()))
 
 		err := c.DownloadWithContext(question.Context(), registry)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		question.Verbose("  bootstrap: Using cached Service Registry file")
+		c.Verbose("  bootstrap: Using cached Service Registry file")
 	}
 
 	answer, err := c.registries[registry].Lookup(question)
 
 	if answer != nil {
-		question.Verbose(fmt.Sprintf("  bootstrap: Looked up '%s'", answer.Query))
+		c.Verbose(fmt.Sprintf("  bootstrap: Looked up '%s'", answer.Query))
 		if answer.Entry != "" {
-			question.Verbose(fmt.Sprintf("  bootstrap: Matching entry '%s'", answer.Entry))
+			c.Verbose(fmt.Sprintf("  bootstrap: Matching entry '%s'", answer.Entry))
 		} else {
-			question.Verbose(fmt.Sprintf("  bootstrap: No match"))
+			c.Verbose(fmt.Sprintf("  bootstrap: No match"))
 		}
 
 		for i, url := range answer.URLs {
-			question.Verbose(fmt.Sprintf("  bootstrap: Service URL #%d: '%s'", i+1, url))
+			c.Verbose(fmt.Sprintf("  bootstrap: Service URL #%d: '%s'", i+1, url))
 		}
 	}
 

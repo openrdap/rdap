@@ -69,7 +69,7 @@ func (r RequestType) String() string {
 	case EntitySearchByHandleRequest:
 		return "entity-search-by-handle"
 	case RawRequest:
-		return "raw-request"
+		return "url"
 	default:
 		panic("Unknown RequestType")
 	}
@@ -172,9 +172,6 @@ type Request struct {
 	//
 	// The default is no timeout.
 	Timeout time.Duration
-
-	// Optional callback function for verbose messages.
-	Verbose func(text string)
 
 	ctx context.Context
 }

@@ -80,10 +80,10 @@ func Example() {
 
 // PrintDomain prints some basic rdap.Domain fields.
 func PrintDomain(d *rdap.Domain) {
-	// Registry unique identifier for the domain. Here, "google.cz".
+	// Registry unique identifier for the domain. Here, "example.cz".
 	fmt.Printf("Handle=%s\n", d.Handle)
 
-	// Domain name (LDH = letters, digits, hyphen). Here, "google.cz".
+	// Domain name (LDH = letters, digits, hyphen). Here, "example.cz".
 	fmt.Printf("LDHName=%s\n", d.LDHName)
 
 	// Domain registration status. Here, "active".

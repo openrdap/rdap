@@ -26,7 +26,7 @@ var (
 (www.openrdap.org)
 
 Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL
-  e.g. rdap google.cz
+  e.g. rdap example.cz
        rdap 192.0.2.0
        rdap 2001:db8::
        rdap AS2856
@@ -186,7 +186,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	// Exactly one argument is required (i.e. the domain/ip/url/etc), unless
 	// we're making a help query.
 	if *queryType != "help" && len(*queryArgs) == 0 {
-		printError(stderr, fmt.Sprintf("Error: %s\n\n%s", "Query object required, e.g. rdap google.cz", usageText))
+		printError(stderr, fmt.Sprintf("Error: %s\n\n%s", "Query object required, e.g. rdap example.cz", usageText))
 		return 1
 	}
 

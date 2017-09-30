@@ -10,7 +10,7 @@
 //
 // Example quick usage:
 //   client := rdap.NewClient()
-//   domain, err := client.QueryDomain("google.cz")
+//   domain, err := client.QueryDomain("example.cz")
 //
 //   if err != nil {
 //     fmt.Printf("name=%s, address=%s\n", domain.Registrant.Name, domain.Registrant.Address)
@@ -25,7 +25,7 @@
 //
 // The above examples If you are running lots of RDAP queries, enable the bootstrap data disk cache ($HOME/.openrdap or %UserData%\openrdap):
 //
-//  - text based query for google.cz
+//  - text based query for example.cz
 //  - client options
 //  - use of bootstrap cache, custom http, timeout
 //

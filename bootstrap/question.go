@@ -19,9 +19,6 @@ type Question struct {
 	// Query text.
 	Query string
 
-	// Optional callback function for verbose messages.
-	Verbose func(text string)
-
 	ctx context.Context
 }
 

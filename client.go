@@ -21,7 +21,7 @@ import (
 //
 // Quick usage:
 //   client := &rdap.Client{}
-//   domain, err := client.QueryDomain("google.cz")
+//   domain, err := client.QueryDomain("example.cz")
 //
 //   if err == nil {
 //     fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
@@ -72,6 +72,9 @@ type Client struct {
 	HTTP      *http.Client
 	Bootstrap *bootstrap.Client
 
+	// Optional callback function for verbose messages.
+	Verbose func(text string)
+
 	ServiceProviderExperiment bool
 	UserAgent                 string
 }
@@ -99,24 +102,24 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	}
 
 	// Init Verbose callback?
-	if req.Verbose == nil {
-		req.Verbose = defaultVerboseFunc
+	if c.Verbose == nil {
+		c.Verbose = defaultVerboseFunc
 	}
 
-	req.Verbose("")
-	req.Verbose(fmt.Sprintf("client: Running..."))
-	req.Verbose(fmt.Sprintf("client: Request type  : %s", req.Type))
-	req.Verbose(fmt.Sprintf("client: Request query : %s", req.Query))
+	c.Verbose("")
+	c.Verbose(fmt.Sprintf("client: Running..."))
+	c.Verbose(fmt.Sprintf("client: Request type  : %s", req.Type))
+	c.Verbose(fmt.Sprintf("client: Request query : %s", req.Query))
 
 	var reqs []*Request
 
 	// Need to bootstrap the query?
 	if req.Server != nil {
-		req.Verbose(fmt.Sprintf("client: Request URL   : %s", req.URL()))
+		c.Verbose(fmt.Sprintf("client: Request URL   : %s", req.URL()))
 
 		reqs = []*Request{req}
 	} else if req.Server == nil {
-		req.Verbose("client: Request URL   : TBD, bootstrap required")
+		c.Verbose("client: Request URL   : TBD, bootstrap required")
 
 		var bootstrapType *bootstrap.RegistryType = bootstrapTypeFor(req)
 
@@ -129,11 +132,15 @@ func (c *Client) Do(req *Request) (*Response, error) {
 			}
 		}
 
+		origBootstrapVerbose := c.Bootstrap.Verbose
+		c.Bootstrap.Verbose = c.Verbose
+		defer func() {
+			c.Bootstrap.Verbose = origBootstrapVerbose
+		}()
+
 		question := &bootstrap.Question{
 			RegistryType: *bootstrapType,
 			Query:        req.Query,
-
-			Verbose: req.Verbose,
 		}
 		question = question.WithContext(req.Context())
 
@@ -161,17 +168,17 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	}
 
 	for i, r := range reqs {
-		req.Verbose(fmt.Sprintf("client: RDAP URL #%d is %s", i, r.URL()))
+		c.Verbose(fmt.Sprintf("client: RDAP URL #%d is %s", i, r.URL()))
 	}
 
 	for _, r := range reqs {
-		req.Verbose(fmt.Sprintf("client: GET %s", r.URL()))
+		c.Verbose(fmt.Sprintf("client: GET %s", r.URL()))
 
 		httpResponse := c.get(r)
 		resp.HTTP = append(resp.HTTP, httpResponse)
 
 		if httpResponse.Error != nil {
-			req.Verbose(fmt.Sprintf("client: error: %s",
+			c.Verbose(fmt.Sprintf("client: error: %s",
 				httpResponse.Error))
 
 			if r.Context().Err() == context.DeadlineExceeded {
@@ -182,7 +189,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 		} else {
 			hrr := httpResponse.Response
 
-			req.Verbose(fmt.Sprintf("client: status-code=%d, content-type=%s, length=%d bytes, duration=%s",
+			c.Verbose(fmt.Sprintf("client: status-code=%d, content-type=%s, length=%d bytes, duration=%s",
 				hrr.StatusCode,
 				hrr.Header.Get("Content-Type"),
 				len(httpResponse.Body),
@@ -195,17 +202,21 @@ func (c *Client) Do(req *Request) (*Response, error) {
 				resp.Response, httpResponse.Error = decoder.Decode()
 
 				if httpResponse.Error != nil {
-					req.Verbose(fmt.Sprintf("client: error decoding response: %s",
+					c.Verbose(fmt.Sprintf("client: Error decoding response: %s",
 						httpResponse.Error))
 					continue
 				}
 
-				req.Verbose("client: Successfully decoded response")
+				c.Verbose("client: Successfully decoded response")
+
+				// Implement additional fetches here.
 
 				return resp, nil
 			}
 		}
 	}
+
+	c.Verbose(fmt.Sprintf("client: No more servers to query"))
 
 	return resp, &ClientError{
 		Type: NoWorkingServers,
