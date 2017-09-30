@@ -4,6 +4,11 @@
 
 package rdap
 
+import (
+	"fmt"
+	"strings"
+)
+
 type ClientErrorType uint
 
 const (
@@ -15,6 +20,7 @@ const (
 	WrongResponseType
 	NoWorkingServers
 	ObjectDoesNotExist
+	RDAPServerError
 )
 
 type ClientError struct {
@@ -34,4 +40,14 @@ func isClientError(t ClientErrorType, err error) bool {
 	}
 
 	return false
+}
+
+func clientErrorFromRDAPError(e *Error) *ClientError {
+	return &ClientError{
+		Type: RDAPServerError,
+		Text: fmt.Sprintf("Server returned error code %d, title='%s', description='%s'",
+			e.ErrorCode,
+			e.Title,
+			strings.Join(e.Description, " ")),
+	}
 }

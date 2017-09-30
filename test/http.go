@@ -105,6 +105,8 @@ func loadTestDatasets() {
 	// RDAP responses.
 	load(Responses, 200, "https://rdap.nic.cz/domain/example.cz", "rdap/rdap.nic.cz/domain-example.cz.json")
 	load(Responses, 404, "https://rdap.nic.cz/domain/non-existent.cz", "misc/empty.html")
+	load(Responses, 200, "https://rdap.nic.cz/domain/wrong-response-type.cz", "rdap/rdap.nic.cz/nameserver-ns2.pipni.cz.json")
+	load(Responses, 200, "https://rdap.nic.cz/domain/malformed.cz", "misc/malformed.json")
 }
 
 func load(set TestDataset, status int, url string, filename string) {

@@ -60,9 +60,44 @@ func TestClientQueryDomain404(t *testing.T) {
 	}
 }
 
+func TestClientQueryDomainWrongType(t *testing.T) {
+	test.Start(test.Bootstrap)
+	test.Start(test.Responses)
+	defer test.Finish()
+
+	client := &Client{
+		Verbose: verboseFunc(),
+	}
+
+	_, err := client.QueryDomain("wrong-response-type.cz")
+
+	if err == nil {
+		t.Errorf("Unexpected success")
+	} else if !isClientError(WrongResponseType, err) {
+		t.Errorf("Unexpected err %s", err)
+	}
+}
+
+func TestClientQueryDomainMalformed(t *testing.T) {
+	test.Start(test.Bootstrap)
+	test.Start(test.Responses)
+	defer test.Finish()
+
+	client := &Client{
+		Verbose: verboseFunc(),
+	}
+
+	_, err := client.QueryDomain("malformed.cz")
+
+	if err == nil {
+		t.Errorf("Unexpected success")
+	} else if !isClientError(NoWorkingServers, err) {
+		t.Errorf("Unexpected err %s", err)
+	}
+}
+
+// test Do()
 // 1) success, 1 of each query
 // 2) bootstrap not supported
 // 3) bootstrap no match
-// 4) ran out of servers
-// 5) retry broken server
-// 6) error decoding response
+// test Help...

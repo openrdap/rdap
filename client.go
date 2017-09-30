@@ -103,7 +103,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 
 	// Init Verbose callback?
 	if c.Verbose == nil {
-		c.Verbose = defaultVerboseFunc
+		c.Verbose = func(text string) {}
 	}
 
 	c.Verbose("")
@@ -221,8 +221,6 @@ func (c *Client) Do(req *Request) (*Response, error) {
 		}
 	}
 
-	c.Verbose(fmt.Sprintf("client: No more servers to query"))
-
 	return resp, &ClientError{
 		Type: NoWorkingServers,
 		Text: fmt.Sprintf("No RDAP servers responded successfully (tried %d server(s))",
@@ -290,11 +288,13 @@ func (c *Client) QueryDomain(domain string) (*Domain, error) {
 
 	if domain, ok := resp.Response.(*Domain); ok {
 		return domain, nil
+	} else if respError, ok := resp.Response.(*Error); ok {
+		return nil, clientErrorFromRDAPError(respError)
 	}
 
 	return nil, &ClientError{
 		Type: WrongResponseType,
-		Text: "The server didn't return an RDAP Domain response",
+		Text: "The server returned a non-Domain RDAP response",
 	}
 }
 
@@ -326,11 +326,13 @@ func (c *Client) QueryAutnum(autnum string) (*Autnum, error) {
 
 	if autnum, ok := resp.Response.(*Autnum); ok {
 		return autnum, nil
+	} else if respError, ok := resp.Response.(*Error); ok {
+		return nil, clientErrorFromRDAPError(respError)
 	}
 
 	return nil, &ClientError{
 		Type: WrongResponseType,
-		Text: "The server didn't return an RDAP Autnum response",
+		Text: "The server returned a non-Autnum RDAP response",
 	}
 }
 
@@ -350,15 +352,14 @@ func (c *Client) QueryIP(ip string) (*IPNetwork, error) {
 
 	if ipNet, ok := resp.Response.(*IPNetwork); ok {
 		return ipNet, nil
+	} else if respError, ok := resp.Response.(*Error); ok {
+		return nil, clientErrorFromRDAPError(respError)
 	}
 
 	return nil, &ClientError{
 		Type: WrongResponseType,
-		Text: "The server didn't return an RDAP IPNetwork response",
+		Text: "The server returned a non-IPNetwork RDAP response",
 	}
-}
-
-func defaultVerboseFunc(text string) {
 }
 
 func bootstrapTypeFor(req *Request) *bootstrap.RegistryType {
