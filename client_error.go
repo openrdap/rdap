@@ -14,6 +14,7 @@ const (
 	BootstrapNoMatch
 	WrongResponseType
 	NoWorkingServers
+	ObjectDoesNotExist
 )
 
 type ClientError struct {
@@ -23,4 +24,14 @@ type ClientError struct {
 
 func (c ClientError) Error() string {
 	return c.Text
+}
+
+func isClientError(t ClientErrorType, err error) bool {
+	if ce, ok := err.(*ClientError); ok {
+		if ce.Type == t {
+			return true
+		}
+	}
+
+	return false
 }

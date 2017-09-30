@@ -212,6 +212,11 @@ func (c *Client) Do(req *Request) (*Response, error) {
 				// Implement additional fetches here.
 
 				return resp, nil
+			} else if hrr.StatusCode == 404 {
+				return resp, &ClientError{
+					Type: ObjectDoesNotExist,
+					Text: fmt.Sprintf("RDAP server returned 404, object does not exist."),
+				}
 			}
 		}
 	}
