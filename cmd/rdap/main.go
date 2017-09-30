@@ -21,8 +21,9 @@ import (
 )
 
 var (
-	version   = "OpenRDAP v0.0.1 (www.openrdap.org)"
+	version   = "OpenRDAP v0.0.1"
 	usageText = version + `
+(www.openrdap.org)
 
 Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL
   e.g. rdap google.cz
@@ -247,7 +248,7 @@ func run(args []string, stdout io.Writer, stderr io.Writer) int {
 	case "nameserver-search-by-nameserver-ip":
 		req = rdap.NewRequest(rdap.NameserverSearchByNameserverIPRequest, queryText)
 	default:
-		printError(stderr, fmt.Sprintf("Unknown query type '%s'", queryType))
+		printError(stderr, fmt.Sprintf("Unknown query type '%s'", *queryType))
 		return 1
 	}
 

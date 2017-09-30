@@ -11,7 +11,9 @@ const (
 
 	InputError
 	BootstrapNotSupported
+	BootstrapNoMatch
 	WrongResponseType
+	NoWorkingServers
 )
 
 type ClientError struct {

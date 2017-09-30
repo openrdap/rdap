@@ -7,6 +7,7 @@ package rdap
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -76,6 +77,9 @@ type Client struct {
 }
 
 func (c *Client) Do(req *Request) (*Response, error) {
+	// Response struct.
+	resp := &Response{}
+
 	// Bad query?
 	if req == nil {
 		return nil, &ClientError{
@@ -104,9 +108,13 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	req.Verbose(fmt.Sprintf("client: Request type  : %s", req.Type))
 	req.Verbose(fmt.Sprintf("client: Request query : %s", req.Query))
 
+	var reqs []*Request
+
 	// Need to bootstrap the query?
 	if req.Server != nil {
 		req.Verbose(fmt.Sprintf("client: Request URL   : %s", req.URL()))
+
+		reqs = []*Request{req}
 	} else if req.Server == nil {
 		req.Verbose("client: Request URL   : TBD, bootstrap required")
 
@@ -133,18 +141,121 @@ func (c *Client) Do(req *Request) (*Response, error) {
 		var err error
 
 		answer, err = c.Bootstrap.Lookup(question)
+		resp.BootstrapAnswer = answer
 
 		if err != nil {
-			return nil, err
+			return resp, err
 		}
 
-		fmt.Printf("ok bootstrap ok %v\n", *answer)
+		// No URLs to query?
+		if len(answer.URLs) == 0 {
+			return resp, &ClientError{
+				Type: BootstrapNoMatch,
+				Text: fmt.Sprintf("No RDAP servers found for '%s'", question.Query),
+			}
+		}
+
+		for _, u := range answer.URLs {
+			reqs = append(reqs, req.WithServer(u))
+		}
 	}
 
-	fmt.Printf("Querying with UA %s\n", c.UserAgent)
+	for i, r := range reqs {
+		req.Verbose(fmt.Sprintf("client: RDAP URL #%d is %s", i, r.URL()))
+	}
 
-	// main issues are raw response, timeout working correctly, *Response or interface{}?
-	return nil, nil
+	for _, r := range reqs {
+		req.Verbose(fmt.Sprintf("client: GET %s", r.URL()))
+
+		httpResponse := c.get(r)
+		resp.HTTP = append(resp.HTTP, httpResponse)
+
+		if httpResponse.Error != nil {
+			req.Verbose(fmt.Sprintf("client: error: %s",
+				httpResponse.Error))
+
+			if r.Context().Err() == context.DeadlineExceeded {
+				return resp, httpResponse.Error
+			}
+
+			// Continues to the next RDAP server.
+		} else {
+			hrr := httpResponse.Response
+
+			req.Verbose(fmt.Sprintf("client: status-code=%d, content-type=%s, length=%d bytes, duration=%s",
+				hrr.StatusCode,
+				hrr.Header.Get("Content-Type"),
+				len(httpResponse.Body),
+				httpResponse.Duration))
+
+			if len(httpResponse.Body) > 0 && hrr.StatusCode >= 200 && hrr.StatusCode <= 299 {
+				// Decode the response.
+				decoder := NewDecoder(httpResponse.Body)
+
+				resp.Response, httpResponse.Error = decoder.Decode()
+
+				if httpResponse.Error != nil {
+					req.Verbose(fmt.Sprintf("client: error decoding response: %s",
+						httpResponse.Error))
+					continue
+				}
+
+				req.Verbose("client: Successfully decoded response")
+
+				return resp, nil
+			}
+		}
+	}
+
+	return resp, &ClientError{
+		Type: NoWorkingServers,
+		Text: fmt.Sprintf("No RDAP servers responded successfully (tried %d server(s))",
+			len(reqs)),
+	}
+}
+
+func (c *Client) get(rdapReq *Request) *HTTPResponse {
+	// HTTPResponse stores the URL, http.Response, response body...
+	httpResponse := &HTTPResponse{
+		URL: rdapReq.URL().String(),
+	}
+
+	start := time.Now()
+
+	// Setup the HTTP request.
+	req, err := http.NewRequest("GET", httpResponse.URL, nil)
+	if err != nil {
+		httpResponse.Error = err
+		httpResponse.Duration = time.Since(start)
+		return httpResponse
+	}
+
+	// Optionally add User-Agent header.
+	if c.UserAgent != "" {
+		req.Header.Add("User-Agent", c.UserAgent)
+	}
+
+	// Add context for timeout.
+	req = req.WithContext(rdapReq.Context())
+
+	// Make the HTTP request.
+	resp, err := c.HTTP.Do(req)
+	httpResponse.Response = resp
+
+	// Handle errors such as "remote doesn't speak HTTP"...
+	if err != nil {
+		httpResponse.Error = err
+		httpResponse.Duration = time.Since(start)
+
+		return httpResponse
+	}
+
+	defer resp.Body.Close()
+	httpResponse.Body, httpResponse.Error = ioutil.ReadAll(resp.Body)
+
+	httpResponse.Duration = time.Since(start)
+
+	return httpResponse
 }
 
 // QueryDomain makes an RDAP request for the |domain|.
