@@ -111,7 +111,7 @@ func (a *ASNRegistry) Lookup(question *Question) (*Answer, error) {
 	}
 
 	return &Answer{
-		Query: string(asn),
+		Query: fmt.Sprintf("%d", asn),
 		Entry: entry,
 		URLs:  urls,
 	}, nil
