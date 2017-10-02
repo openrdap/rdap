@@ -99,7 +99,11 @@ const (
 	ExperimentalBootstrapURL = "https://test.rdap.net/rdap"
 )
 
-func RunCLI(args []string, stdout io.Writer, stderr io.Writer) int {
+type CLIOptions struct {
+	Sandbox bool
+}
+
+func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOptions) int {
 	// For duration timer (in --verbose output).
 	start := time.Now()
 
@@ -108,6 +112,15 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer) int {
 	app.HelpFlag.Short('h')
 	app.UsageTemplate(usageText)
 	app.UsageWriter(stderr)
+
+	// Instead of letting kingpin call os.Exit(), flag if it requests to exit
+	// here.
+	//
+	// This lets the function be called in libraries/tests without exiting them.
+	terminate := false
+	app.Terminate(func(int) {
+		terminate = true
+	})
 
 	// Command line options.
 	verboseFlag := app.Flag("verbose", "").Short('v').Bool()
@@ -126,13 +139,16 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer) int {
 	bootstrapTimeoutFlag := app.Flag("bs-ttl", "").Default("3600").Uint32()
 
 	// Command line query (any remaining non-option arguments).
-	var queryArgs *[]string = app.Arg("", "").Strings()
+	queryArgs := app.Arg("", "").Strings()
 
 	// Parse command line arguments.
 	// The help messages for -h/--help are printed directly by app.Parse().
 	_, err := app.Parse(args)
 	if err != nil {
 		printError(stderr, fmt.Sprintf("Error: %s\n\n%s", err, usageText))
+		return 1
+	} else if terminate {
+		// Occurs when kingpin prints the --help message.
 		return 1
 	}
 
@@ -277,7 +293,11 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer) int {
 	} else {
 		dc := cache.NewDiskCache()
 		if *cacheDirFlag != "default" {
-			dc.Dir = *cacheDirFlag
+			if !options.Sandbox {
+				dc.Dir = *cacheDirFlag
+			} else {
+				verbose(fmt.Sprintf("rdap: Ignored --cache-dir option (sandbox mode enabled)"))
+			}
 		}
 
 		verbose(fmt.Sprintf("rdap: Using disk cache (%s)", dc.Dir))

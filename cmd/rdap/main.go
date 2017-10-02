@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	exitCode := rdap.RunCLI(os.Args[1:], os.Stdout, os.Stderr)
+	exitCode := rdap.RunCLI(os.Args[1:], os.Stdout, os.Stderr, rdap.CLIOptions{})
 
 	os.Exit(exitCode)
 }
