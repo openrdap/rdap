@@ -15,6 +15,8 @@ import (
 	"github.com/openrdap/rdap/bootstrap"
 	"github.com/openrdap/rdap/bootstrap/cache"
 
+	"github.com/davecgh/go-spew/spew"
+
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -381,6 +383,8 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		printError(stderr, fmt.Sprintf("Error: %s", err))
 		return 1
 	}
+
+	spew.Fdump(stdout, resp.Response)
 
 	_ = resp
 	_ = insecureFlag

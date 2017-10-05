@@ -23,6 +23,19 @@ type DecodeData struct {
 	notes              map[string][]string
 }
 
+// TODO (temporary, using for spew output)
+func (r DecodeData) String() string {
+	result := "["
+	for name, notes := range r.notes {
+		for _, note := range notes {
+			result += "\n !!!" + name + ": " + note
+		}
+	}
+	result += "\n"
+
+	return result
+}
+
 // Notes returns a list of minor warnings/errors encountered while decoding the
 // field |name|.
 //
