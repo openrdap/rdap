@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
+	"github.com/openrdap/rdap/test"
 )
 
 func TestDecodeEmpty(t *testing.T) {
@@ -307,6 +308,15 @@ func TestDecodeString(t *testing.T) {
 		F2:   "-3.14",
 		N:    "",
 	})
+}
+
+func TestDecodeBug1(t *testing.T) {
+	jsonBlob := test.LoadFile("rdap/rdap-pilot.verisignlabs.com/entity-1-VRSN")
+
+	d := NewDecoder([]byte(jsonBlob))
+	result, err := d.Decode()
+
+	t.Logf("%s %s\n", result, err)
 }
 
 func runDecode(t *testing.T, target interface{}, jsonBlob string) (interface{}, bool) {

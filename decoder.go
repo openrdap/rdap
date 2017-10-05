@@ -230,7 +230,11 @@ func (d *Decoder) decode(keyName string, src interface{}, dst reflect.Value, dec
 // The parameters and return variables are as per decode().
 func (d *Decoder) decodeSlice(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	// Cast the input to a slice.
-	srcSlice := src.([]interface{})
+	srcSlice, ok := src.([]interface{})
+	if !ok {
+		d.addDecodeNote(decodeData, keyName, "invalid JSON type, expecting array")
+		return false, nil
+	}
 
 	// Construct the result slice.
 	result := reflect.MakeSlice(dst.Type(), 0, len(srcSlice))
@@ -577,7 +581,11 @@ func (d *Decoder) decodeStruct(keyName string, src interface{}, dst reflect.Valu
 	var err error
 
 	// |src| must be a JSON object.
-	srcMap := src.(map[string]interface{})
+	srcMap, ok := src.(map[string]interface{})
+	if !ok {
+		d.addDecodeNote(decodeData, keyName, "invalid JSON type, expecting object")
+		return false, nil
+	}
 
 	// Identify the fields in the struct we'll decode into.
 	// e.g. fields["port43"] => [some reflect.Value]
