@@ -47,7 +47,7 @@ func (s *ServiceProviderRegistry) Lookup(question *Question) (*Answer, error) {
 	input := question.Query
 
 	// Valid input looks like 12345-VRSN.
-	offset := strings.IndexByte(input, '~')
+	offset := strings.LastIndexByte(input, '~')
 
 	if offset == -1 || offset == len(input)-1 {
 		return &Answer{
