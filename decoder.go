@@ -275,11 +275,16 @@ func (d *Decoder) decodeMap(keyName string, src interface{}, dst reflect.Value, 
 		panic("BUG: map key is not string")
 	}
 
+	srcMap, ok := src.(map[string]interface{})
+	if !ok {
+		d.addDecodeNote(decodeData, keyName, "invalid JSON type, expecting object")
+		return false, nil
+	}
+
 	// Construct the result map.
 	result := reflect.MakeMap(dst.Type())
 
 	// Foreach |src| map key/value...
-	srcMap := src.(map[string]interface{})
 	for k, v := range srcMap {
 		// Construct the result value.
 		vdst := reflect.New(dst.Type().Elem())

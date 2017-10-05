@@ -319,6 +319,29 @@ func TestDecodeBug1(t *testing.T) {
 	t.Logf("%s %s\n", result, err)
 }
 
+func TestDecodeMismatchedTypes(t *testing.T) {
+	type C struct {
+	}
+
+	type XYZ struct {
+		A []string
+		B map[string]string
+		C C
+	}
+
+	runDecodeAndCompareTest(t, &XYZ{}, `
+	{
+		"a": {},
+		"b": [1,2,3],
+		"c": false
+	}
+	`, &XYZ{
+		A: nil,
+		B: nil,
+		C: C{},
+	})
+}
+
 func runDecode(t *testing.T, target interface{}, jsonBlob string) (interface{}, bool) {
 	d := NewDecoder([]byte(jsonBlob))
 	d.target = target
