@@ -12,10 +12,12 @@ import (
 )
 
 type Response struct {
-	Response        interface{}
+	Object          RDAPObject
 	BootstrapAnswer *bootstrap.Answer
 	HTTP            []*HTTPResponse
 }
+
+type RDAPObject interface{}
 
 type HTTPResponse struct {
 	URL      string

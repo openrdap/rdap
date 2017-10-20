@@ -15,8 +15,6 @@ import (
 	"github.com/openrdap/rdap/bootstrap"
 	"github.com/openrdap/rdap/bootstrap/cache"
 
-	"github.com/davecgh/go-spew/spew"
-
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -98,13 +96,25 @@ Advanced options (experiments):
 )
 
 const (
-	ExperimentalBootstrapURL = "https://test.rdap.net/rdap"
+	experimentalBootstrapURL = "https://test.rdap.net/rdap"
 )
 
+// CLIOptions specifies options for the command line client.
 type CLIOptions struct {
+	// Sandbox mode disables the --cache-dir option, to prevent arbitrary writes to
+	// the file system.
+	//
+	// This is used for https://www.openrdap.org/demo.
 	Sandbox bool
 }
 
+// RunCLI runs the OpenRDAP command line client.
+//
+// |args| are the command line arguments to use (normally os.Args[1:]).
+// |stdout| and |stderr| are the io.Writers for STDOUT/STDERR.
+// |options| specifies extra options.
+//
+// Returns the program exit code.
 func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOptions) int {
 	// For duration timer (in --verbose output).
 	start := time.Now()
@@ -113,7 +123,8 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	app := kingpin.New("rdap", "RDAP command-line client")
 	app.HelpFlag.Short('h')
 	app.UsageTemplate(usageText)
-	app.UsageWriter(stderr)
+	app.UsageWriter(stdout)
+	app.ErrorWriter(stderr)
 
 	// Instead of letting kingpin call os.Exit(), flag if it requests to exit
 	// here.
@@ -317,7 +328,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 	// Use experimental bootstrap service URL?
 	if experiments["test_rdap_net"] && *bootstrapURLFlag == "default" {
-		*bootstrapURLFlag = ExperimentalBootstrapURL
+		*bootstrapURLFlag = experimentalBootstrapURL
 
 		verbose("rdap: Using test.rdap.net bootstrap service (test_rdap_net experiment)")
 	}
@@ -384,9 +395,16 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		return 1
 	}
 
-	spew.Fdump(stdout, resp.Response)
+	// Print the response out in text format.
+	// TODO: JSON output.
+	printer := &Printer{
+		Writer: stdout,
 
-	_ = resp
+		BriefLinks:  true,
+		BriefOutput: true,
+	}
+	printer.Print(resp.Object)
+
 	_ = insecureFlag
 	_ = queryType
 	_ = verboseFlag

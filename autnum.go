@@ -16,8 +16,8 @@ type Autnum struct {
 	Notices         []Notice
 
 	Handle      string
-	StartAutnum uint32
-	EndAutnum   string
+	StartAutnum *uint32
+	EndAutnum   *uint32
 	IPVersion   string `rdap:"ipVersion"`
 	Name        string
 	Type        string

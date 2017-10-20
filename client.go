@@ -199,7 +199,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 				// Decode the response.
 				decoder := NewDecoder(httpResponse.Body)
 
-				resp.Response, httpResponse.Error = decoder.Decode()
+				resp.Object, httpResponse.Error = decoder.Decode()
 
 				if httpResponse.Error != nil {
 					c.Verbose(fmt.Sprintf("client: Error decoding response: %s",
@@ -286,9 +286,9 @@ func (c *Client) QueryDomain(domain string) (*Domain, error) {
 		return nil, err
 	}
 
-	if domain, ok := resp.Response.(*Domain); ok {
+	if domain, ok := resp.Object.(*Domain); ok {
 		return domain, nil
-	} else if respError, ok := resp.Response.(*Error); ok {
+	} else if respError, ok := resp.Object.(*Error); ok {
 		return nil, clientErrorFromRDAPError(respError)
 	}
 
@@ -324,9 +324,9 @@ func (c *Client) QueryAutnum(autnum string) (*Autnum, error) {
 		return nil, err
 	}
 
-	if autnum, ok := resp.Response.(*Autnum); ok {
+	if autnum, ok := resp.Object.(*Autnum); ok {
 		return autnum, nil
-	} else if respError, ok := resp.Response.(*Error); ok {
+	} else if respError, ok := resp.Object.(*Error); ok {
 		return nil, clientErrorFromRDAPError(respError)
 	}
 
@@ -350,9 +350,9 @@ func (c *Client) QueryIP(ip string) (*IPNetwork, error) {
 		return nil, err
 	}
 
-	if ipNet, ok := resp.Response.(*IPNetwork); ok {
+	if ipNet, ok := resp.Object.(*IPNetwork); ok {
 		return ipNet, nil
-	} else if respError, ok := resp.Response.(*Error); ok {
+	} else if respError, ok := resp.Object.(*Error); ok {
 		return nil, clientErrorFromRDAPError(respError)
 	}
 

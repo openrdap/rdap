@@ -8,29 +8,28 @@
 //
 // This client executes RDAP queries and returns the responses as Go values.
 //
-// Example quick usage:
-//   client := rdap.NewClient()
+// Quick usage:
+//   client := &rdap.Client{}
 //   domain, err := client.QueryDomain("example.cz")
 //
-//   if err != nil {
-//     fmt.Printf("name=%s, address=%s\n", domain.Registrant.Name, domain.Registrant.Address)
+//   if err == nil {
+//     fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
+//   }
+// The QueryDomain(), QueryAutnum(), and QueryIP() methods all provide full contact information, and timeout after 30s.
+//
+// Normal usage:
+//   // Query example.cz.
+//   req := &rdap.Request{
+//     Type: rdap.DomainRequest,
+//     Query: "example.cz",
 //   }
 //
-// Manual query construction, with options to fetch specific data (if available):
-//  client := rdap.NewClient()
-//  client.Options = FetchRegistrant | FetchTechnical | FetchNOC
+//   client := &rdap.Client{}
+//   resp, err := client.Do(req)
 //
-//  query := rdap.NewAutnumQuery(5400)
-//  response, err := client.Query(query)
-//
-// The above examples If you are running lots of RDAP queries, enable the bootstrap data disk cache ($HOME/.openrdap or %UserData%\openrdap):
-//
-//  - text based query for example.cz
-//  - client options
-//  - use of bootstrap cache, custom http, timeout
-//
-//  - success/partial success
-//  - timeouts
+//   if domain, ok := resp.Object.(*rdap.Domain); ok {
+//     fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
+//   }
 //
 // As of June 2017, all five number registries (AFRINIC, ARIN, APNIC, LANIC,
 // RIPE) run RDAP servers. A small number of TLDs (top level domains) support

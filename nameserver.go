@@ -19,7 +19,7 @@ type Nameserver struct {
 	LDHName     string `rdap:"ldhName"`
 	UnicodeName string
 
-	IPAddresses IPAddressSet `rdap:"ipAddresses"`
+	IPAddresses *IPAddressSet `rdap:"ipAddresses"`
 
 	Entities []Entity
 	Status   []string

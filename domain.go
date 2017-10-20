@@ -24,7 +24,7 @@ type Domain struct {
 
 	Nameservers []Nameserver
 
-	SecureDNS SecureDNS
+	SecureDNS *SecureDNS
 
 	Entities []Entity
 	Status   []string
@@ -34,7 +34,7 @@ type Domain struct {
 	Links     []Link
 	Port43    string
 	Events    []Event
-	Network   IPNetwork
+	Network   *IPNetwork
 }
 
 // Variant is a subfield of Domain.
@@ -61,10 +61,11 @@ type SecureDNS struct {
 	DecodeData *DecodeData
 
 	Common
-	ZoneSigned       bool
-	DelegationSigned bool
-	MaxSigLife       uint64
+	ZoneSigned       *bool
+	DelegationSigned *bool
+	MaxSigLife       *uint64
 	DS               []DSData `rdap:"dsData"`
+	Keys             []KeyData
 }
 
 // DSData is a subfield of Domain.
@@ -72,8 +73,20 @@ type DSData struct {
 	DecodeData *DecodeData
 
 	Common
-	KeyTag     uint64
-	Algorithm  uint8
+	KeyTag     *uint64
+	Algorithm  *uint8
 	Digest     string
-	DigestType uint8
+	DigestType *uint8
+
+	Events []Event
+	Links  []Link
+}
+
+type KeyData struct {
+	DecodeData *DecodeData
+
+	Flags     *uint16
+	Protocol  *uint8
+	Algorithm *uint8
+	PublicKey string
 }
