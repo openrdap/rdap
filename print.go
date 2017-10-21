@@ -87,6 +87,75 @@ func (p *Printer) printObject(obj RDAPObject, indentLevel uint) {
 		p.printHelp(v, indentLevel)
 	case *Error:
 		p.printError(v, indentLevel)
+	case *DomainSearchResults:
+		p.printDomainSearchResults(v, indentLevel)
+	case *EntitySearchResults:
+		p.printEntitySearchResults(v, indentLevel)
+	case *NameserverSearchResults:
+		p.printNameserverSearchResults(v, indentLevel)
+	}
+}
+
+func (p *Printer) printNameserverSearchResults(sr *NameserverSearchResults, indentLevel uint) {
+	p.printHeading("Nameserver Search Results", indentLevel)
+	indentLevel++
+
+	if !p.BriefOutput {
+		for _, c := range sr.Conformance {
+			p.printValue("Conformance", c, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitNotices {
+		for _, n := range sr.Notices {
+			p.printNotice(n, indentLevel)
+		}
+	}
+
+	for _, n := range sr.Nameservers {
+		p.printNameserver(&n, indentLevel)
+	}
+}
+
+func (p *Printer) printEntitySearchResults(sr *EntitySearchResults, indentLevel uint) {
+	p.printHeading("Entity Search Results", indentLevel)
+	indentLevel++
+
+	if !p.BriefOutput {
+		for _, c := range sr.Conformance {
+			p.printValue("Conformance", c, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitNotices {
+		for _, n := range sr.Notices {
+			p.printNotice(n, indentLevel)
+		}
+	}
+
+	for _, e := range sr.Entities {
+		p.printEntity(&e, indentLevel)
+	}
+}
+
+func (p *Printer) printDomainSearchResults(sr *DomainSearchResults, indentLevel uint) {
+	p.printHeading("Domain Search Results", indentLevel)
+	indentLevel++
+
+	if !p.BriefOutput {
+		for _, c := range sr.Conformance {
+			p.printValue("Conformance", c, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitNotices {
+		for _, n := range sr.Notices {
+			p.printNotice(n, indentLevel)
+		}
+	}
+
+	for _, d := range sr.Domains {
+		p.printDomain(&d, indentLevel)
 	}
 }
 
