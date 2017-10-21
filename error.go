@@ -15,7 +15,7 @@ type Error struct {
 
 	Notices []Notice
 
-	ErrorCode   uint16
+	ErrorCode   *uint16
 	Title       string
 	Description []string
 }

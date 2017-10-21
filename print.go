@@ -12,16 +12,43 @@ import (
 	"strings"
 )
 
+// Printer formats RDAP response objects as human readable text, and writes them
+// to an io.Writer.
+//
+// The format resembles a WHOIS response.
 type Printer struct {
+	// Output io.Writer.
+	//
+	// Defaults to os.Stdout.
 	Writer io.Writer
 
-	IndentSize uint
+	// RDAP responses typically consist of a nested set of objects,
+	// these are represented using indentation.
+
+	// Character to ident responses with.
+	//
+	// Defaults to ' ' (space character).
 	IndentChar rune
 
+	// Number of characters per indentation.
+	//
+	// Defaults to 2.
+	IndentSize uint
+
+	// OmitNotices prevents RDAP Notices from being printed.
 	OmitNotices bool
+
+	// OmitNotices prevents RDAP Remarks from being printed.
 	OmitRemarks bool
+
+	// BriefOutput shortens the output by omitting various objects. These are:
+	//
+	// Conformance, Notices, Remarks, Events, Port43, Variants, SecureDNS.
 	BriefOutput bool
-	BriefLinks  bool
+
+	// BriefLinks causes Link objects to be printed as a single line (the link),
+	// rather than as a multi-line object.
+	BriefLinks bool
 }
 
 func (p *Printer) Print(obj RDAPObject) {
@@ -54,6 +81,58 @@ func (p *Printer) printObject(obj RDAPObject, indentLevel uint) {
 		p.printNameserver(v, indentLevel)
 	case *Autnum:
 		p.printAutnum(v, indentLevel)
+	case *IPNetwork:
+		p.printIPNetwork(v, indentLevel)
+	case *Help:
+		p.printHelp(v, indentLevel)
+	case *Error:
+		p.printError(v, indentLevel)
+	}
+}
+
+func (p *Printer) printError(e *Error, indentLevel uint) {
+	p.printHeading("Error", indentLevel)
+	indentLevel++
+
+	if !p.BriefOutput {
+		for _, c := range e.Conformance {
+			p.printValue("Conformance", c, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitNotices {
+		for _, n := range e.Notices {
+			p.printNotice(n, indentLevel)
+		}
+	}
+
+	if e.ErrorCode != nil {
+		p.printValue("Error Code",
+			strconv.FormatUint(uint64(*e.ErrorCode), 10),
+			indentLevel)
+	}
+
+	p.printValue("Title", e.Title, indentLevel)
+
+	for _, d := range e.Description {
+		p.printValue("Description", d, indentLevel)
+	}
+}
+
+func (p *Printer) printHelp(h *Help, indentLevel uint) {
+	p.printHeading("Help", indentLevel)
+	indentLevel++
+
+	if !p.BriefOutput {
+		for _, c := range h.Conformance {
+			p.printValue("Conformance", c, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitNotices {
+		for _, n := range h.Notices {
+			p.printNotice(n, indentLevel)
+		}
 	}
 }
 
@@ -83,15 +162,15 @@ func (p *Printer) printDomain(d *Domain, indentLevel uint) {
 		}
 	}
 
-	if !p.BriefOutput || p.OmitRemarks {
-		for _, r := range d.Remarks {
-			p.printRemark(r, indentLevel)
-		}
-	}
-
 	if !p.BriefOutput || p.OmitNotices {
 		for _, n := range d.Notices {
 			p.printNotice(n, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitRemarks {
+		for _, r := range d.Remarks {
+			p.printRemark(r, indentLevel)
 		}
 	}
 
@@ -101,7 +180,7 @@ func (p *Printer) printDomain(d *Domain, indentLevel uint) {
 
 	if !p.BriefOutput {
 		for _, e := range d.Events {
-			p.printEvent(e, indentLevel)
+			p.printEvent(e, indentLevel, false)
 		}
 
 		for _, v := range d.Variants {
@@ -119,6 +198,10 @@ func (p *Printer) printDomain(d *Domain, indentLevel uint) {
 
 	for _, n := range d.Nameservers {
 		p.printNameserver(&n, indentLevel)
+	}
+
+	if d.Network != nil {
+		p.printIPNetwork(d.Network, indentLevel)
 	}
 }
 
@@ -160,15 +243,15 @@ func (p *Printer) printAutnum(a *Autnum, indentLevel uint) {
 		p.printValue("Port43", a.Port43, indentLevel)
 	}
 
-	if !p.BriefOutput || p.OmitRemarks {
-		for _, r := range a.Remarks {
-			p.printRemark(r, indentLevel)
-		}
-	}
-
 	if !p.BriefOutput || p.OmitNotices {
 		for _, n := range a.Notices {
 			p.printNotice(n, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitRemarks {
+		for _, r := range a.Remarks {
+			p.printRemark(r, indentLevel)
 		}
 	}
 
@@ -178,7 +261,7 @@ func (p *Printer) printAutnum(a *Autnum, indentLevel uint) {
 
 	if !p.BriefOutput {
 		for _, e := range a.Events {
-			p.printEvent(e, indentLevel)
+			p.printEvent(e, indentLevel, false)
 		}
 	}
 
@@ -210,15 +293,15 @@ func (p *Printer) printNameserver(n *Nameserver, indentLevel uint) {
 		}
 	}
 
-	if !p.BriefOutput || p.OmitRemarks {
-		for _, r := range n.Remarks {
-			p.printRemark(r, indentLevel)
-		}
-	}
-
 	if !p.BriefOutput || p.OmitNotices {
 		for _, n := range n.Notices {
 			p.printNotice(n, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitRemarks {
+		for _, r := range n.Remarks {
+			p.printRemark(r, indentLevel)
 		}
 	}
 
@@ -228,7 +311,7 @@ func (p *Printer) printNameserver(n *Nameserver, indentLevel uint) {
 
 	if !p.BriefOutput {
 		for _, e := range n.Events {
-			p.printEvent(e, indentLevel)
+			p.printEvent(e, indentLevel, false)
 		}
 	}
 
@@ -270,15 +353,13 @@ func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 		p.printValue("Port43", e.Port43, indentLevel)
 	}
 
+	for _, pid := range e.PublicIDs {
+		p.printPublicID(pid, indentLevel)
+	}
+
 	if !p.BriefOutput {
 		for _, c := range e.Conformance {
 			p.printValue("Conformance", c, indentLevel)
-		}
-	}
-
-	if !p.BriefOutput || p.OmitRemarks {
-		for _, r := range e.Remarks {
-			p.printRemark(r, indentLevel)
 		}
 	}
 
@@ -288,16 +369,24 @@ func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 		}
 	}
 
+	if !p.BriefOutput || p.OmitRemarks {
+		for _, r := range e.Remarks {
+			p.printRemark(r, indentLevel)
+		}
+	}
+
 	for _, l := range e.Links {
 		p.printLink(l, indentLevel)
 	}
 
 	if !p.BriefOutput {
 		for _, e := range e.Events {
-			p.printEvent(e, indentLevel)
+			p.printEvent(e, indentLevel, false)
 		}
 
-		// TODO: AsEventActor
+		for _, e := range e.AsEventActor {
+			p.printEvent(e, indentLevel, true)
+		}
 	}
 
 	for _, r := range e.Roles {
@@ -307,7 +396,7 @@ func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 	if e.VCard != nil {
 		for _, property := range e.VCard.Properties {
 			for _, str := range property.Values() {
-				p.printValue(property.Name, str, indentLevel)
+				p.printValue("VCard "+property.Name, str, indentLevel)
 			}
 		}
 	}
@@ -320,11 +409,60 @@ func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 		for _, asn := range e.Autnums {
 			p.printAutnum(&asn, indentLevel)
 		}
-	}
 
+		for _, e := range e.Entities {
+			p.printEntity(&e, indentLevel)
+		}
+	}
 }
 
 func (p *Printer) printIPNetwork(n *IPNetwork, indentLevel uint) {
+	p.printHeading("IP Network", indentLevel)
+
+	indentLevel++
+
+	p.printValue("Handle", n.Handle, indentLevel)
+	p.printValue("Start Address", n.StartAddress, indentLevel)
+	p.printValue("End Address", n.EndAddress, indentLevel)
+	p.printValue("IP Version", n.IPVersion, indentLevel)
+	p.printValue("Name", n.Name, indentLevel)
+	p.printValue("Type", n.Type, indentLevel)
+	p.printValue("Country", n.Country, indentLevel)
+	p.printValue("ParentHandle", n.ParentHandle, indentLevel)
+
+	for _, s := range n.Status {
+		p.printValue("Status", s, indentLevel)
+	}
+
+	if !p.BriefOutput {
+		p.printValue("Port43", n.Port43, indentLevel)
+	}
+
+	if !p.BriefOutput || p.OmitNotices {
+		for _, no := range n.Notices {
+			p.printNotice(no, indentLevel)
+		}
+	}
+
+	if !p.BriefOutput || p.OmitRemarks {
+		for _, r := range n.Remarks {
+			p.printRemark(r, indentLevel)
+		}
+	}
+
+	for _, e := range n.Entities {
+		p.printEntity(&e, indentLevel)
+	}
+
+	for _, l := range n.Links {
+		p.printLink(l, indentLevel)
+	}
+
+	if !p.BriefOutput {
+		for _, e := range n.Events {
+			p.printEvent(e, indentLevel, false)
+		}
+	}
 }
 
 func (p *Printer) printPublicID(pid PublicID, indentLevel uint) {
@@ -392,6 +530,16 @@ func (p *Printer) printKeyData(k KeyData, indentLevel uint) {
 	}
 
 	p.printValue("Public Key", k.PublicKey, indentLevel)
+
+	if !p.BriefOutput {
+		for _, e := range k.Events {
+			p.printEvent(e, indentLevel, false)
+		}
+	}
+
+	for _, l := range k.Links {
+		p.printLink(l, indentLevel)
+	}
 }
 
 func (p *Printer) printDSData(d DSData, indentLevel uint) {
@@ -419,6 +567,12 @@ func (p *Printer) printDSData(d DSData, indentLevel uint) {
 			indentLevel)
 	}
 
+	if !p.BriefOutput {
+		for _, e := range d.Events {
+			p.printEvent(e, indentLevel, false)
+		}
+	}
+
 	for _, l := range d.Links {
 		p.printLink(l, indentLevel)
 	}
@@ -432,7 +586,7 @@ func (p *Printer) printVariant(v Variant, indentLevel uint) {
 		p.printValue("Relation", r, indentLevel)
 	}
 
-	p.printValue("IDNTable", v.IDNTable, indentLevel)
+	p.printValue("IDN Table", v.IDNTable, indentLevel)
 
 	for _, vn := range v.VariantNames {
 		p.printVariantName(vn, indentLevel)
@@ -515,12 +669,16 @@ func (p *Printer) printValue(name string, value string, indentLevel uint) {
 		p.cleanString(value))
 }
 
-func (p *Printer) printEvent(e Event, indentLevel uint) {
+func (p *Printer) printEvent(e Event, indentLevel uint, asEventActor bool) {
 	if p.BriefOutput {
 		return
 	}
 
-	p.printHeading("Event", indentLevel)
+	if asEventActor {
+		p.printHeading("AsEventActor", indentLevel)
+	} else {
+		p.printHeading("Event", indentLevel)
+	}
 
 	indentLevel++
 

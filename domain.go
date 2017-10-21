@@ -89,4 +89,7 @@ type KeyData struct {
 	Protocol  *uint8
 	Algorithm *uint8
 	PublicKey string
+
+	Events []Event
+	Links  []Link
 }

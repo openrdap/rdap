@@ -395,19 +395,19 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		return 1
 	}
 
+	// Insert a blank line to seperate verbose messages/proper output.
+	if *verboseFlag {
+		fmt.Fprintln(stderr, "")
+	}
+
 	// Print the response out in text format.
-	// TODO: JSON output.
 	printer := &Printer{
 		Writer: stdout,
 
-		BriefLinks:  true,
-		BriefOutput: true,
+		BriefLinks: true,
 	}
 	printer.Print(resp.Object)
 
-	_ = insecureFlag
-	_ = queryType
-	_ = verboseFlag
 	_ = fetchRolesFlag
 
 	return 0
