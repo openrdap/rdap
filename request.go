@@ -63,7 +63,7 @@ func (r RequestType) String() string {
 	case NameserverSearchRequest:
 		return "nameserver-search"
 	case NameserverSearchByNameserverIPRequest:
-		return "nameserver-search-by-nameserver-ip"
+		return "nameserver-search-by-ip"
 	case EntitySearchRequest:
 		return "entity-search"
 	case EntitySearchByHandleRequest:

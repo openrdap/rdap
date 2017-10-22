@@ -265,7 +265,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		req = NewRequest(DomainSearchByNameserverIPRequest, queryText)
 	case "nameserver-search":
 		req = NewRequest(NameserverSearchRequest, queryText)
-	case "nameserver-search-by-nameserver-ip":
+	case "nameserver-search-by-ip":
 		req = NewRequest(NameserverSearchByNameserverIPRequest, queryText)
 	default:
 		printError(stderr, fmt.Sprintf("Unknown query type '%s'", *queryType))
