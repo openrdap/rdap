@@ -64,8 +64,8 @@ type SecureDNS struct {
 	ZoneSigned       *bool
 	DelegationSigned *bool
 	MaxSigLife       *uint64
-	DS               []DSData `rdap:"dsData"`
-	Keys             []KeyData
+	DS               []DSData  `rdap:"dsData"`
+	Keys             []KeyData `rdap:"keyData"`
 }
 
 // DSData is a subfield of Domain.
