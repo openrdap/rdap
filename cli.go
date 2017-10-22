@@ -67,7 +67,6 @@ Advanced options (query):
                       - entity
                       - help
                       - url
-                      - entity-search-by-handle
                       - domain-search
                       - domain-search-by-nameserver
                       - domain-search-by-nameserver-ip
