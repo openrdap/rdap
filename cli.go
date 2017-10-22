@@ -290,6 +290,10 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 			return 1
 		}
 
+		if serverURL.Scheme == "" {
+			serverURL.Scheme = "http"
+		}
+
 		req = req.WithServer(serverURL)
 
 		verbose(fmt.Sprintf("rdap: Using server '%s'", serverURL))
