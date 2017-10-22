@@ -465,7 +465,7 @@ func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 	if e.VCard != nil {
 		for _, property := range e.VCard.Properties {
 			for _, str := range property.Values() {
-				p.printValue("VCard "+property.Name, str, indentLevel)
+				p.printValue("vCard "+property.Name, str, indentLevel)
 			}
 		}
 	}
