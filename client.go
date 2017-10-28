@@ -249,6 +249,9 @@ func (c *Client) get(rdapReq *Request) *HTTPResponse {
 		req.Header.Add("User-Agent", c.UserAgent)
 	}
 
+	// HTTP Accept header.
+	req.Header.Add("Accept", "application/rdap+json")
+
 	// Add context for timeout.
 	req = req.WithContext(rdapReq.Context())
 
