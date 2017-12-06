@@ -1,0 +1,6 @@
+   ["vcard",
+     [
+       ["version", {}, "text", "4.0"],
+       ["mixed", {}, "text", "abc", true, 42, null, ["def", false, 43]]
+     ]
+   ]

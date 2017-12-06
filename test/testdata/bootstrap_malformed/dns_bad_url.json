@@ -1,0 +1,40 @@
+{
+  "description": "RDAP bootstrap file for Domain Name System registrations",
+  "publication": "2017-03-15T21:26:24Z",
+  "services": [
+    [
+      [
+        "ar"
+      ],
+      [
+        "https://rdap.nic.ar"
+      ]
+    ],
+    [
+      [
+        "cz"
+      ],
+      [
+        "https://rdap.nic.cz"
+      ]
+    ],
+    [
+      [
+        "br"
+      ],
+      [
+        "https://rdap.registro.br/",
+        "http://example.org/%%"
+      ]
+    ],
+    [
+      [
+        "example"
+      ],
+      [
+        "http://example.org/%%"
+      ]
+    ]
+  ],
+  "version": "1.0"
+}
