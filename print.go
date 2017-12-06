@@ -115,6 +115,8 @@ func (p *Printer) printNameserverSearchResults(sr *NameserverSearchResults, inde
 	for _, n := range sr.Nameservers {
 		p.printNameserver(&n, indentLevel)
 	}
+
+	p.printUnknowns(sr.DecodeData, indentLevel)
 }
 
 func (p *Printer) printEntitySearchResults(sr *EntitySearchResults, indentLevel uint) {
@@ -136,6 +138,8 @@ func (p *Printer) printEntitySearchResults(sr *EntitySearchResults, indentLevel 
 	for _, e := range sr.Entities {
 		p.printEntity(&e, indentLevel)
 	}
+
+	p.printUnknowns(sr.DecodeData, indentLevel)
 }
 
 func (p *Printer) printDomainSearchResults(sr *DomainSearchResults, indentLevel uint) {
@@ -157,6 +161,8 @@ func (p *Printer) printDomainSearchResults(sr *DomainSearchResults, indentLevel 
 	for _, d := range sr.Domains {
 		p.printDomain(&d, indentLevel)
 	}
+
+	p.printUnknowns(sr.DecodeData, indentLevel)
 }
 
 func (p *Printer) printError(e *Error, indentLevel uint) {
@@ -186,6 +192,8 @@ func (p *Printer) printError(e *Error, indentLevel uint) {
 	for _, d := range e.Description {
 		p.printValue("Description", d, indentLevel)
 	}
+
+	p.printUnknowns(e.DecodeData, indentLevel)
 }
 
 func (p *Printer) printHelp(h *Help, indentLevel uint) {
@@ -203,6 +211,8 @@ func (p *Printer) printHelp(h *Help, indentLevel uint) {
 			p.printNotice(n, indentLevel)
 		}
 	}
+
+	p.printUnknowns(h.DecodeData, indentLevel)
 }
 
 func (p *Printer) printDomain(d *Domain, indentLevel uint) {
@@ -272,6 +282,8 @@ func (p *Printer) printDomain(d *Domain, indentLevel uint) {
 	if d.Network != nil {
 		p.printIPNetwork(d.Network, indentLevel)
 	}
+
+	p.printUnknowns(d.DecodeData, indentLevel)
 }
 
 func (p *Printer) printAutnum(a *Autnum, indentLevel uint) {
@@ -337,6 +349,8 @@ func (p *Printer) printAutnum(a *Autnum, indentLevel uint) {
 	for _, e := range a.Entities {
 		p.printEntity(&e, indentLevel)
 	}
+
+	p.printUnknowns(a.DecodeData, indentLevel)
 }
 
 func (p *Printer) printNameserver(n *Nameserver, indentLevel uint) {
@@ -391,6 +405,8 @@ func (p *Printer) printNameserver(n *Nameserver, indentLevel uint) {
 	for _, e := range n.Entities {
 		p.printEntity(&e, indentLevel)
 	}
+
+	p.printUnknowns(n.DecodeData, indentLevel)
 }
 
 func (p *Printer) printIPAddressSet(s *IPAddressSet, indentLevel uint) {
@@ -405,6 +421,8 @@ func (p *Printer) printIPAddressSet(s *IPAddressSet, indentLevel uint) {
 	for _, ip := range s.V4 {
 		p.printValue("IPv4", ip, indentLevel)
 	}
+
+	p.printUnknowns(s.DecodeData, indentLevel)
 }
 
 func (p *Printer) printEntity(e *Entity, indentLevel uint) {
@@ -483,6 +501,8 @@ func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 			p.printEntity(&e, indentLevel)
 		}
 	}
+
+	p.printUnknowns(e.DecodeData, indentLevel)
 }
 
 func (p *Printer) printIPNetwork(n *IPNetwork, indentLevel uint) {
@@ -532,6 +552,8 @@ func (p *Printer) printIPNetwork(n *IPNetwork, indentLevel uint) {
 			p.printEvent(e, indentLevel, false)
 		}
 	}
+
+	p.printUnknowns(n.DecodeData, indentLevel)
 }
 
 func (p *Printer) printPublicID(pid PublicID, indentLevel uint) {
@@ -541,6 +563,8 @@ func (p *Printer) printPublicID(pid PublicID, indentLevel uint) {
 
 	p.printValue("Type", pid.Type, indentLevel)
 	p.printValue("Identifier", pid.Identifier, indentLevel)
+
+	p.printUnknowns(pid.DecodeData, indentLevel)
 }
 
 func (p *Printer) printSecureDNS(s *SecureDNS, indentLevel uint) {
@@ -573,6 +597,8 @@ func (p *Printer) printSecureDNS(s *SecureDNS, indentLevel uint) {
 	for _, key := range s.Keys {
 		p.printKeyData(key, indentLevel)
 	}
+
+	p.printUnknowns(s.DecodeData, indentLevel)
 }
 
 func (p *Printer) printKeyData(k KeyData, indentLevel uint) {
@@ -609,6 +635,8 @@ func (p *Printer) printKeyData(k KeyData, indentLevel uint) {
 	for _, l := range k.Links {
 		p.printLink(l, indentLevel)
 	}
+
+	p.printUnknowns(k.DecodeData, indentLevel)
 }
 
 func (p *Printer) printDSData(d DSData, indentLevel uint) {
@@ -645,6 +673,8 @@ func (p *Printer) printDSData(d DSData, indentLevel uint) {
 	for _, l := range d.Links {
 		p.printLink(l, indentLevel)
 	}
+
+	p.printUnknowns(d.DecodeData, indentLevel)
 }
 
 func (p *Printer) printVariant(v Variant, indentLevel uint) {
@@ -660,6 +690,8 @@ func (p *Printer) printVariant(v Variant, indentLevel uint) {
 	for _, vn := range v.VariantNames {
 		p.printVariantName(vn, indentLevel)
 	}
+
+	p.printUnknowns(v.DecodeData, indentLevel)
 }
 
 func (p *Printer) printVariantName(vn VariantName, indentLevel uint) {
@@ -668,6 +700,8 @@ func (p *Printer) printVariantName(vn VariantName, indentLevel uint) {
 	indentLevel++
 	p.printValue("Domain Name", vn.LDHName, indentLevel)
 	p.printValue("Domain Name (Unicode)", vn.UnicodeName, indentLevel)
+
+	p.printUnknowns(vn.DecodeData, indentLevel)
 }
 
 func (p *Printer) printRemark(r Remark, indentLevel uint) {
@@ -683,6 +717,8 @@ func (p *Printer) printRemark(r Remark, indentLevel uint) {
 	for _, l := range r.Links {
 		p.printLink(l, indentLevel)
 	}
+
+	p.printUnknowns(r.DecodeData, indentLevel)
 }
 
 func (p *Printer) printNotice(n Notice, indentLevel uint) {
@@ -698,6 +734,8 @@ func (p *Printer) printNotice(n Notice, indentLevel uint) {
 	for _, l := range n.Links {
 		p.printLink(l, indentLevel)
 	}
+
+	p.printUnknowns(n.DecodeData, indentLevel)
 }
 
 func (p *Printer) printLink(l Link, indent uint) {
@@ -719,6 +757,8 @@ func (p *Printer) printLink(l Link, indent uint) {
 	for _, h := range l.HrefLang {
 		p.printValue("HrefLang", h, indent)
 	}
+
+	p.printUnknowns(l.DecodeData, indent)
 }
 
 func (p *Printer) printHeading(heading string, indentLevel uint) {
@@ -757,6 +797,47 @@ func (p *Printer) printEvent(e Event, indentLevel uint, asEventActor bool) {
 
 	for _, l := range e.Links {
 		p.printLink(l, indentLevel)
+	}
+
+	p.printUnknowns(e.DecodeData, indentLevel)
+}
+
+func (p *Printer) printUnknowns(d *DecodeData, indentLevel uint) {
+	if d == nil {
+		return
+	}
+
+	for k, v := range d.values {
+		isKnown, _ := d.isKnown[k]
+		isOverrided, _ := d.overrideKnownValue[k]
+
+		if !(isKnown && !isOverrided) {
+			p.printUnknown(k, v, indentLevel)
+		}
+	}
+}
+
+func (p *Printer) printUnknown(key string, value interface{}, indentLevel uint) {
+	switch value.(type) {
+	case bool:
+		p.printValue(key, strconv.FormatBool(value.(bool)), indentLevel)
+	case float64:
+		p.printValue(key, strconv.FormatFloat(value.(float64), 'f', -1, 64), indentLevel)
+	case string:
+		p.printValue(key, value.(string), indentLevel)
+	case []interface{}:
+		for _, value2 := range value.([]interface{}) {
+			p.printUnknown(key, value2, indentLevel)
+		}
+	case map[string]interface{}:
+		p.printHeading(key, indentLevel)
+		indentLevel++
+
+		for key2, value2 := range value.(map[string]interface{}) {
+			p.printUnknown(key2, value2, indentLevel)
+		}
+	default:
+		p.printValue(key, "[unprintable value]", indentLevel)
 	}
 }
 
