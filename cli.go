@@ -369,21 +369,25 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	tlsConfig := &tls.Config{InsecureSkipVerify: *insecureFlag}
 
 	var clientCert tls.Certificate
-	if *clientCertFilename != "" && *clientKeyFilename != "" {
-		var err error
-		clientCert, err = tls.LoadX509KeyPair(*clientCertFilename, *clientKeyFilename)
-
-		if err != nil {
-			printError(stderr, fmt.Sprintf("rdap: Error: cannot load client certificate/key: %s", err))
+	if *clientCertFilename != "" || *clientKeyFilename != "" {
+		if options.Sandbox {
+			verbose(fmt.Sprintf("rdap: Ignored --cert and --key options (sandbox mode enabled)"))
+		} else if *clientCertFilename == "" || *clientKeyFilename == "" {
+			printError(stderr, fmt.Sprintf("rdap: Error: --cert and --key must be used together"))
 			return 1
+		} else {
+			var err error
+			clientCert, err = tls.LoadX509KeyPair(*clientCertFilename, *clientKeyFilename)
+
+			if err != nil {
+				printError(stderr, fmt.Sprintf("rdap: Error: cannot load client certificate/key: %s", err))
+				return 1
+			}
+
+			verbose(fmt.Sprintf("rdap: Loaded client certificate from '%s'", *clientCertFilename))
+
+			tlsConfig.Certificates = append(tlsConfig.Certificates, clientCert)
 		}
-
-		verbose(fmt.Sprintf("rdap: Loaded client certificate from '%s'", *clientCertFilename))
-
-		tlsConfig.Certificates = append(tlsConfig.Certificates, clientCert)
-	} else if *clientCertFilename != "" || *clientKeyFilename != "" {
-		printError(stderr, fmt.Sprintf("rdap: Error: --cert and --key must be used together"))
-		return 1
 	}
 
 	// Custom HTTP client. Used to disable TLS certificate verification.
