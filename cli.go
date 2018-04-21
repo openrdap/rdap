@@ -57,6 +57,10 @@ Output Options:
   -J, --compact       Output JSON, compact (one line) format.
   -r, --raw           Output the raw server response. Forces --fetch=none.
 
+Authentication options:
+  -C, --cert=cert.pem Use client certificate (PEM format)
+  -K, --key=cert.key  Use client private key (PEM format)
+
 Advanced options (query):
   -s  --server=URL    RDAP server to query.
   -t  --type=TYPE     RDAP query type. Normally auto-detected. The types are:
@@ -149,6 +153,9 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	cacheDirFlag := app.Flag("cache-dir", "").Default("default").String()
 	bootstrapURLFlag := app.Flag("bs-url", "").Default("default").String()
 	bootstrapTimeoutFlag := app.Flag("bs-ttl", "").Default("3600").Uint32()
+
+	clientCertFilename := app.Flag("cert", "").Short('C').String()
+	clientKeyFilename := app.Flag("key", "").Short('K').String()
 
 	// Command line query (any remaining non-option arguments).
 	queryArgs := app.Arg("", "").Strings()
@@ -358,9 +365,30 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		verbose(fmt.Sprintf("rdap: Bootstrap cache TTL set to %d seconds", *bootstrapTimeoutFlag))
 	}
 
+	// Custom TLS config.
+	tlsConfig := &tls.Config{InsecureSkipVerify: *insecureFlag}
+
+	var clientCert tls.Certificate
+	if *clientCertFilename != "" && *clientKeyFilename != "" {
+		var err error
+		clientCert, err = tls.LoadX509KeyPair(*clientCertFilename, *clientKeyFilename)
+
+		if err != nil {
+			printError(stderr, fmt.Sprintf("rdap: Error: cannot load client certificate/key: %s", err))
+			return 1
+		}
+
+		verbose(fmt.Sprintf("rdap: Loaded client certificate from '%s'", *clientCertFilename))
+
+		tlsConfig.Certificates = append(tlsConfig.Certificates, clientCert)
+	} else if *clientCertFilename != "" || *clientKeyFilename != "" {
+		printError(stderr, fmt.Sprintf("rdap: Error: --cert and --key must be used together"))
+		return 1
+	}
+
 	// Custom HTTP client. Used to disable TLS certificate verification.
 	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: *insecureFlag},
+		TLSClientConfig: tlsConfig,
 	}
 	httpClient := &http.Client{
 		Transport: transport,
