@@ -50,10 +50,10 @@ Authentication options:
   -K, --key=cert.key  Use client private key (PEM format)
 
 Output Options:
-      --text          Output WHOIS style, plain text format (default).
+      --text          Output RDAP, plain text "tree" format (default).
+  -w, --whois         Output WHOIS style, plain text "flat" format.
   -j, --json          Output JSON, pretty-printed format.
-  -J, --compact       Output JSON, compact (one line) format.
-  -r, --raw           Output the raw server response. Forces --fetch=none.
+  -r, --raw           Output the raw server response.
 
 Advanced options (query):
   -s  --server=URL    RDAP server to query.
@@ -148,6 +148,11 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 	clientCertFilename := app.Flag("cert", "").Short('C').String()
 	clientKeyFilename := app.Flag("key", "").Short('K').String()
+
+	outputFormatText := app.Flag("text", "").Bool()
+	outputFormatWhois := app.Flag("whois", "").Short('w').Bool()
+	outputFormatJSON := app.Flag("json", "").Short('j').Bool()
+	outputFormatRaw := app.Flag("raw", "").Short('r').Bool()
 
 	// Command line query (any remaining non-option arguments).
 	queryArgs := app.Arg("", "").Strings()
@@ -427,13 +432,25 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		fmt.Fprintln(stderr, "")
 	}
 
-	// Print the response out in text format.
-	printer := &Printer{
-		Writer: stdout,
+    // Output formatting.
+    if !(*outputFormatText || *outputFormatWhois || *outputFormatJSON || *outputFormatRaw) {
+        *outputFormatText = true
+    }
 
-		BriefLinks: true,
-	}
-	printer.Print(resp.Object)
+    // Print the response out in text format?
+    if *outputFormatText {
+        printer := &Printer{
+            Writer: stdout,
+
+            BriefLinks: true,
+        }
+        printer.Print(resp.Object)
+    }
+
+    // Print the raw response out?
+    if *outputFormatRaw {
+        fmt.Printf("%s", resp.HTTP[0].Body)
+    }
 
 	_ = fetchRolesFlag
 
