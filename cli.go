@@ -45,21 +45,15 @@ Options:
                       - Use the bootstrap service https://test.rdap.net/rdap
                       - Enable object tag support
 
-Contact Information Fetch Options:
-  -f, --fetch=all     Fetch all available contact information (default).
-  -f, --fetch=none    Disable additional RDAP requests for contact information.
-  -f, --fetch=ROLE    Fetch additional contact information for the role
-                      ROLE only. The regular WHOIS roles are:
-                      registrant, administrative, billing.
+Authentication options:
+  -C, --cert=cert.pem Use client certificate (PEM format)
+  -K, --key=cert.key  Use client private key (PEM format)
+
 Output Options:
       --text          Output WHOIS style, plain text format (default).
   -j, --json          Output JSON, pretty-printed format.
   -J, --compact       Output JSON, compact (one line) format.
   -r, --raw           Output the raw server response. Forces --fetch=none.
-
-Authentication options:
-  -C, --cert=cert.pem Use client certificate (PEM format)
-  -K, --key=cert.key  Use client private key (PEM format)
 
 Advanced options (query):
   -s  --server=URL    RDAP server to query.
@@ -81,8 +75,6 @@ Advanced options (query):
                       The servers for domain, ip, autnum, url queries can be
                       determined automatically. Otherwise, the RDAP server
                       (--server=URL) must be specified.
-      --strict-fetch  Exit with an error when a contact information fetch
-                      (--fetch=) fails. By default these errors are ignored.
 
 Advanced options (bootstrapping):
       --cache-dir=DIR Bootstrap cache directory to use. Specify empty string
