@@ -51,7 +51,7 @@ Authentication options:
 
 Output Options:
       --text          Output RDAP, plain text "tree" format (default).
-  -w, --whois         Output WHOIS style, plain text "flat" format.
+  -w, --whois         Output WHOIS style (domain queries only).
   -j, --json          Output JSON, pretty-printed format.
   -r, --raw           Output the raw server response.
 
@@ -452,9 +452,32 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
         fmt.Printf("%s", resp.HTTP[0].Body)
     }
 
+	// Print WHOIS style response out?
+	if *outputFormatWhois {
+		w := resp.ToWhoisStyleResponse()
+
+		for _, key := range w.KeyDisplayOrder {
+			for _, value := range w.Data[key] {
+				fmt.Fprintf(stdout, "%s: %s\n", key, safePrint(value))
+			}
+		}
+	}
+
 	_ = fetchRolesFlag
 
 	return 0
+}
+
+func safePrint(v string) string {
+	removeBadChars := func(r rune) rune {
+		switch {
+		case r == '\000': return -1
+		case r == '\n': return ' '
+		default: return r
+		}
+	}
+
+	return strings.Map(removeBadChars, v)
 }
 
 func printError(stderr io.Writer, text string) {
