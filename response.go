@@ -29,7 +29,7 @@ type HTTPResponse struct {
 
 type WhoisStyleResponse struct {
 	KeyDisplayOrder []string
-	Data map[string][]string
+	Data            map[string][]string
 }
 
 func (w *WhoisStyleResponse) add(key string, value string) {
@@ -130,16 +130,16 @@ func addEntityFields(w *WhoisStyleResponse, t string, e *Entity) {
 		return
 	}
 
-	w.add(t + " Name", v.Name())
-	w.add(t + " PO Box", v.POBox())
-	w.add(t + " Extended Address", v.ExtendedAddress())
-	w.add(t + " Street", v.StreetAddress())
-	w.add(t + " Locality", v.Locality())
-	w.add(t + " Post Code", v.PostalCode())
-	w.add(t + " Country", v.Country())
-	w.add(t + " Tel", v.Tel())
-	w.add(t + " Fax", v.Fax())
-	w.add(t + " Email", v.Email())
+	w.add(t+" Name", v.Name())
+	w.add(t+" PO Box", v.POBox())
+	w.add(t+" Extended Address", v.ExtendedAddress())
+	w.add(t+" Street", v.StreetAddress())
+	w.add(t+" Locality", v.Locality())
+	w.add(t+" Post Code", v.PostalCode())
+	w.add(t+" Country", v.Country())
+	w.add(t+" Tel", v.Tel())
+	w.add(t+" Fax", v.Fax())
+	w.add(t+" Email", v.Email())
 }
 
 func findFirstEntity(role string, entities []Entity) *Entity {
@@ -153,4 +153,3 @@ func findFirstEntity(role string, entities []Entity) *Entity {
 
 	return nil
 }
-

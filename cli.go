@@ -3,8 +3,10 @@ package rdap
 import (
 	"context"
 	"crypto/tls"
+	"encoding/pem"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -14,6 +16,9 @@ import (
 
 	"github.com/openrdap/rdap/bootstrap"
 	"github.com/openrdap/rdap/bootstrap/cache"
+	"github.com/openrdap/rdap/sandbox"
+
+	"golang.org/x/crypto/pkcs12"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
@@ -46,8 +51,10 @@ Options:
                       - Enable object tag support
 
 Authentication options:
-  -C, --cert=cert.pem Use client certificate (PEM format)
-  -K, --key=cert.key  Use client private key (PEM format)
+  -P, --p12=cert.p12[:password] Use client certificate & private key (PKCS#12 format)
+or:
+  -C, --cert=cert.pem           Use client certificate (PEM format)
+  -K, --key=cert.key            Use client private key (PEM format)
 
 Output Options:
       --text          Output RDAP, plain text "tree" format (default).
@@ -146,6 +153,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	bootstrapURLFlag := app.Flag("bs-url", "").Default("default").String()
 	bootstrapTimeoutFlag := app.Flag("bs-ttl", "").Default("3600").Uint32()
 
+	clientP12FilenameAndPassword := app.Flag("p12", "").Short('P').String()
 	clientCertFilename := app.Flag("cert", "").Short('C').String()
 	clientKeyFilename := app.Flag("key", "").Short('K').String()
 
@@ -187,6 +195,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	experiments := map[string]bool{
 		"test_rdap_net": false,
 		"object_tag":    false,
+		"sandbox":       false,
 	}
 
 	// Enable experimental options.
@@ -205,6 +214,11 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		verbose("rdap: Enabled -e/--experiments: test_rdap_net, object_tag")
 		experiments["test_rdap_net"] = true
 		experiments["object_tag"] = true
+	}
+
+	// Forced sandbox mode?
+	if experiments["sandbox"] {
+		options.Sandbox = true
 	}
 
 	// Exactly one argument is required (i.e. the domain/ip/url/etc), unless
@@ -367,11 +381,14 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 	var clientCert tls.Certificate
 	if *clientCertFilename != "" || *clientKeyFilename != "" {
-		if options.Sandbox {
-			verbose(fmt.Sprintf("rdap: Ignored --cert and --key options (sandbox mode enabled)"))
+		if *clientP12FilenameAndPassword != "" {
+			printError(stderr, fmt.Sprintf("rdap: Error: Can't use both --cert/--key and --p12 together"))
+			return 1
 		} else if *clientCertFilename == "" || *clientKeyFilename == "" {
 			printError(stderr, fmt.Sprintf("rdap: Error: --cert and --key must be used together"))
 			return 1
+		} else if options.Sandbox {
+			verbose(fmt.Sprintf("rdap: Ignored --cert and --key options (sandbox mode enabled)"))
 		} else {
 			var err error
 			clientCert, err = tls.LoadX509KeyPair(*clientCertFilename, *clientKeyFilename)
@@ -385,6 +402,58 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 			tlsConfig.Certificates = append(tlsConfig.Certificates, clientCert)
 		}
+	} else if *clientP12FilenameAndPassword != "" {
+		// Split the filename and optional password.
+		// [0] is the filename, [1] is the optional password.
+		var p12FilenameAndPassword []string = strings.SplitAfterN(*clientP12FilenameAndPassword, ":", 2)
+		p12FilenameAndPassword[0] = strings.TrimSuffix(p12FilenameAndPassword[0], ":")
+
+		// Use a blank password if none was specified.
+		if len(p12FilenameAndPassword) == 1 {
+			p12FilenameAndPassword = append(p12FilenameAndPassword, "")
+		}
+
+		var p12 []byte
+		var err error
+
+		// Load the file from disk, or the sandbox.
+		if options.Sandbox {
+			p12, err = sandbox.LoadFile(p12FilenameAndPassword[0])
+		} else {
+			p12, err = ioutil.ReadFile(p12FilenameAndPassword[0])
+		}
+
+		// Check the file was read correctly.
+		if err != nil {
+			printError(stderr, fmt.Sprintf("rdap: Error: cannot load client certificate: %s", err))
+			return 1
+		}
+
+		// Convert P12 to PEM blocks.
+		var blocks []*pem.Block
+		blocks, err = pkcs12.ToPEM(p12, p12FilenameAndPassword[1])
+
+		if err != nil {
+			printError(stderr, fmt.Sprintf("rdap: Error: cannot read client certificate: %s", err))
+			return 1
+		}
+
+		// Build single concatenated PEM block.
+		var pemData []byte
+		for _, b := range blocks {
+			pemData = append(pemData, pem.EncodeToMemory(b)...)
+		}
+
+		clientCert, err = tls.X509KeyPair(pemData, pemData)
+
+		if err != nil {
+			printError(stderr, fmt.Sprintf("rdap: Error: cannot read client certificate: %s", err))
+			return 1
+		}
+
+		verbose(fmt.Sprintf("rdap: Loaded client certificate from '%s'", p12FilenameAndPassword[0]))
+
+		tlsConfig.Certificates = append(tlsConfig.Certificates, clientCert)
 	}
 
 	// Custom HTTP client. Used to disable TLS certificate verification.
@@ -432,25 +501,25 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		fmt.Fprintln(stderr, "")
 	}
 
-    // Output formatting.
-    if !(*outputFormatText || *outputFormatWhois || *outputFormatJSON || *outputFormatRaw) {
-        *outputFormatText = true
-    }
+	// Output formatting.
+	if !(*outputFormatText || *outputFormatWhois || *outputFormatJSON || *outputFormatRaw) {
+		*outputFormatText = true
+	}
 
-    // Print the response out in text format?
-    if *outputFormatText {
-        printer := &Printer{
-            Writer: stdout,
+	// Print the response out in text format?
+	if *outputFormatText {
+		printer := &Printer{
+			Writer: stdout,
 
-            BriefLinks: true,
-        }
-        printer.Print(resp.Object)
-    }
+			BriefLinks: true,
+		}
+		printer.Print(resp.Object)
+	}
 
-    // Print the raw response out?
-    if *outputFormatRaw {
-        fmt.Printf("%s", resp.HTTP[0].Body)
-    }
+	// Print the raw response out?
+	if *outputFormatRaw {
+		fmt.Printf("%s", resp.HTTP[0].Body)
+	}
 
 	// Print WHOIS style response out?
 	if *outputFormatWhois {
@@ -471,9 +540,12 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 func safePrint(v string) string {
 	removeBadChars := func(r rune) rune {
 		switch {
-		case r == '\000': return -1
-		case r == '\n': return ' '
-		default: return r
+		case r == '\000':
+			return -1
+		case r == '\n':
+			return ' '
+		default:
+			return r
 		}
 	}
 
