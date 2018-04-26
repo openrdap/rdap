@@ -39,15 +39,22 @@ func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
 
 // Lookup returns a list of RDAP base URLs for the entity question |question|.
 //
-// e.g. for the handle "53774930~VRSN", the RDAP base URLs for "VRSN" are returned.
+// e.g. for the handle "53774930-VRSN", the RDAP base URLs for "VRSN" are returned.
 //
 // Missing/malformed/unknown service tags are not treated as errors. An empty
 // list of URLs is returned in these cases.
+//
+// Deprecated: Previously service tags used a TILDE char (e.g. ~VRSN) instead,
+// these are still supported.
 func (s *ServiceProviderRegistry) Lookup(question *Question) (*Answer, error) {
 	input := question.Query
 
 	// Valid input looks like 12345-VRSN.
 	offset := strings.LastIndexByte(input, '~')
+
+	if offset == -1 {
+		offset = strings.LastIndexByte(input, '-')
+	}
 
 	if offset == -1 || offset == len(input)-1 {
 		return &Answer{

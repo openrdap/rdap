@@ -88,7 +88,7 @@ func (r RequestType) String() string {
 //   -------------------------------------------+---------------+-------------------------+----------------
 //   rdap.AutnumRequest                         | Yes           | autnum/QUERY            | AS2846
 //   rdap.DomainRequest                         | Yes           | domain/QUERY            | example.cz
-//   rdap.EntityRequest                         | Experimental  | entity/QUERY            | 86860670~VRSN
+//   rdap.EntityRequest                         | Experimental  | entity/QUERY            | 86860670-VRSN
 //   rdap.HelpRequest                           | No            | help                    | N/A
 //   rdap.IPRequest                             | Yes           | ip/QUERY                | 2001:db8::1
 //   rdap.NameserverRequest                     | No            | nameserver/QUERY        | ns1.skip.org
@@ -98,8 +98,8 @@ func (r RequestType) String() string {
 //   rdap.DomainSearchByNameserverIPRequest     | No            | domains?nsIp=QUERY      | 192.0.2.0
 //   rdap.NameserverSearchRequest               | No            | nameservers?name=QUERY  | ns1.exampl*.com
 //   rdap.NameserverSearchByNameserverIPRequest | No            | nameservers?ip=QUERY    | 192.0.2.0
-//   rdap.EntitySearchRequest                   | No            | entities?fn=QUERY       | ABC*~VRSN
-//   rdap.EntitySearchByHandleRequest           | No            | entities?handle=QUERY   | ABC*~VRSN
+//   rdap.EntitySearchRequest                   | No            | entities?fn=QUERY       | ABC*-VRSN
+//   rdap.EntitySearchByHandleRequest           | No            | entities?handle=QUERY   | ABC*-VRSN
 //                                              |               |                         |
 //   rdap.RawRequest                            | N/A           | N/A                     | N/A
 //

@@ -44,7 +44,7 @@ This is under construction...
 | Domain (.みんな) | rdap -v -e nic.みんな  |
 | Network | rdap -v 2001:db8:: |
 | Autnum | rdap -v AS15169 |
-| Entity (test bootstrap) | rdap -v -e 1~VRSN |
+| Entity (test bootstrap) | rdap -v -e 1-VRSN |
 | Nameserver | rdap -v -t nameserver -s https://rdap-pilot.verisignlabs.com/rdap/v1 ns1.google.com |
 | Help | rdap -v -t help -s https://rdap-pilot.verisignlabs.com/rdap/v1 |
 | Domain Search	| rdap -v -t domain-search -s https://rdap-pilot.verisignlabs.com/rdap/v1 exampl*.com |
@@ -52,8 +52,8 @@ This is under construction...
 | Domain Search (by NS IP) | rdap -v -t domain-search-by-nameserver-ip -s https://rdap-pilot.verisignlabs.com/rdap/v1 194.72.238.11 |
 | Nameserver Search	| rdap -v -t nameserver-search -s https://rdap-pilot.verisignlabs.com/rdap/v1 ns*.yahoo.com |
 | Nameserver Search (by IP)	| rdap -v -t nameserver-search-by-ip -s https://rdap-pilot.verisignlabs.com/rdap/v1 194.72.238.11 |
-| Entity Search	| rdap -v -t entity-search -s https://rdap-pilot.verisignlabs.com/rdap/v1 Register*~VRSN |
-| Entity Search (by handle)	| rdap -v -t entity-search-by-handle -s https://rdap-pilot.verisignlabs.com/rdap/v1 1*~VRSN |
+| Entity Search	| rdap -v -t entity-search -s https://rdap-pilot.verisignlabs.com/rdap/v1 Register*-VRSN |
+| Entity Search (by handle)	| rdap -v -t entity-search-by-handle -s https://rdap-pilot.verisignlabs.com/rdap/v1 1*-VRSN |
 
 See https://www.openrdap.org/docs.
 

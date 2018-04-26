@@ -60,6 +60,30 @@ func TestServiceProviderRegistryLookups(t *testing.T) {
 			"VRSN",
 			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
 		},
+		{
+			"12345-VRSN",
+			false,
+			"VRSN",
+			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
+		},
+		{
+			"*-VRSN",
+			false,
+			"VRSN",
+			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
+		},
+		{
+			"-VRSN",
+			false,
+			"VRSN",
+			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
+		},
+		{
+			"A-B-VRSN",
+			false,
+			"VRSN",
+			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
+		},
 	}
 
 	runRegistryTests(t, tests, s)

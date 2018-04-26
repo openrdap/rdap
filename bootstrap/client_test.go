@@ -70,6 +70,12 @@ func TestLookups(t *testing.T) {
 			true,
 			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
 		},
+		{
+			ServiceProvider,
+			"12345-VRSN",
+			true,
+			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
+		},
 	}
 
 	test.Start(test.Bootstrap)
