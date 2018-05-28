@@ -316,6 +316,9 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		verbose(fmt.Sprintf("rdap: Using server '%s'", serverURL))
 	}
 
+	// Custom TLS config.
+	tlsConfig := &tls.Config{InsecureSkipVerify: *insecureFlag}
+
 	bs := &bootstrap.Client{}
 
 	// Custom bootstrap cache type/directory?
@@ -375,9 +378,6 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 		verbose(fmt.Sprintf("rdap: Bootstrap cache TTL set to %d seconds", *bootstrapTimeoutFlag))
 	}
-
-	// Custom TLS config.
-	tlsConfig := &tls.Config{InsecureSkipVerify: *insecureFlag}
 
 	var clientCert tls.Certificate
 	if *clientCertFilename != "" || *clientKeyFilename != "" {
@@ -459,6 +459,11 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	// Custom HTTP client. Used to disable TLS certificate verification.
 	transport := &http.Transport{
 		TLSClientConfig: tlsConfig,
+	}
+
+	// Setup http.RoundTripper for http clients
+	bs.HTTP = &http.Client{
+		Transport: transport,
 	}
 	httpClient := &http.Client{
 		Transport: transport,
