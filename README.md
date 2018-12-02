@@ -32,9 +32,15 @@ https://www.openrdap.org/demo - live demo
 
 ## Installation
 
-TBD, it's a standard Go progrem (go install ...)
+This program uses Go. The Go compiler is available from https://golang.org/.
 
-This is under construction...
+To install:
+
+    go get -u github.com/openrdap/rdap
+
+This will install the "rdap" binary in your $GOPATH/go/bin directory. Try running:
+
+    ~/go/bin/rdap google.com
 
 ## Usage
 
