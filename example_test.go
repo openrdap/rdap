@@ -73,7 +73,7 @@ func Example() {
 	//   Region    : 'ON'
 	//   PostalCode: 'M5E 1W5'
 	//   Country   : 'Canada'
-	//   Tel       : 'tel:+1-555-555-5555'
+	//   Tel       : '+1-555-555-5555'
 	//   Fax       : ''
 	//   Email     : 'hi@example.com'
 }
