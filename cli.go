@@ -1,8 +1,10 @@
 package rdap
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"encoding/pem"
 	"fmt"
 	"io"
@@ -10,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -316,6 +319,9 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		verbose(fmt.Sprintf("rdap: Using server '%s'", serverURL))
 	}
 
+	// Custom TLS config.
+	tlsConfig := &tls.Config{InsecureSkipVerify: *insecureFlag}
+
 	bs := &bootstrap.Client{}
 
 	// Custom bootstrap cache type/directory?
@@ -375,9 +381,6 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 		verbose(fmt.Sprintf("rdap: Bootstrap cache TTL set to %d seconds", *bootstrapTimeoutFlag))
 	}
-
-	// Custom TLS config.
-	tlsConfig := &tls.Config{InsecureSkipVerify: *insecureFlag}
 
 	var clientCert tls.Certificate
 	if *clientCertFilename != "" || *clientKeyFilename != "" {
@@ -460,6 +463,11 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	transport := &http.Transport{
 		TLSClientConfig: tlsConfig,
 	}
+
+	// Setup http.RoundTripper for http clients
+	bs.HTTP = &http.Client{
+		Transport: transport,
+	}
 	httpClient := &http.Client{
 		Transport: transport,
 	}
@@ -519,6 +527,13 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	// Print the raw response out?
 	if *outputFormatRaw {
 		fmt.Printf("%s", resp.HTTP[0].Body)
+	}
+
+	// Print the response, JSON pretty-printed?
+	if *outputFormatJSON {
+		var out bytes.Buffer
+		json.Indent(&out, resp.HTTP[0].Body, "", "  ")
+		out.WriteTo(os.Stdout)
 	}
 
 	// Print WHOIS style response out?

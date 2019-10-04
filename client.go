@@ -38,7 +38,7 @@ import (
 //   client := &rdap.Client{}
 //   resp, err := client.Do(req)
 //
-//   if domain, ok := resp.Response.(*rdap.Domain); ok {
+//   if domain, ok := resp.Object.(*rdap.Domain); ok {
 //     fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
 //   }
 //
@@ -65,7 +65,7 @@ import (
 //
 //   resp, err := client.Do(req)
 //
-//   if ns, ok := resp.Response.(*rdap.Nameserver); ok {
+//   if ns, ok := resp.Object.(*rdap.Nameserver); ok {
 //     fmt.Printf("Handle=%s Domain=%s\n", ns.Handle, ns.LDHName)
 //   }
 type Client struct {
