@@ -44,22 +44,20 @@ This will install the "rdap" binary in your $GOPATH/go/bin directory. Try runnin
 
 ## Usage
 
-| Query type  | Usage   |
-|---|---|
-| Domain (.com)   | rdap -v example.com |
-| Domain (.みんな) | rdap -v -e nic.みんな  |
-| Network | rdap -v 2001:db8:: |
-| Autnum | rdap -v AS15169 |
-| Entity (test bootstrap) | rdap -v -e 1-VRSN |
-| Nameserver | rdap -v -t nameserver -s https://rdap-pilot.verisignlabs.com/rdap/v1 ns1.google.com |
-| Help | rdap -v -t help -s https://rdap-pilot.verisignlabs.com/rdap/v1 |
-| Domain Search	| rdap -v -t domain-search -s https://rdap-pilot.verisignlabs.com/rdap/v1 exampl*.com |
-| Domain Search (by NS)	| rdap -v -t domain-search-by-nameserver -s https://rdap-pilot.verisignlabs.com/rdap/v1 ns1.google.com |
-| Domain Search (by NS IP) | rdap -v -t domain-search-by-nameserver-ip -s https://rdap-pilot.verisignlabs.com/rdap/v1 194.72.238.11 |
-| Nameserver Search	| rdap -v -t nameserver-search -s https://rdap-pilot.verisignlabs.com/rdap/v1 ns*.yahoo.com |
-| Nameserver Search (by IP)	| rdap -v -t nameserver-search-by-ip -s https://rdap-pilot.verisignlabs.com/rdap/v1 194.72.238.11 |
-| Entity Search	| rdap -v -t entity-search -s https://rdap-pilot.verisignlabs.com/rdap/v1 Register*-VRSN |
-| Entity Search (by handle)	| rdap -v -t entity-search-by-handle -s https://rdap-pilot.verisignlabs.com/rdap/v1 1*-VRSN |
+| Query type                | Usage                                                                    |
+| ---                       | ---                                                                      |
+| Domain (.com)             | rdap -v example.com                                                      |
+| Network                   | rdap -v 2001:db8::                                                       |
+| Autnum                    | rdap -v AS15169                                                          |
+| Nameserver                | rdap -v -t nameserver -s https://rdap.verisign.com/com/v1 ns1.google.com |
+| Help                      | rdap -v -t help -s https://rdap.verisign.com/com/v1                      |
+| Domain Search             | rdap -v -t domain-search -s $SERVER_URL example*.gtld                    |
+| Domain Search (by NS)     | rdap -v -t domain-search-by-nameserver -s $SERVER_URL ns1.example.gtld   |
+| Domain Search (by NS IP)  | rdap -v -t domain-search-by-nameserver-ip -s $SERVER_URL 192.0.2.0       |
+| Nameserver Search         | rdap -v -t nameserver-search -s $SERVER_URL ns1.example.gtld             |
+| Nameserver Search (by IP) | rdap -v -t nameserver-search-by-ip -s $SERVER_URL 192.0.2.0              |
+| Entity Search             | rdap -v -t entity-search -s $SERVER_URL ENTITY-TAG                       |
+| Entity Search (by handle) | rdap -v -t entity-search-by-handle -s $SERVER_URL ENTITY-TAG             |
 
 See https://www.openrdap.org/docs.
 
