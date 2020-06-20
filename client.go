@@ -77,6 +77,10 @@ type Client struct {
 
 	ServiceProviderExperiment bool
 	UserAgent                 string
+
+	// Optional API key sent to rdap.lacnic.net.
+	// https://labs.lacnic.net/rdap-descripcin-de-la-api/.
+	LACNICAPIKey string
 }
 
 func (c *Client) Do(req *Request) (*Response, error) {
@@ -172,8 +176,6 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	}
 
 	for _, r := range reqs {
-		c.Verbose(fmt.Sprintf("client: GET %s", r.URL()))
-
 		httpResponse := c.get(r)
 		resp.HTTP = append(resp.HTTP, httpResponse)
 
@@ -229,9 +231,19 @@ func (c *Client) Do(req *Request) (*Response, error) {
 }
 
 func (c *Client) get(rdapReq *Request) *HTTPResponse {
+	url := *rdapReq.URL()
+
+	// Add LACNIC API key to the request?
+	if url.Host == "rdap.lacnic.net" && c.LACNICAPIKey != "" {
+		values := url.Query()
+		values.Set("apikey", c.LACNICAPIKey)
+
+		url.RawQuery = values.Encode()
+	}
+
 	// HTTPResponse stores the URL, http.Response, response body...
 	httpResponse := &HTTPResponse{
-		URL: rdapReq.URL().String(),
+		URL: url.String(),
 	}
 
 	start := time.Now()
@@ -254,6 +266,8 @@ func (c *Client) get(rdapReq *Request) *HTTPResponse {
 
 	// Add context for timeout.
 	req = req.WithContext(rdapReq.Context())
+
+	c.Verbose(fmt.Sprintf("client: GET %s", url.String()))
 
 	// Make the HTTP request.
 	resp, err := c.HTTP.Do(req)

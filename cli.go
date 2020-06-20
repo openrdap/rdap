@@ -53,12 +53,6 @@ Options:
                       - Use the bootstrap service https://test.rdap.net/rdap
                       - Enable object tag support
 
-Authentication options:
-  -P, --p12=cert.p12[:password] Use client certificate & private key (PKCS#12 format)
-or:
-  -C, --cert=cert.pem           Use client certificate (PEM format)
-  -K, --key=cert.key            Use client private key (PEM format)
-
 Output Options:
       --text          Output RDAP, plain text "tree" format (default).
   -w, --whois         Output WHOIS style (domain queries only).
@@ -97,6 +91,14 @@ Advanced options (experiments):
       --exp=test_rdap_net  Use the bootstrap service https://test.rdap.net/rdap
       --exp=object_tag     Enable object tag support
                            (draft-hollenbeck-regext-rdap-object-tag)
+
+Advanced options (authentication):
+  -L, --lacnic-apikey=APIKEY    Use APIKEY for requests to rdap.lacnic.net.
+  -P, --p12=cert.p12[:password] Use client certificate & private key (PKCS#12 format)
+or:
+  -C, --cert=cert.pem           Use client certificate (PEM format)
+  -K, --key=cert.key            Use client private key (PEM format)
+
 `
 )
 
@@ -159,6 +161,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	clientP12FilenameAndPassword := app.Flag("p12", "").Short('P').String()
 	clientCertFilename := app.Flag("cert", "").Short('C').String()
 	clientKeyFilename := app.Flag("key", "").Short('K').String()
+	lacnicAPIKey := app.Flag("lacnic-apikey", "").Short('L').String()
 
 	outputFormatText := app.Flag("text", "").Bool()
 	outputFormatWhois := app.Flag("whois", "").Short('w').Bool()
@@ -479,6 +482,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		Verbose:                   verbose,
 		UserAgent:                 version,
 		ServiceProviderExperiment: experiments["object_tag"],
+		LACNICAPIKey:              *lacnicAPIKey,
 	}
 
 	if *insecureFlag {
