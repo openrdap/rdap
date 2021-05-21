@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/jarcoal/httpmock v1.0.4
+	github.com/mailru/easyjson v0.7.7
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/stretchr/testify v1.3.0 // indirect
 	golang.org/x/crypto v0.0.0-20190701094942-4def268fd1a4

@@ -91,10 +91,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/openrdap/rdap/bootstrap/cache"
@@ -102,6 +104,13 @@ import (
 
 // A RegistryType represents a bootstrap registry type.
 type RegistryType int
+
+type jsonDocument struct {
+	Description string
+	Publication string
+	Version     string
+	Services    [][][]string
+}
 
 const (
 	DNS RegistryType = iota
@@ -236,19 +245,48 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 		return nil, nil, fmt.Errorf("Server returned non-200 status code: %s", resp.Status)
 	}
 
-	json, err := ioutil.ReadAll(resp.Body)
+	jsonString, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	var s Registry
-	s, err = newRegistry(registry, json)
+	// existiert ein custom-RegistryType file?
+	dc := cache.NewDiskCache()
+	if _, err := os.Stat(dc.Dir + "/custom-" + c.filenameFor(registry)); err == nil {
+		// path/to/whatever exists
+		custom, err := ioutil.ReadFile(dc.Dir + "/custom-" + c.filenameFor(registry))
+		if err != nil {
+			return nil, nil, err
+		}
 
-	if err != nil {
-		return json, nil, err
+		var customDecoded jsonDocument
+		err = json.Unmarshal(custom, &customDecoded)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		var decoded jsonDocument
+		err = json.Unmarshal(jsonString, &decoded)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		decoded.Services = append(decoded.Services, customDecoded.Services...)
+
+		jsonString, err = json.Marshal(decoded)
+		if err != nil {
+			return nil, nil, err
+		}
 	}
 
-	return json, s, nil
+	var s Registry
+	s, err = newRegistry(registry, jsonString)
+
+	if err != nil {
+		return jsonString, nil, err
+	}
+
+	return jsonString, s, nil
 }
 
 func (c *Client) freshenFromCache(registry RegistryType) {

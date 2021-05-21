@@ -481,11 +481,22 @@ func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 	}
 
 	if e.VCard != nil {
-		for _, property := range e.VCard.Properties {
-			for _, str := range property.Values() {
-				p.printValue("vCard "+property.Name, str, indentLevel)
-			}
+		p.printValue("vCard Version", e.VCard.Version(), indentLevel)
+		p.printValue("vCard Name", e.VCard.Name(), indentLevel)
+		p.printValue("vCard Org", e.VCard.Org(), indentLevel)
+		for _, lang := range e.VCard.Languages() {
+			p.printValue("vCard Lang", lang, indentLevel)
 		}
+		p.printValue("vCard POBox", e.VCard.POBox(), indentLevel)
+		p.printValue("vCard ExtendedAddress", e.VCard.ExtendedAddress(), indentLevel)
+		p.printValue("vCard Street", e.VCard.StreetAddress(), indentLevel)
+		p.printValue("vCard Locality", e.VCard.Locality(), indentLevel)
+		p.printValue("vCard Region", e.VCard.Region(), indentLevel)
+		p.printValue("vCard PostalCode", e.VCard.PostalCode(), indentLevel)
+		p.printValue("vCard CountryCode", e.VCard.CountryCode(), indentLevel)
+		p.printValue("vCard Tel", e.VCard.Tel(), indentLevel)
+		p.printValue("vCard Fax", e.VCard.Fax(), indentLevel)
+		p.printValue("vCard ContactURI", e.VCard.ContactURI(), indentLevel)
 	}
 
 	if !p.BriefOutput {

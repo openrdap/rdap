@@ -174,6 +174,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	for _, r := range reqs {
 		c.Verbose(fmt.Sprintf("client: GET %s", r.URL()))
 
+		resp.URL = r.URL()
 		httpResponse := c.get(r)
 		resp.HTTP = append(resp.HTTP, httpResponse)
 

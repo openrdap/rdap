@@ -154,7 +154,7 @@ func TestVCardQuickAccessors(t *testing.T) {
 		"QC",
 		"G1V 2M2",
 		"Canada",
-		"tel:+1-418-656-9254;ext=102",
+		"+1-418-656-9254;ext=102",
 		"",
 		"simon.perreault@viagenie.ca",
 	}

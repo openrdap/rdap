@@ -504,6 +504,45 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		return 1
 	}
 
+	// resp.Object
+	secondLookup := false
+	var registrarUrl *url.URL
+	if req.Type.String() == "domain" {
+		// try to follow
+
+		d, ok := resp.Object.(*Domain)
+		if ok {
+			for _, link := range d.Links {
+				if link.Href != resp.URL.String() {
+					// zweiter lookup
+					registrarUrl, err = url.Parse(link.Href)
+					secondLookup = true
+					if err != nil {
+						printError(stderr, fmt.Sprintf("Error: %s", err))
+						return 1
+					}
+				}
+			}
+		}
+	}
+
+	var secondReq *Request
+	var secondResp *Response
+	if secondLookup {
+		secondStart := time.Now()
+
+		secondReq = NewRawRequest(registrarUrl)
+		secondResp, err = client.Do(secondReq)
+
+		verbose("")
+		verbose(fmt.Sprintf("rdap: Finished second query in %s", time.Since(secondStart)))
+
+		if err != nil {
+			printError(stderr, fmt.Sprintf("Registrar Error: %s", err))
+			secondLookup = false
+		}
+	}
+
 	// Insert a blank line to seperate verbose messages/proper output.
 	if *verboseFlag {
 		fmt.Fprintln(stderr, "")
@@ -516,33 +555,62 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 	// Print the response out in text format?
 	if *outputFormatText {
+		fmt.Fprintln(stdout, "RDAP from Registry:")
 		printer := &Printer{
 			Writer: stdout,
 
 			BriefLinks: true,
 		}
 		printer.Print(resp.Object)
+		if secondLookup {
+			fmt.Fprintf(stdout, "\n\nRDAP from Registrar:\n")
+			printer.Print(secondResp.Object)
+		}
 	}
 
 	// Print the raw response out?
 	if *outputFormatRaw {
+		fmt.Fprintln(stdout, "RDAP from Registry:")
 		fmt.Printf("%s", resp.HTTP[0].Body)
+		if secondLookup {
+			fmt.Fprintf(stdout, "\n\nRDAP from Registrar:\n")
+			fmt.Printf("%s", secondResp.HTTP[0].Body)
+		}
 	}
 
 	// Print the response, JSON pretty-printed?
 	if *outputFormatJSON {
 		var out bytes.Buffer
 		json.Indent(&out, resp.HTTP[0].Body, "", "  ")
+		fmt.Fprintln(stdout, "RDAP from Registry:")
 		out.WriteTo(os.Stdout)
+
+		if secondLookup {
+			json.Indent(&out, secondResp.HTTP[0].Body, "", "  ")
+			fmt.Fprintf(stdout, "\n\nRDAP from Registrar:\n")
+			out.WriteTo(os.Stdout)
+		}
 	}
 
 	// Print WHOIS style response out?
 	if *outputFormatWhois {
+		fmt.Fprintln(stdout, "RDAP from Registry:")
 		w := resp.ToWhoisStyleResponse()
 
 		for _, key := range w.KeyDisplayOrder {
 			for _, value := range w.Data[key] {
 				fmt.Fprintf(stdout, "%s: %s\n", key, safePrint(value))
+			}
+		}
+
+		if secondLookup {
+			fmt.Fprintf(stdout, "\n\nRDAP from Registrar:\n")
+			w = secondResp.ToWhoisStyleResponse()
+
+			for _, key := range w.KeyDisplayOrder {
+				for _, value := range w.Data[key] {
+					fmt.Fprintf(stdout, "%s: %s\n", key, safePrint(value))
+				}
 			}
 		}
 	}
