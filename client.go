@@ -250,7 +250,7 @@ func (c *Client) get(rdapReq *Request) *HTTPResponse {
 	}
 
 	// HTTP Accept header.
-	req.Header.Add("Accept", "application/rdap+json")
+	req.Header.Add("Accept", "application/rdap+json, application/json")
 
 	// Add context for timeout.
 	req = req.WithContext(rdapReq.Context())

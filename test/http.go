@@ -9,7 +9,7 @@ import (
 	"log"
 	"net/http"
 
-	"gopkg.in/jarcoal/httpmock.v1"
+	"github.com/jarcoal/httpmock"
 )
 
 type TestDataset int
