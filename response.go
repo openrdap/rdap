@@ -6,6 +6,7 @@ package rdap
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/openrdap/rdap/bootstrap"
@@ -15,6 +16,7 @@ type Response struct {
 	Object          RDAPObject
 	BootstrapAnswer *bootstrap.Answer
 	HTTP            []*HTTPResponse
+	URL             *url.URL
 }
 
 type RDAPObject interface{}
