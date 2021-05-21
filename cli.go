@@ -538,8 +538,8 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		verbose(fmt.Sprintf("rdap: Finished second query in %s", time.Since(secondStart)))
 
 		if err != nil {
-			printError(stderr, fmt.Sprintf("Error: %s", err))
-			return 1
+			printError(stderr, fmt.Sprintf("Registrar Error: %s", err))
+			secondLookup = false
 		}
 	}
 
