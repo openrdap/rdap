@@ -81,3 +81,48 @@ func NewFile(jsonDocument []byte) (*File, error) {
 
 	return f, nil
 }
+
+func (f *File) AddEntries(jsonDocument []byte) error {
+	var doc struct {
+		Description string
+		Publication string
+		Version     string
+
+		Services [][][]string
+	}
+
+	err := json.Unmarshal(jsonDocument, &doc)
+	if err != nil {
+		return err
+	}
+
+	for _, s := range doc.Services {
+		if len(s) != 2 {
+			return errors.New("Malformed bootstrap (bad services array)")
+		}
+
+		entries := s[0]
+		rawURLs := s[1]
+
+		var urls []*url.URL
+
+		for _, rawURL := range rawURLs {
+			url, err := url.Parse(rawURL)
+
+			// Ignore unparsable URLs.
+			if err != nil {
+				continue
+			}
+
+			urls = append(urls, url)
+		}
+
+		if len(urls) > 0 {
+			for _, entry := range entries {
+				f.Entries[entry] = urls
+			}
+		}
+	}
+
+	return nil
+}
