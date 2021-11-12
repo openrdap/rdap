@@ -7,7 +7,7 @@ package bootstrap
 import (
 	"testing"
 
-	"github.com/keperry/rdap/test"
+	"github.com/openrdap/rdap/test"
 )
 
 func TestParseValid(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/keperry/rdap/test"
+	"github.com/openrdap/rdap/test"
 )
 
 func TestVCardErrors(t *testing.T) {

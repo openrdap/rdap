@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/keperry/rdap/bootstrap"
+	"github.com/openrdap/rdap/bootstrap"
 )
 
 // Client implements an RDAP client.

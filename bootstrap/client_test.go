@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/keperry/rdap/test"
+	"github.com/openrdap/rdap/test"
 )
 
 func TestDownload(t *testing.T) {

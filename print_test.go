@@ -7,7 +7,7 @@ package rdap
 import (
 	"testing"
 
-	"github.com/keperry/rdap/test"
+	"github.com/openrdap/rdap/test"
 )
 
 func TestPrintDomain(t *testing.T) {
