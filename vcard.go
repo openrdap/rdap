@@ -431,6 +431,13 @@ func (v *VCard) Email() string {
 	return v.getFirstPropertySingleString("email")
 }
 
+// Org returns the VCard's org.
+//
+// Returns empty string if the VCard contains no  organization.
+func (v *VCard) Org() string {
+	return v.getFirstPropertySingleString("org")
+}
+
 func (v *VCard) getFirstAddressField(index int) string {
 	adr := v.GetFirst("adr")
 	if adr == nil {

@@ -143,6 +143,7 @@ func TestVCardQuickAccessors(t *testing.T) {
 		j.Tel(),
 		j.Fax(),
 		j.Email(),
+		j.Org(),
 	}
 
 	expected := []string{
@@ -157,6 +158,7 @@ func TestVCardQuickAccessors(t *testing.T) {
 		"tel:+1-418-656-9254;ext=102",
 		"",
 		"simon.perreault@viagenie.ca",
+		"Viagenie",
 	}
 
 	if !reflect.DeepEqual(got, expected) {
