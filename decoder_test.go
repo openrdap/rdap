@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/davecgh/go-spew/spew"
-	"github.com/openrdap/rdap/test"
+	"github.com/keperry/rdap/test"
 )
 
 func TestDecodeEmpty(t *testing.T) {

@@ -1,4 +1,4 @@
-module github.com/openrdap/rdap
+module github.com/keperry/rdap
 
 go 1.12
 
