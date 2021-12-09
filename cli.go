@@ -464,6 +464,17 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		TLSClientConfig: tlsConfig,
 	}
 
+	// If http_proxy is set, use that as the Transport Proxy
+	proxyStr, present := os.LookupEnv("http_proxy")
+	if present {
+		proxyURL, err := url.Parse(proxyStr)
+		if err != nil {
+			printError(stderr, fmt.Sprintf("rdap: Error: invalid proxy URL: %s", proxyURL))
+			return 1
+		}
+		transport.Proxy = http.ProxyURL(proxyURL)
+	}
+
 	// Setup http.RoundTripper for http clients
 	bs.HTTP = &http.Client{
 		Transport: transport,
