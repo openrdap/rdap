@@ -36,7 +36,7 @@ This program uses Go. The Go compiler is available from https://golang.org/.
 
 To install:
 
-    go get -u github.com/openrdap/rdap/cmd/rdap
+    go install github.com/openrdap/rdap/cmd/rdap
 
 This will install the "rdap" binary in your $GOPATH/go/bin directory. Try running:
 
@@ -64,8 +64,8 @@ See https://www.openrdap.org/docs.
 ## Go docs
 [![godoc](https://godoc.org/github.com/openrdap/rdap?status.png)](https://godoc.org/github.com/openrdap/rdap)
 
-## Requires
-Go 1.7+
+## Uses
+Go 1.20+
 
 ## Links
 - Wikipedia - [Registration Data Access Protocol](https://en.wikipedia.org/wiki/Registration_Data_Access_Protocol)
@@ -81,4 +81,3 @@ Go 1.7+
 - [RFC 7482 Registration Data Access Protocol (RDAP) Query Format](https://tools.ietf.org/html/rfc7482)
 - [RFC 7483 JSON Responses for the Registration Data Access Protocol (RDAP)](https://tools.ietf.org/html/rfc7483)
 - [RFC 7484 Finding the Authoritative Registration Data (RDAP) Service](https://tools.ietf.org/html/rfc7484)
-
