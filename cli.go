@@ -27,7 +27,7 @@ import (
 )
 
 var (
-	version   = "OpenRDAP v0.0.1"
+	version   = "OpenRDAP v0.9.1"
 	usageText = version + `
 (www.openrdap.org)
 
