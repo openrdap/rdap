@@ -11,10 +11,10 @@ import (
 )
 
 func TestServiceProviderRegistryLookups(t *testing.T) {
-	test.Start(test.BootstrapExperimental)
+	test.Start(test.Bootstrap)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://test.rdap.net/rdap/serviceprovider-draft-03.json")
+	var bytes []byte = test.Get("https://data.iana.org/rdap/object-tags.json")
 
 	var s *ServiceProviderRegistry
 	s, err := NewServiceProviderRegistry(bytes)
@@ -31,58 +31,28 @@ func TestServiceProviderRegistryLookups(t *testing.T) {
 			[]string{},
 		},
 		{
-			"~",
+			"12345-FRNIC",
 			false,
-			"",
-			[]string{},
+			"FRNIC",
+			[]string{"https://rdap.nic.fr/"},
 		},
 		{
-			"X~VRSN~",
+			"*-FRNIC",
 			false,
-			"",
-			[]string{},
+			"FRNIC",
+			[]string{"https://rdap.nic.fr/"},
 		},
 		{
-			"12345~VRSN",
+			"-FRNIC",
 			false,
-			"VRSN",
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
+			"FRNIC",
+			[]string{"https://rdap.nic.fr/"},
 		},
 		{
-			"*~VRSN",
+			"A-B-FRNIC",
 			false,
-			"VRSN",
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
-		},
-		{
-			"~VRSN",
-			false,
-			"VRSN",
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
-		},
-		{
-			"12345-VRSN",
-			false,
-			"VRSN",
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
-		},
-		{
-			"*-VRSN",
-			false,
-			"VRSN",
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
-		},
-		{
-			"-VRSN",
-			false,
-			"VRSN",
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
-		},
-		{
-			"A-B-VRSN",
-			false,
-			"VRSN",
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
+			"FRNIC",
+			[]string{"https://rdap.nic.fr/"},
 		},
 	}
 

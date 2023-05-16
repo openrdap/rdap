@@ -430,7 +430,7 @@ func (c *Client) filenameFor(r RegistryType) string {
 	return filename
 }
 
-// Filename returns the JSON document filename: One of {asn,dns,ipv4,ipv6,service_provider}.json.
+// Filename returns the JSON document filename: One of {asn,dns,ipv4,ipv6,object-tags}.json.
 func (r RegistryType) Filename() string {
 	switch r {
 	case ASN:
@@ -442,8 +442,7 @@ func (r RegistryType) Filename() string {
 	case IPv6:
 		return "ipv6.json"
 	case ServiceProvider:
-		// This is a guess and will need fixing to match whatever IANA chooses.
-		return "serviceprovider-draft-03.json"
+		return "object-tags.json"
 	default:
 		panic("Unknown RegistryType")
 	}

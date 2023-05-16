@@ -22,7 +22,7 @@ type ServiceProviderRegistry struct {
 // Provider JSON document.
 //
 // The document format is specified in
-// https://datatracker.ietf.org/doc/draft-hollenbeck-regext-rdap-object-tag/.
+// https://datatracker.ietf.org/doc/rfc8521/.
 func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
 	var r *File
 	r, err := NewFile(json)
@@ -50,11 +50,7 @@ func (s *ServiceProviderRegistry) Lookup(question *Question) (*Answer, error) {
 	input := question.Query
 
 	// Valid input looks like 12345-VRSN.
-	offset := strings.LastIndexByte(input, '~')
-
-	if offset == -1 {
-		offset = strings.LastIndexByte(input, '-')
-	}
+	offset := strings.LastIndexByte(input, '-')
 
 	if offset == -1 || offset == len(input)-1 {
 		return &Answer{

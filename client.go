@@ -79,8 +79,11 @@ type Client struct {
 	// Optional callback function for verbose messages.
 	Verbose func(text string)
 
+	UserAgent string
+
+	// Service Provider support is now always enabled.
+	// This field is ignored.
 	ServiceProviderExperiment bool
-	UserAgent                 string
 }
 
 func (c *Client) Do(req *Request) (*Response, error) {
@@ -127,7 +130,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 
 		var bootstrapType *bootstrap.RegistryType = bootstrapTypeFor(req)
 
-		if bootstrapType == nil || (*bootstrapType == bootstrap.ServiceProvider && !c.ServiceProviderExperiment) {
+		if bootstrapType == nil {
 			return nil, &ClientError{
 				Type: BootstrapNotSupported,
 				Text: fmt.Sprintf("Cannot run query type '%s' without a server URL, "+

@@ -52,12 +52,21 @@ func NewFile(jsonDocument []byte) (*File, error) {
 	f.Entries = make(map[string][]*url.URL)
 
 	for _, s := range doc.Services {
-		if len(s) != 2 {
+		var entries []string
+		var rawURLs []string
+
+		switch len(s) {
+		case 2:
+			// {asn,dns,ipv4,ipv6}.json
+			entries = s[0]
+			rawURLs = s[1]
+		case 3:
+			// object-tags.json
+			entries = s[1]
+			rawURLs = s[2]
+		default:
 			return nil, errors.New("Malformed bootstrap (bad services array)")
 		}
-
-		entries := s[0]
-		rawURLs := s[1]
 
 		var urls []*url.URL
 

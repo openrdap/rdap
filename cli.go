@@ -93,11 +93,6 @@ Advanced options (bootstrapping):
                       automatically as needed. (default: $HOME/.openrdap).
       --bs-url=URL    Bootstrap service URL (default: https://data.iana.org/rdap)
       --bs-ttl=SECS   Bootstrap cache time in seconds (default: 3600)
-
-Advanced options (experiments):
-      --exp=test_rdap_net  Use the bootstrap service https://test.rdap.net/rdap
-      --exp=object_tag     Enable object tag support
-                           (draft-hollenbeck-regext-rdap-object-tag)
 `
 )
 
@@ -222,9 +217,8 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 	// Enable the -e selection of experiments?
 	if *experimentalFlag {
-		verbose("rdap: Enabled -e/--experiments: test_rdap_net, object_tag")
+		verbose("rdap: Enabled -e/--experiments: test_rdap_net")
 		experiments["test_rdap_net"] = true
-		experiments["object_tag"] = true
 	}
 
 	// Forced sandbox mode?
@@ -484,9 +478,8 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		HTTP:      httpClient,
 		Bootstrap: bs,
 
-		Verbose:                   verbose,
-		UserAgent:                 version,
-		ServiceProviderExperiment: experiments["object_tag"],
+		Verbose:   verbose,
+		UserAgent: version,
 	}
 
 	if *insecureFlag {

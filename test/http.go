@@ -82,10 +82,7 @@ func loadTestDatasets() {
 	load(Bootstrap, 200, "https://data.iana.org/rdap/dns.json", "bootstrap/dns.json")
 	load(Bootstrap, 200, "https://data.iana.org/rdap/ipv4.json", "bootstrap/ipv4.json")
 	load(Bootstrap, 200, "https://data.iana.org/rdap/ipv6.json", "bootstrap/ipv6.json")
-
-	// Experimental bootstrap file for service providers.
-	// https://datatracker.ietf.org/doc/draft-hollenbeck-regext-rdap-object-tag/ .
-	load(BootstrapExperimental, 200, "https://test.rdap.net/rdap/serviceprovider-draft-03.json", "bootstrap_experimental/service_provider.json")
+	load(Bootstrap, 200, "https://data.iana.org/rdap/object-tags.json", "bootstrap/object-tags.json")
 
 	// Malformed bootstrap files.
 	load(BootstrapMalformed, 200, "https://www.example.org/dns_bad_services.json", "bootstrap_malformed/dns_bad_services.json")

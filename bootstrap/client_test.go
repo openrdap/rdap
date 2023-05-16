@@ -5,7 +5,6 @@
 package bootstrap
 
 import (
-	"net/url"
 	"testing"
 
 	"github.com/openrdap/rdap/test"
@@ -66,15 +65,9 @@ func TestLookups(t *testing.T) {
 		},
 		{
 			ServiceProvider,
-			"12345~VRSN",
+			"12345-FRNIC",
 			true,
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
-		},
-		{
-			ServiceProvider,
-			"12345-VRSN",
-			true,
-			[]string{"https://rdap.verisignlabs.com/rdap/v1"},
+			[]string{"https://rdap.nic.fr/"},
 		},
 	}
 
@@ -86,10 +79,6 @@ func TestLookups(t *testing.T) {
 
 	for _, test := range tests {
 		var r *Answer
-
-		if test.Registry == ServiceProvider {
-			c.BaseURL, _ = url.Parse("https://test.rdap.net/rdap/")
-		}
 
 		question := &Question{
 			RegistryType: test.Registry,
