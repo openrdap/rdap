@@ -52,7 +52,7 @@ This will install the "rdap" binary in your $GOPATH/go/bin directory. Try runnin
 | Autonomous System (ASN)   | rdap -v AS15169                                                          |
 | Entity (with object tag)  | rdap -v OPS4-RIPE                                                        |
 
-## Advanced Usage (server must be specified using -s; not all servers support all query types)
+## Advanced usage (server must be specified using -s; not all servers support all query types)
 | Query type                | Usage                                                                    |
 | ------------------------- | ------------------------------------------------------------------------ |
 | Nameserver                | rdap -v -t nameserver -s https://rdap.verisign.com/com/v1 ns1.google.com |
@@ -73,9 +73,8 @@ Click the examples to see the output:
 
 <details>
 <summary>rdap example.com</summary>
-```
-rdap example.com
-Domain:
+
+```Domain:
   Domain Name: EXAMPLE.COM
   Handle: 2336799_DOMAIN_COM-VRSN
   Status: client delete prohibited
@@ -132,13 +131,13 @@ Domain:
   Nameserver:
     Nameserver: B.IANA-SERVERS.NET
 ```
+
 </details>
 
 <details>
 <summary>rdap 8.8.8.8</summary>
-```
-$ rdap 8.8.8.8
-IP Network:
+
+```IP Network:
   Handle: NET-8-8-8-0-1
   Start Address: 8.8.8.0
   End Address: 8.8.8.255
@@ -240,8 +239,489 @@ IP Network:
     v4prefix: 8.8.8.0
     length: 24
 ```
+
 </details>
 
+<details>
+<summary>rdap --json AS15169</summary>
+
+```
+{
+  "rdapConformance": [
+    "nro_rdap_profile_0",
+    "rdap_level_0",
+    "nro_rdap_profile_asn_flat_0"
+  ],
+  "notices": [
+    {
+      "title": "Terms of Service",
+      "description": [
+        "By using the ARIN RDAP/Whois service, you are agreeing to the RDAP/Whois Terms of Use"
+      ],
+      "links": [
+        {
+          "value": "https://rdap.arin.net/registry/autnum/15169",
+          "rel": "terms-of-service",
+          "type": "text/html",
+          "href": "https://www.arin.net/resources/registry/whois/tou/"
+        }
+      ]
+    },
+    {
+      "title": "Whois Inaccuracy Reporting",
+      "description": [
+        "If you see inaccuracies in the results, please visit: "
+      ],
+      "links": [
+        {
+          "value": "https://rdap.arin.net/registry/autnum/15169",
+          "rel": "inaccuracy-report",
+          "type": "text/html",
+          "href": "https://www.arin.net/resources/registry/whois/inaccuracy_reporting/"
+        }
+      ]
+    },
+    {
+      "title": "Copyright Notice",
+      "description": [
+        "Copyright 1997-2023, American Registry for Internet Numbers, Ltd."
+      ]
+    }
+  ],
+  "handle": "AS15169",
+  "startAutnum": 15169,
+  "endAutnum": 15169,
+  "name": "GOOGLE",
+  "events": [
+    {
+      "eventAction": "last changed",
+      "eventDate": "2012-02-24T09:44:34-05:00"
+    },
+    {
+      "eventAction": "registration",
+      "eventDate": "2000-03-30T00:00:00-05:00"
+    }
+  ],
+  "links": [
+    {
+      "value": "https://rdap.arin.net/registry/autnum/15169",
+      "rel": "self",
+      "type": "application/rdap+json",
+      "href": "https://rdap.arin.net/registry/autnum/15169"
+    },
+    {
+      "value": "https://rdap.arin.net/registry/autnum/15169",
+      "rel": "alternate",
+      "type": "application/xml",
+      "href": "https://whois.arin.net/rest/asn/AS15169"
+    }
+  ],
+  "entities": [
+    {
+      "handle": "GOGL",
+      "vcardArray": [
+        "vcard",
+        [
+          [
+            "version",
+            {},
+            "text",
+            "4.0"
+          ],
+          [
+            "fn",
+            {},
+            "text",
+            "Google LLC"
+          ],
+          [
+            "adr",
+            {
+              "label": "1600 Amphitheatre Parkway\nMountain View\nCA\n94043\nUnited States"
+            },
+            "text",
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          [
+            "kind",
+            {},
+            "text",
+            "org"
+          ]
+        ]
+      ],
+      "roles": [
+        "registrant"
+      ],
+      "remarks": [
+        {
+          "title": "Registration Comments",
+          "description": [
+            "Please note that the recommended way to file abuse complaints are located in the following links. ",
+            "",
+            "To report abuse and illegal activity: https://www.google.com/contact/",
+            "",
+            "For legal requests: http://support.google.com/legal ",
+            "",
+            "Regards, ",
+            "The Google Team"
+          ]
+        }
+      ],
+      "links": [
+        {
+          "value": "https://rdap.arin.net/registry/autnum/15169",
+          "rel": "self",
+          "type": "application/rdap+json",
+          "href": "https://rdap.arin.net/registry/entity/GOGL"
+        },
+        {
+          "value": "https://rdap.arin.net/registry/autnum/15169",
+          "rel": "alternate",
+          "type": "application/xml",
+          "href": "https://whois.arin.net/rest/org/GOGL"
+        }
+      ],
+      "events": [
+        {
+          "eventAction": "last changed",
+          "eventDate": "2019-10-31T15:45:45-04:00"
+        },
+        {
+          "eventAction": "registration",
+          "eventDate": "2000-03-30T00:00:00-05:00"
+        }
+      ],
+      "entities": [
+        {
+          "handle": "ABUSE5250-ARIN",
+          "vcardArray": [
+            "vcard",
+            [
+              [
+                "version",
+                {},
+                "text",
+                "4.0"
+              ],
+              [
+                "adr",
+                {
+                  "label": "1600 Amphitheatre Parkway\nMountain View\nCA\n94043\nUnited States"
+                },
+                "text",
+                [
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              ],
+              [
+                "fn",
+                {},
+                "text",
+                "Abuse"
+              ],
+              [
+                "org",
+                {},
+                "text",
+                "Abuse"
+              ],
+              [
+                "kind",
+                {},
+                "text",
+                "group"
+              ],
+              [
+                "email",
+                {},
+                "text",
+                "network-abuse@google.com"
+              ],
+              [
+                "tel",
+                {
+                  "type": [
+                    "work",
+                    "voice"
+                  ]
+                },
+                "text",
+                "+1-650-253-0000"
+              ]
+            ]
+          ],
+          "roles": [
+            "abuse"
+          ],
+          "remarks": [
+            {
+              "title": "Registration Comments",
+              "description": [
+                "Please note that the recommended way to file abuse complaints are located in the following links.",
+                "",
+                "To report abuse and illegal activity: https://www.google.com/contact/",
+                "",
+                "For legal requests: http://support.google.com/legal ",
+                "",
+                "Regards,",
+                "The Google Team"
+              ]
+            }
+          ],
+          "links": [
+            {
+              "value": "https://rdap.arin.net/registry/autnum/15169",
+              "rel": "self",
+              "type": "application/rdap+json",
+              "href": "https://rdap.arin.net/registry/entity/ABUSE5250-ARIN"
+            },
+            {
+              "value": "https://rdap.arin.net/registry/autnum/15169",
+              "rel": "alternate",
+              "type": "application/xml",
+              "href": "https://whois.arin.net/rest/poc/ABUSE5250-ARIN"
+            }
+          ],
+          "events": [
+            {
+              "eventAction": "last changed",
+              "eventDate": "2022-10-24T08:43:11-04:00"
+            },
+            {
+              "eventAction": "registration",
+              "eventDate": "2015-11-06T15:36:35-05:00"
+            }
+          ],
+          "status": [
+            "validated"
+          ],
+          "port43": "whois.arin.net",
+          "objectClassName": "entity"
+        },
+        {
+          "handle": "ZG39-ARIN",
+          "vcardArray": [
+            "vcard",
+            [
+              [
+                "version",
+                {},
+                "text",
+                "4.0"
+              ],
+              [
+                "adr",
+                {
+                  "label": "1600 Amphitheatre Parkway\nMountain View\nCA\n94043\nUnited States"
+                },
+                "text",
+                [
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  "",
+                  ""
+                ]
+              ],
+              [
+                "fn",
+                {},
+                "text",
+                "Google LLC"
+              ],
+              [
+                "org",
+                {},
+                "text",
+                "Google LLC"
+              ],
+              [
+                "kind",
+                {},
+                "text",
+                "group"
+              ],
+              [
+                "email",
+                {},
+                "text",
+                "arin-contact@google.com"
+              ],
+              [
+                "tel",
+                {
+                  "type": [
+                    "work",
+                    "voice"
+                  ]
+                },
+                "text",
+                "+1-650-253-0000"
+              ]
+            ]
+          ],
+          "roles": [
+            "technical",
+            "administrative"
+          ],
+          "links": [
+            {
+              "value": "https://rdap.arin.net/registry/autnum/15169",
+              "rel": "self",
+              "type": "application/rdap+json",
+              "href": "https://rdap.arin.net/registry/entity/ZG39-ARIN"
+            },
+            {
+              "value": "https://rdap.arin.net/registry/autnum/15169",
+              "rel": "alternate",
+              "type": "application/xml",
+              "href": "https://whois.arin.net/rest/poc/ZG39-ARIN"
+            }
+          ],
+          "events": [
+            {
+              "eventAction": "last changed",
+              "eventDate": "2022-11-10T07:12:44-05:00"
+            },
+            {
+              "eventAction": "registration",
+              "eventDate": "2000-11-30T13:54:08-05:00"
+            }
+          ],
+          "status": [
+            "validated"
+          ],
+          "port43": "whois.arin.net",
+          "objectClassName": "entity"
+        }
+      ],
+      "port43": "whois.arin.net",
+      "objectClassName": "entity"
+    },
+    {
+      "handle": "ZG39-ARIN",
+      "vcardArray": [
+        "vcard",
+        [
+          [
+            "version",
+            {},
+            "text",
+            "4.0"
+          ],
+          [
+            "adr",
+            {
+              "label": "1600 Amphitheatre Parkway\nMountain View\nCA\n94043\nUnited States"
+            },
+            "text",
+            [
+              "",
+              "",
+              "",
+              "",
+              "",
+              "",
+              ""
+            ]
+          ],
+          [
+            "fn",
+            {},
+            "text",
+            "Google LLC"
+          ],
+          [
+            "org",
+            {},
+            "text",
+            "Google LLC"
+          ],
+          [
+            "kind",
+            {},
+            "text",
+            "group"
+          ],
+          [
+            "email",
+            {},
+            "text",
+            "arin-contact@google.com"
+          ],
+          [
+            "tel",
+            {
+              "type": [
+                "work",
+                "voice"
+              ]
+            },
+            "text",
+            "+1-650-253-0000"
+          ]
+        ]
+      ],
+      "roles": [
+        "technical"
+      ],
+      "links": [
+        {
+          "value": "https://rdap.arin.net/registry/autnum/15169",
+          "rel": "self",
+          "type": "application/rdap+json",
+          "href": "https://rdap.arin.net/registry/entity/ZG39-ARIN"
+        },
+        {
+          "value": "https://rdap.arin.net/registry/autnum/15169",
+          "rel": "alternate",
+          "type": "application/xml",
+          "href": "https://whois.arin.net/rest/poc/ZG39-ARIN"
+        }
+      ],
+      "events": [
+        {
+          "eventAction": "last changed",
+          "eventDate": "2022-11-10T07:12:44-05:00"
+        },
+        {
+          "eventAction": "registration",
+          "eventDate": "2000-11-30T13:54:08-05:00"
+        }
+      ],
+      "status": [
+        "validated"
+      ],
+      "port43": "whois.arin.net",
+      "objectClassName": "entity"
+    }
+  ],
+  "port43": "whois.arin.net",
+  "status": [
+    "active"
+  ],
+  "objectClassName": "autnum"
+}
+```
+
+</details>
 
 ## Go docs
 [![godoc](https://godoc.org/github.com/openrdap/rdap?status.png)](https://godoc.org/github.com/openrdap/rdap)
