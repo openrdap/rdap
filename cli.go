@@ -44,6 +44,7 @@ Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL
 
 Options:
   -h, --help          Show help message.
+  -V, --version       Print version and quit.
   -v, --verbose       Print verbose messages on STDERR.
 
   -T, --timeout=SECS  Timeout after SECS seconds (default: 30).
@@ -142,6 +143,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 	// Command line options.
 	verboseFlag := app.Flag("verbose", "").Short('v').Bool()
+	versionFlag := app.Flag("version", "").Short('V').Bool()
 	timeoutFlag := app.Flag("timeout", "").Short('T').Default("30").Uint16()
 	insecureFlag := app.Flag("insecure", "").Short('k').Bool()
 
@@ -177,6 +179,12 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	} else if terminate {
 		// Occurs when kingpin prints the --help message.
 		return 1
+	}
+
+	// Print version string?
+	if *versionFlag {
+		fmt.Fprintln(stdout, version)
+		return 0
 	}
 
 	var verbose func(text string)
