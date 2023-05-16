@@ -24,19 +24,20 @@ import (
 // telephone numbers. RFC6350 documents a set of standard properties.
 //
 // RFC7095 describes the JSON document format, which looks like:
-//   ["vcard", [
-//     [
-//       ["version", {}, "text", "4.0"],
-//       ["fn", {}, "text", "Joe Appleseed"],
-//       ["tel", {
-//             "type":["work", "voice"],
-//           },
-//           "uri",
-//           "tel:+1-555-555-1234;ext=555"
-//       ],
-//       ...
-//     ]
-//   ]
+//
+//	["vcard", [
+//	  [
+//	    ["version", {}, "text", "4.0"],
+//	    ["fn", {}, "text", "Joe Appleseed"],
+//	    ["tel", {
+//	          "type":["work", "voice"],
+//	        },
+//	        "uri",
+//	        "tel:+1-555-555-1234;ext=555"
+//	    ],
+//	    ...
+//	  ]
+//	]
 type VCard struct {
 	Properties []*VCardProperty
 }
@@ -44,9 +45,10 @@ type VCard struct {
 // VCardProperty represents a single vCard property.
 //
 // Each vCard property has four fields, these are:
-//    Name   Parameters                  Type   Value
-//    -----  --------------------------  -----  -----------------------------
-//   ["tel", {"type":["work", "voice"]}, "uri", "tel:+1-555-555-1234;ext=555"]
+//
+//	 Name   Parameters                  Type   Value
+//	 -----  --------------------------  -----  -----------------------------
+//	["tel", {"type":["work", "voice"]}, "uri", "tel:+1-555-555-1234;ext=555"]
 type VCardProperty struct {
 	Name string
 
@@ -107,10 +109,10 @@ func (p *VCardProperty) appendValueStrings(v interface{}, strings *[]string) {
 
 // String returns the vCard as a multiline human readable string. For example:
 //
-//   vCard[
-//     version (type=text, parameters=map[]): [4.0]
-//     mixed (type=text, parameters=map[]): [abc true 42 <nil> [def false 43]]
-//   ]
+//	vCard[
+//	  version (type=text, parameters=map[]): [4.0]
+//	  mixed (type=text, parameters=map[]): [abc true 42 <nil> [def false 43]]
+//	]
 //
 // This is intended for debugging only, and is not machine parsable.
 func (v *VCard) String() string {
@@ -125,7 +127,7 @@ func (v *VCard) String() string {
 
 // String returns the VCardProperty as a human readable string. For example:
 //
-//     mixed (type=text, parameters=map[]): [abc true 42 <nil> [def false 43]]
+//	mixed (type=text, parameters=map[]): [abc true 42 <nil> [def false 43]]
 //
 // This is intended for debugging only, and is not machine parsable.
 func (p *VCardProperty) String() string {

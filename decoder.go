@@ -20,36 +20,37 @@ import (
 //
 // To decode an RDAP response:
 //
-//  jsonBlob := []byte(`
-//    {
-//      "objectClassName": "domain",
-//      "rdapConformance": ["rdap_level_0"],
-//      "handle":          "EXAMPLECOM",
-//      "ldhName":         "example.com",
-//      "entities":        []
-//    }
-//  `)
+//	jsonBlob := []byte(`
+//	  {
+//	    "objectClassName": "domain",
+//	    "rdapConformance": ["rdap_level_0"],
+//	    "handle":          "EXAMPLECOM",
+//	    "ldhName":         "example.com",
+//	    "entities":        []
+//	  }
+//	`)
 //
-//  d := rdap.NewDecoder(jsonBlob)
-//  result, err := d.Decode()
+//	d := rdap.NewDecoder(jsonBlob)
+//	result, err := d.Decode()
 //
-//  if err != nil {
-//    if domain, ok := result.(*rdap.Domain); ok {
-//      fmt.Printf("Domain name = %s\n", domain.LDHName)
-//    }
-//  }
+//	if err != nil {
+//	  if domain, ok := result.(*rdap.Domain); ok {
+//	    fmt.Printf("Domain name = %s\n", domain.LDHName)
+//	  }
+//	}
 //
 // RDAP responses are decoded into the following types:
-//  &rdap.Error{}                   - Responses with an errorCode value.
-//  &rdap.Autnum{}                  - Responses with objectClassName="autnum".
-//  &rdap.Domain{}                  - Responses with objectClassName="domain".
-//  &rdap.Entity{}                  - Responses with objectClassName="entity".
-//  &rdap.IPNetwork{}               - Responses with objectClassName="ip network".
-//  &rdap.Nameserver{}              - Responses with objectClassName="nameserver".
-//  &rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
-//  &rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
-//  &rdap.NameserverSearchResults{} - Responses with a nameserverSearchResults array.
-//  &rdap.Help{}                    - All other valid JSON responses.
+//
+//	&rdap.Error{}                   - Responses with an errorCode value.
+//	&rdap.Autnum{}                  - Responses with objectClassName="autnum".
+//	&rdap.Domain{}                  - Responses with objectClassName="domain".
+//	&rdap.Entity{}                  - Responses with objectClassName="entity".
+//	&rdap.IPNetwork{}               - Responses with objectClassName="ip network".
+//	&rdap.Nameserver{}              - Responses with objectClassName="nameserver".
+//	&rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
+//	&rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
+//	&rdap.NameserverSearchResults{} - Responses with a nameserverSearchResults array.
+//	&rdap.Help{}                    - All other valid JSON responses.
 //
 // Note that an RDAP server may return a different response type than expected.
 //
@@ -95,16 +96,17 @@ func NewDecoder(jsonBlob []byte, opts ...DecoderOption) *Decoder {
 // returned.
 //
 // The possible results are:
-//  &rdap.Error{}                   - Responses with an errorCode value.
-//  &rdap.Autnum{}                  - Responses with objectClassName="autnum".
-//  &rdap.Domain{}                  - Responses with objectClassName="domain".
-//  &rdap.Entity{}                  - Responses with objectClassName="entity".
-//  &rdap.IPNetwork{}               - Responses with objectClassName="ip network".
-//  &rdap.Nameserver{}              - Responses with objectClassName="nameserver".
-//  &rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
-//  &rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
-//  &rdap.NameserverSearchResults{} - Responses with a nameserverSearchResults array.
-//  &rdap.Help{}                    - All other valid JSON responses.
+//
+//	&rdap.Error{}                   - Responses with an errorCode value.
+//	&rdap.Autnum{}                  - Responses with objectClassName="autnum".
+//	&rdap.Domain{}                  - Responses with objectClassName="domain".
+//	&rdap.Entity{}                  - Responses with objectClassName="entity".
+//	&rdap.IPNetwork{}               - Responses with objectClassName="ip network".
+//	&rdap.Nameserver{}              - Responses with objectClassName="nameserver".
+//	&rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
+//	&rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
+//	&rdap.NameserverSearchResults{} - Responses with a nameserverSearchResults array.
+//	&rdap.Help{}                    - All other valid JSON responses.
 //
 // On serious errors (e.g. JSON syntax error) an error is returned. Otherwise,
 // decoding is performed on a best-effort basis, and "minor errors" (such as

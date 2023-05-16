@@ -60,7 +60,6 @@ func (r DecodeData) Notes(name string) []string {
 //
 // |name| is the RDAP field name (not the Go field name), so "port43", not
 // "Port43". For a full list of decoded field names, use Fields().
-//
 func (r DecodeData) Value(name string) interface{} {
 	if v, ok := r.values[name]; ok {
 		return v

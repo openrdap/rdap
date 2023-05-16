@@ -9,27 +9,30 @@
 // This client executes RDAP queries and returns the responses as Go values.
 //
 // Quick usage:
-//   client := &rdap.Client{}
-//   domain, err := client.QueryDomain("example.cz")
 //
-//   if err == nil {
-//     fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
-//   }
+//	client := &rdap.Client{}
+//	domain, err := client.QueryDomain("example.cz")
+//
+//	if err == nil {
+//	  fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
+//	}
+//
 // The QueryDomain(), QueryAutnum(), and QueryIP() methods all provide full contact information, and timeout after 30s.
 //
 // Normal usage:
-//   // Query example.cz.
-//   req := &rdap.Request{
-//     Type: rdap.DomainRequest,
-//     Query: "example.cz",
-//   }
 //
-//   client := &rdap.Client{}
-//   resp, err := client.Do(req)
+//	// Query example.cz.
+//	req := &rdap.Request{
+//	  Type: rdap.DomainRequest,
+//	  Query: "example.cz",
+//	}
 //
-//   if domain, ok := resp.Object.(*rdap.Domain); ok {
-//     fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
-//   }
+//	client := &rdap.Client{}
+//	resp, err := client.Do(req)
+//
+//	if domain, ok := resp.Object.(*rdap.Domain); ok {
+//	  fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
+//	}
 //
 // As of June 2017, all five number registries (AFRINIC, ARIN, APNIC, LANIC,
 // RIPE) run RDAP servers. A small number of TLDs (top level domains) support

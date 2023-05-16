@@ -20,54 +20,58 @@ import (
 // This client executes RDAP requests, and returns the responses as Go values.
 //
 // Quick usage:
-//   client := &rdap.Client{}
-//   domain, err := client.QueryDomain("example.cz")
 //
-//   if err == nil {
-//     fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
-//   }
+//	client := &rdap.Client{}
+//	domain, err := client.QueryDomain("example.cz")
+//
+//	if err == nil {
+//	  fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
+//	}
+//
 // The QueryDomain(), QueryAutnum(), and QueryIP() methods all provide full contact information, and timeout after 30s.
 //
 // Normal usage:
-//   // Query example.cz.
-//   req := &rdap.Request{
-//     Type: rdap.DomainRequest,
-//     Query: "example.cz",
-//   }
 //
-//   client := &rdap.Client{}
-//   resp, err := client.Do(req)
+//	// Query example.cz.
+//	req := &rdap.Request{
+//	  Type: rdap.DomainRequest,
+//	  Query: "example.cz",
+//	}
 //
-//   if domain, ok := resp.Object.(*rdap.Domain); ok {
-//     fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
-//   }
+//	client := &rdap.Client{}
+//	resp, err := client.Do(req)
+//
+//	if domain, ok := resp.Object.(*rdap.Domain); ok {
+//	  fmt.Printf("Handle=%s Domain=%s\n", domain.Handle, domain.LDHName)
+//	}
 //
 // Advanced usage:
 //
 // This demonstrates custom FetchRoles, a custom Context, a custom HTTP client,
 // a custom Bootstrapper, and a custom timeout.
-//   // Nameserver query on rdap.nic.cz.
-//   server, _ := url.Parse("https://rdap.nic.cz")
-//   req := &rdap.Request{
-//     Type: rdap.NameserverRequest,
-//     Query: "a.ns.nic.cz",
-//     FetchRoles: []string{"all"},
-//     Timeout: time.Second * 45, // Custom timeout.
 //
-//     Server: server,
-//   }
+//	// Nameserver query on rdap.nic.cz.
+//	server, _ := url.Parse("https://rdap.nic.cz")
+//	req := &rdap.Request{
+//	  Type: rdap.NameserverRequest,
+//	  Query: "a.ns.nic.cz",
+//	  FetchRoles: []string{"all"},
+//	  Timeout: time.Second * 45, // Custom timeout.
 //
-//   req = req.WithContext(ctx) // Custom context (see https://blog.golang.org/context).
+//	  Server: server,
+//	}
 //
-//   client := &rdap.Client{}
-//   client.HTTP = &http.Client{} // Custom HTTP client.
-//   client.Bootstrap = &bootstrap.Client{} // Custom bootstapper.
+//	req = req.WithContext(ctx) // Custom context (see https://blog.golang.org/context).
 //
-//   resp, err := client.Do(req)
+//	client := &rdap.Client{}
+//	client.HTTP = &http.Client{} // Custom HTTP client.
+//	client.Bootstrap = &bootstrap.Client{} // Custom bootstapper.
 //
-//   if ns, ok := resp.Object.(*rdap.Nameserver); ok {
-//     fmt.Printf("Handle=%s Domain=%s\n", ns.Handle, ns.LDHName)
-//   }
+//	resp, err := client.Do(req)
+//
+//	if ns, ok := resp.Object.(*rdap.Nameserver); ok {
+//	  fmt.Printf("Handle=%s Domain=%s\n", ns.Handle, ns.LDHName)
+//	}
 type Client struct {
 	HTTP      *http.Client
 	Bootstrap *bootstrap.Client

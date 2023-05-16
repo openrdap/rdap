@@ -77,31 +77,31 @@ func (r RequestType) String() string {
 
 // A Request represents an RDAP request.
 //
-//   req := &rdap.Request{
-//     Type: rdap.DomainRequest,
-//     Query: "example.cz",
-//   }
+//	req := &rdap.Request{
+//	  Type: rdap.DomainRequest,
+//	  Query: "example.cz",
+//	}
 //
 // RDAP supports many request types. These are:
 //
-//   RequestType                                | Bootstrapped? | HTTP request path       | Example Query
-//   -------------------------------------------+---------------+-------------------------+----------------
-//   rdap.AutnumRequest                         | Yes           | autnum/QUERY            | AS2846
-//   rdap.DomainRequest                         | Yes           | domain/QUERY            | example.cz
-//   rdap.EntityRequest                         | Experimental  | entity/QUERY            | 86860670-VRSN
-//   rdap.HelpRequest                           | No            | help                    | N/A
-//   rdap.IPRequest                             | Yes           | ip/QUERY                | 2001:db8::1
-//   rdap.NameserverRequest                     | No            | nameserver/QUERY        | ns1.skip.org
-//                                              |               |                         |
-//   rdap.DomainSearchRequest                   | No            | domains?name=QUERY      | exampl*.com
-//   rdap.DomainSearchByNameserverRequest       | No            | domains?nsLdhName=QUERY | ns1.exampl*.com
-//   rdap.DomainSearchByNameserverIPRequest     | No            | domains?nsIp=QUERY      | 192.0.2.0
-//   rdap.NameserverSearchRequest               | No            | nameservers?name=QUERY  | ns1.exampl*.com
-//   rdap.NameserverSearchByNameserverIPRequest | No            | nameservers?ip=QUERY    | 192.0.2.0
-//   rdap.EntitySearchRequest                   | No            | entities?fn=QUERY       | ABC*-VRSN
-//   rdap.EntitySearchByHandleRequest           | No            | entities?handle=QUERY   | ABC*-VRSN
-//                                              |               |                         |
-//   rdap.RawRequest                            | N/A           | N/A                     | N/A
+//	RequestType                                | Bootstrapped? | HTTP request path       | Example Query
+//	-------------------------------------------+---------------+-------------------------+----------------
+//	rdap.AutnumRequest                         | Yes           | autnum/QUERY            | AS2846
+//	rdap.DomainRequest                         | Yes           | domain/QUERY            | example.cz
+//	rdap.EntityRequest                         | Experimental  | entity/QUERY            | 86860670-VRSN
+//	rdap.HelpRequest                           | No            | help                    | N/A
+//	rdap.IPRequest                             | Yes           | ip/QUERY                | 2001:db8::1
+//	rdap.NameserverRequest                     | No            | nameserver/QUERY        | ns1.skip.org
+//	                                           |               |                         |
+//	rdap.DomainSearchRequest                   | No            | domains?name=QUERY      | exampl*.com
+//	rdap.DomainSearchByNameserverRequest       | No            | domains?nsLdhName=QUERY | ns1.exampl*.com
+//	rdap.DomainSearchByNameserverIPRequest     | No            | domains?nsIp=QUERY      | 192.0.2.0
+//	rdap.NameserverSearchRequest               | No            | nameservers?name=QUERY  | ns1.exampl*.com
+//	rdap.NameserverSearchByNameserverIPRequest | No            | nameservers?ip=QUERY    | 192.0.2.0
+//	rdap.EntitySearchRequest                   | No            | entities?fn=QUERY       | ABC*-VRSN
+//	rdap.EntitySearchByHandleRequest           | No            | entities?handle=QUERY   | ABC*-VRSN
+//	                                           |               |                         |
+//	rdap.RawRequest                            | N/A           | N/A                     | N/A
 //
 // See https://tools.ietf.org/html/rfc7482 for more information on RDAP request
 // types.
@@ -112,21 +112,22 @@ func (r RequestType) String() string {
 //
 // For other Request types, you must specify the RDAP server:
 //
-//   // Nameserver query on rdap.nic.cz.
-//   server, _ := url.Parse("https://rdap.nic.cz")
-//   req := &rdap.Request{
-//     Type: rdap.NameserverRequest,
-//     Query: "a.ns.nic.cz",
+//	// Nameserver query on rdap.nic.cz.
+//	server, _ := url.Parse("https://rdap.nic.cz")
+//	req := &rdap.Request{
+//	  Type: rdap.NameserverRequest,
+//	  Query: "a.ns.nic.cz",
 //
-//     Server: server,
-//   }
+//	  Server: server,
+//	}
 //
 // RawRequest is a special case for existing RDAP request URLs:
-//   rdapURL, _ := url.Parse("https://rdap.example/mystery/query?ip=192.0.2.0")
-//   req := &rdap.Request{
-//     Type: rdap.RawRequest,
-//     Server: rdapURL,
-//   }
+//
+//	rdapURL, _ := url.Parse("https://rdap.example/mystery/query?ip=192.0.2.0")
+//	req := &rdap.Request{
+//	  Type: rdap.RawRequest,
+//	  Server: rdapURL,
+//	}
 type Request struct {
 	// Request type.
 	Type RequestType
@@ -227,15 +228,16 @@ func (r *Request) pathAndValues() (string, url.Values) {
 // URL constructs and returns the RDAP Request URL.
 //
 // As an example:
-//   server, _ := url.Parse("https://rdap.nic.cz")
-//   req := &rdap.Request{
-//     Type: rdap.NameserverRequest,
-//     Query: "a.ns.nic.cz",
 //
-//     Server: server,
-//   }
+//	server, _ := url.Parse("https://rdap.nic.cz")
+//	req := &rdap.Request{
+//	  Type: rdap.NameserverRequest,
+//	  Query: "a.ns.nic.cz",
 //
-//   fmt.Println(req.URL()) // Prints https://rdap.nic.cz/nameserver/a.ns.nic.cz.
+//	  Server: server,
+//	}
+//
+//	fmt.Println(req.URL()) // Prints https://rdap.nic.cz/nameserver/a.ns.nic.cz.
 //
 // Returns nil if the Server field is nil.
 //
@@ -431,11 +433,11 @@ func NewRequest(requestType RequestType, query string) *Request {
 // NewAutoRequest creates a Request by guessing the type required for |queryText|.
 //
 // The following types are suppported:
-//  - RawRequest    - e.g. https://example.com/domain/example2.com
-//  - DomainRequest - e.g. example.com, https://example.com, http://example.com/
-//  - IPRequest     - e.g. 192.0.2.0, 2001:db8::, 192.0.2.0/24, 2001:db8::/128
-//  - AutnumRequest - e.g. AS2856, 5400
-//  - EntityRequest - all other queries.
+//   - RawRequest    - e.g. https://example.com/domain/example2.com
+//   - DomainRequest - e.g. example.com, https://example.com, http://example.com/
+//   - IPRequest     - e.g. 192.0.2.0, 2001:db8::, 192.0.2.0/24, 2001:db8::/128
+//   - AutnumRequest - e.g. AS2856, 5400
+//   - EntityRequest - all other queries.
 //
 // Returns a Request. Use r.Type to find the RequestType chosen.
 func NewAutoRequest(queryText string) *Request {
