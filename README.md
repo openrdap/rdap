@@ -731,7 +731,7 @@ Go 1.20+
 
 ## Links
 - Wikipedia - [Registration Data Access Protocol](https://en.wikipedia.org/wiki/Registration_Data_Access_Protocol)
-- [ICANN RDAP pilot](https://www.icann.org/rdap)
+- ICANN - [RDAP](https://www.icann.org/rdap)
 
 - [OpenRDAP](https://www.openrdap.org)
 
@@ -742,4 +742,4 @@ Go 1.20+
 - [RFC 7482 Registration Data Access Protocol (RDAP) Query Format](https://tools.ietf.org/html/rfc7482)
 - [RFC 7483 JSON Responses for the Registration Data Access Protocol (RDAP)](https://tools.ietf.org/html/rfc7483)
 - [RFC 7484 Finding the Authoritative Registration Data (RDAP) Service](https://tools.ietf.org/html/rfc7484)
-- [RFC 8521 Registration Data Access Protocol (RDAP) Object Tagging] (https://datatracker.ietf.org/doc/rfc8521/)
+- [RFC 8521 Registration Data Access Protocol (RDAP) Object Tagging](https://datatracker.ietf.org/doc/rfc8521/)
