@@ -9,6 +9,7 @@ https://www.openrdap.org/demo - live demo
 
 ## Features
 * Command line RDAP client
+* Output formats: text, JSON, WHOIS style
 * Query types supported:
     * ip
     * domain
@@ -24,11 +25,10 @@ https://www.openrdap.org/demo - live demo
     * nameserver-search-by-ip
     * entity-search
     * entity-search-by-handle
-* Query bootstrapping (automatic RDAP server URL detection for ip/domain/autnum/(experimental) entity queries)
+* Automatic server detection for ip/domain/autnum/entities
+* Object tags support
 * Bootstrap cache (optional, uses ~/.openrdap by default)
 * X.509 client authentication
-* Output formats: text, JSON, WHOIS style
-* Experimental [object tagging](https://datatracker.ietf.org/doc/draft-ietf-regext-rdap-object-tag/) support
 
 ## Installation
 
@@ -45,10 +45,16 @@ This will install the "rdap" binary in your $GOPATH/go/bin directory. Try runnin
 ## Usage
 
 | Query type                | Usage                                                                    |
-| ---                       | ---                                                                      |
+| ------------------------- | ------------------------------------------------------------------------ |
 | Domain (.com)             | rdap -v example.com                                                      |
-| Network                   | rdap -v 2001:db8::                                                       |
-| Autnum                    | rdap -v AS15169                                                          |
+| IPv4 Address              | rdap -v 192.0.2.0                                                        |
+| IPv6 Address              | rdap -v 2001:db8::                                                       |
+| Autonomous System (ASN)   | rdap -v AS15169                                                          |
+| Entity (with object tag)  | rdap -v OPS4-RIPE                                                        |
+
+## Advanced Usage (server must be specified using -s; not all servers support all query types)
+| Query type                | Usage                                                                    |
+| ------------------------- | ------------------------------------------------------------------------ |
 | Nameserver                | rdap -v -t nameserver -s https://rdap.verisign.com/com/v1 ns1.google.com |
 | Help                      | rdap -v -t help -s https://rdap.verisign.com/com/v1                      |
 | Domain Search             | rdap -v -t domain-search -s $SERVER_URL example*.gtld                    |
@@ -60,6 +66,182 @@ This will install the "rdap" binary in your $GOPATH/go/bin directory. Try runnin
 | Entity Search (by handle) | rdap -v -t entity-search-by-handle -s $SERVER_URL ENTITY-TAG             |
 
 See https://www.openrdap.org/docs.
+
+## Example output
+
+Click the examples to see the output:
+
+<details>
+<summary>rdap example.com</summary>
+```
+rdap example.com
+Domain:
+  Domain Name: EXAMPLE.COM
+  Handle: 2336799_DOMAIN_COM-VRSN
+  Status: client delete prohibited
+  Status: client transfer prohibited
+  Status: client update prohibited
+  Conformance: rdap_level_0
+  Conformance: icann_rdap_technical_implementation_guide_0
+  Conformance: icann_rdap_response_profile_0
+  Notice:
+    Title: Terms of Use
+    Description: Service subject to Terms of Use.
+    Link: https://www.verisign.com/domain-names/registration-data-access-protocol/terms-service/index.xhtml
+  Notice:
+    Title: Status Codes
+    Description: For more information on domain status codes, please visit https://icann.org/epp
+    Link: https://icann.org/epp
+  Notice:
+    Title: RDDS Inaccuracy Complaint Form
+    Description: URL of the ICANN RDDS Inaccuracy Complaint Form: https://icann.org/wicf
+    Link: https://icann.org/wicf
+  Link: https://rdap.verisign.com/com/v1/domain/EXAMPLE.COM
+  Event:
+    Action: registration
+    Date: 1995-08-14T04:00:00Z
+  Event:
+    Action: expiration
+    Date: 2023-08-13T04:00:00Z
+  Event:
+    Action: last changed
+    Date: 2023-05-12T15:13:35Z
+  Event:
+    Action: last update of RDAP database
+    Date: 2023-05-16T20:36:06Z
+  Secure DNS:
+    Delegation Signed: true
+    DSData:
+      Key Tag: 370
+      Algorithm: 13
+      Digest: BE74359954660069D5C63D200C39F5603827D7DD02B56F120EE9F3A86764247C
+      DigestType: 2
+  Entity:
+    Handle: 376
+    Public ID:
+      Type: IANA Registrar ID
+      Identifier: 376
+    Role: registrar
+    vCard version: 4.0
+    vCard fn: RESERVED-Internet Assigned Numbers Authority
+    Entity:
+      Role: abuse
+      vCard version: 4.0
+  Nameserver:
+    Nameserver: A.IANA-SERVERS.NET
+  Nameserver:
+    Nameserver: B.IANA-SERVERS.NET
+```
+</details>
+
+<details>
+<summary>rdap 8.8.8.8</summary>
+```
+$ rdap 8.8.8.8
+IP Network:
+  Handle: NET-8-8-8-0-1
+  Start Address: 8.8.8.0
+  End Address: 8.8.8.255
+  IP Version: v4
+  Name: LVLT-GOGL-8-8-8
+  Type: ALLOCATION
+  ParentHandle: NET-8-0-0-0-1
+  Status: active
+  Port43: whois.arin.net
+  Notice:
+    Title: Terms of Service
+    Description: By using the ARIN RDAP/Whois service, you are agreeing to the RDAP/Whois Terms of Use
+    Link: https://www.arin.net/resources/registry/whois/tou/
+  Notice:
+    Title: Whois Inaccuracy Reporting
+    Description: If you see inaccuracies in the results, please visit: 
+    Link: https://www.arin.net/resources/registry/whois/inaccuracy_reporting/
+  Notice:
+    Title: Copyright Notice
+    Description: Copyright 1997-2023, American Registry for Internet Numbers, Ltd.
+  Entity:
+    Handle: GOGL
+    Port43: whois.arin.net
+    Remark:
+      Title: Registration Comments
+      Description: Please note that the recommended way to file abuse complaints are located in the following links. 
+      Description: To report abuse and illegal activity: https://www.google.com/contact/
+      Description: For legal requests: http://support.google.com/legal 
+      Description: Regards, 
+      Description: The Google Team
+    Link: https://rdap.arin.net/registry/entity/GOGL
+    Link: https://whois.arin.net/rest/org/GOGL
+    Event:
+      Action: last changed
+      Date: 2019-10-31T15:45:45-04:00
+    Event:
+      Action: registration
+      Date: 2000-03-30T00:00:00-05:00
+    Role: registrant
+    vCard version: 4.0
+    vCard fn: Google LLC
+    vCard kind: org
+    Entity:
+      Handle: ABUSE5250-ARIN
+      Status: validated
+      Port43: whois.arin.net
+      Remark:
+        Title: Registration Comments
+        Description: Please note that the recommended way to file abuse complaints are located in the following links.
+        Description: To report abuse and illegal activity: https://www.google.com/contact/
+        Description: For legal requests: http://support.google.com/legal 
+        Description: Regards,
+        Description: The Google Team
+      Link: https://rdap.arin.net/registry/entity/ABUSE5250-ARIN
+      Link: https://whois.arin.net/rest/poc/ABUSE5250-ARIN
+      Event:
+        Action: last changed
+        Date: 2022-10-24T08:43:11-04:00
+      Event:
+        Action: registration
+        Date: 2015-11-06T15:36:35-05:00
+      Role: abuse
+      vCard version: 4.0
+      vCard fn: Abuse
+      vCard org: Abuse
+      vCard kind: group
+      vCard email: network-abuse@google.com
+      vCard tel: +1-650-253-0000
+    Entity:
+      Handle: ZG39-ARIN
+      Status: validated
+      Port43: whois.arin.net
+      Link: https://rdap.arin.net/registry/entity/ZG39-ARIN
+      Link: https://whois.arin.net/rest/poc/ZG39-ARIN
+      Event:
+        Action: last changed
+        Date: 2022-11-10T07:12:44-05:00
+      Event:
+        Action: registration
+        Date: 2000-11-30T13:54:08-05:00
+      Role: technical
+      Role: administrative
+      vCard version: 4.0
+      vCard fn: Google LLC
+      vCard org: Google LLC
+      vCard kind: group
+      vCard email: arin-contact@google.com
+      vCard tel: +1-650-253-0000
+  Link: https://rdap.arin.net/registry/ip/8.8.8.0
+  Link: https://whois.arin.net/rest/net/NET-8-8-8-0-1
+  Link: https://rdap.arin.net/registry/ip/8.0.0.0/9
+  Event:
+    Action: last changed
+    Date: 2014-03-14T16:52:05-04:00
+  Event:
+    Action: registration
+    Date: 2014-03-14T16:52:05-04:00
+  cidr0_cidrs:
+    v4prefix: 8.8.8.0
+    length: 24
+```
+</details>
+
 
 ## Go docs
 [![godoc](https://godoc.org/github.com/openrdap/rdap?status.png)](https://godoc.org/github.com/openrdap/rdap)
@@ -74,10 +256,10 @@ Go 1.20+
 - [OpenRDAP](https://www.openrdap.org)
 
 - https://data.iana.org/rdap/ - Official IANA bootstrap information
-- https://test.rdap.net/rdap/ - Test alternate bootstrap service with more experimental RDAP servers
 
 - [RFC 7480 HTTP Usage in the Registration Data Access Protocol (RDAP)](https://tools.ietf.org/html/rfc7480)
 - [RFC 7481 Security Services for the Registration Data Access Protocol (RDAP)](https://tools.ietf.org/html/rfc7481)
 - [RFC 7482 Registration Data Access Protocol (RDAP) Query Format](https://tools.ietf.org/html/rfc7482)
 - [RFC 7483 JSON Responses for the Registration Data Access Protocol (RDAP)](https://tools.ietf.org/html/rfc7483)
 - [RFC 7484 Finding the Authoritative Registration Data (RDAP) Service](https://tools.ietf.org/html/rfc7484)
+- [RFC 8521 Registration Data Access Protocol (RDAP) Object Tagging] (https://datatracker.ietf.org/doc/rfc8521/)

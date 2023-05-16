@@ -32,13 +32,13 @@ var (
 (www.openrdap.org)
 
 Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL
-  e.g. rdap example.cz
+  e.g. rdap example.com
        rdap 192.0.2.0
        rdap 2001:db8::
        rdap AS2856
+	   rdap OPS4-RIPE
        rdap https://rdap.nic.cz/domain/example.cz
 
-       rdap -f registrant -f administrative -f billing amazon.com.br
        rdap --json https://rdap.nic.cz/domain/example.cz
        rdap -s https://rdap.nic.cz -t help
 
@@ -49,16 +49,6 @@ Options:
 
   -T, --timeout=SECS  Timeout after SECS seconds (default: 30).
   -k, --insecure      Disable SSL certificate verification.
-
-  -e, --experimental  Enable some experimental options:
-                      - Use the bootstrap service https://test.rdap.net/rdap
-                      - Enable object tag support
-
-Authentication options:
-  -P, --p12=cert.p12[:password] Use client certificate & private key (PKCS#12 format)
-or:
-  -C, --cert=cert.pem           Use client certificate (PEM format)
-  -K, --key=cert.key            Use client private key (PEM format)
 
 Output Options:
       --text          Output RDAP, plain text "tree" format (default).
@@ -93,6 +83,13 @@ Advanced options (bootstrapping):
                       automatically as needed. (default: $HOME/.openrdap).
       --bs-url=URL    Bootstrap service URL (default: https://data.iana.org/rdap)
       --bs-ttl=SECS   Bootstrap cache time in seconds (default: 3600)
+
+Advanced options (authentication):
+  -P, --p12=cert.p12[:password] Use client certificate & private key (PKCS#12 format)
+or:
+  -C, --cert=cert.pem           Use client certificate (PEM format)
+  -K, --key=cert.key            Use client private key (PEM format)
+
 `
 )
 
