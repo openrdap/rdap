@@ -150,7 +150,12 @@ func NewVCard(jsonBlob []byte) (*VCard, error) {
 	return vcard, err
 }
 
-// NewVCardWithOptions creates a VCard from jsonBlob.
+// NewVCardWithOptions creates a VCard from jsonBlob. options specifies options for
+// the VCard decoder.
+//
+// Example usage:
+//
+//	vcard, err := NewVCardWithOptions(jsonBlob, VCardOptions{IgnoreInvalidProperties: true})
 func NewVCardWithOptions(jsonBlob []byte, options VCardOptions) (*VCard, error) {
 	var top []interface{}
 	err := json.Unmarshal(jsonBlob, &top)
