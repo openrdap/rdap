@@ -739,7 +739,7 @@ func (d *Decoder) decodePtr(keyName string, src interface{}, dst reflect.Value, 
 	var err error
 
 	if dst.Type().Elem().Name() == "VCard" {
-		vcard, vcardError := newVCardImpl(src)
+		vcard, vcardError := newVCardImpl(src, VCardOptions{})
 
 		if vcardError == nil {
 			dst.Set(reflect.ValueOf(vcard))

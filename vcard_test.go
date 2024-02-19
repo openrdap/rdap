@@ -34,6 +34,20 @@ func TestVCardErrors(t *testing.T) {
 	}
 }
 
+func TestVCardIgnoreInvalidProperties(t *testing.T) {
+	json := test.LoadFile("jcard/error_invalid_properties.json")
+
+	j1, err1 := NewVCardWithOptions(json, VCardOptions{IgnoreInvalidProperties: true})
+	if j1 == nil || len(j1.Properties) != 4 || err1 != nil {
+		t.Errorf("jCard with ignored errors not parsed correctly\n")
+	}
+
+	j2, err2 := NewVCardWithOptions(json, VCardOptions{IgnoreInvalidProperties: false})
+	if j2 != nil || err2 == nil {
+		t.Errorf("jCard with errors unexpectedly parsed\n")
+	}
+}
+
 func TestVCardExample(t *testing.T) {
 	j, err := NewVCard(test.LoadFile("jcard/example.json"))
 	if j == nil || err != nil {

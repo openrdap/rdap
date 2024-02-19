@@ -1,0 +1,10 @@
+["vcard",
+    [
+        ["lang", { "pref": "1" }, "language-tag", "fr"],
+        ["lang", { "pref": "2" }, "language-tag", "pt"],
+        ["lang", { "pref": "3" }, "language-tag", "de"],
+        ["lang", { "pref": "4" }, "language-tag", "es"],
+ 
+        ["lang", {"type": "language-tag"}, "en"]
+    ]
+]

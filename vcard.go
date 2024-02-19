@@ -73,6 +73,14 @@ type VCardProperty struct {
 	Value interface{}
 }
 
+// VCardOptions specifies options for the VCard decoder routine.
+type VCardOptions struct {
+	// By default, any invalid VCard property causes the entire VCard decode to fail.
+	//
+	// Set IgnoreInvalidProperties to true to silently skip any invalid properties.
+	IgnoreInvalidProperties bool
+}
+
 // Values returns a simplified representation of the VCardProperty value.
 //
 // This is convenient for accessing simple unstructured data (e.g. "fn", "tel").
@@ -135,7 +143,15 @@ func (p *VCardProperty) String() string {
 }
 
 // NewVCard creates a VCard from jsonBlob.
+//
+// Default options are used for the VCard decoder (see NewVCardWithOptions).
 func NewVCard(jsonBlob []byte) (*VCard, error) {
+	vcard, err := NewVCardWithOptions(jsonBlob, VCardOptions{})
+	return vcard, err
+}
+
+// NewVCardWithOptions creates a VCard from jsonBlob.
+func NewVCardWithOptions(jsonBlob []byte, options VCardOptions) (*VCard, error) {
 	var top []interface{}
 	err := json.Unmarshal(jsonBlob, &top)
 
@@ -144,12 +160,12 @@ func NewVCard(jsonBlob []byte) (*VCard, error) {
 	}
 
 	var vcard *VCard
-	vcard, err = newVCardImpl(top)
+	vcard, err = newVCardImpl(top, options)
 
 	return vcard, err
 }
 
-func newVCardImpl(src interface{}) (*VCard, error) {
+func newVCardImpl(src interface{}, options VCardOptions) (*VCard, error) {
 	top, ok := src.([]interface{})
 
 	if !ok || len(top) != 2 {
@@ -171,58 +187,72 @@ func newVCardImpl(src interface{}) (*VCard, error) {
 
 	var p interface{}
 	for _, p = range top[1].([]interface{}) {
-		var a []interface{}
-		var ok bool
-		a, ok = p.([]interface{})
-
-		if !ok {
-			return nil, vCardError("jCard property was not an array")
-		} else if len(a) < 4 {
-			return nil, vCardError("jCard property too short (>=4 array elements required)")
-		}
-
-		name, ok := a[0].(string)
-
-		if !ok {
-			return nil, vCardError("jCard property name invalid")
-		}
-
-		var parameters map[string][]string
-		var err error
-		parameters, err = readParameters(a[1])
+		property, err := decodeVCardProperty(p)
 
 		if err != nil {
-			return nil, err
-		}
-
-		propertyType, ok := a[2].(string)
-
-		if !ok {
-			return nil, vCardError("jCard property type invalid")
-		}
-
-		var value interface{}
-		if len(a) == 4 {
-			value, err = readValue(a[3], 0)
-		} else {
-			value, err = readValue(a[3:], 0)
-		}
-
-		if err != nil {
-			return nil, err
-		}
-
-		property := &VCardProperty{
-			Name:       name,
-			Type:       propertyType,
-			Parameters: parameters,
-			Value:      value,
+			if options.IgnoreInvalidProperties {
+				continue
+			} else {
+				return nil, err
+			}
 		}
 
 		v.Properties = append(v.Properties, property)
 	}
 
 	return v, nil
+}
+
+func decodeVCardProperty(p interface{}) (*VCardProperty, error) {
+	var a []interface{}
+	var ok bool
+	a, ok = p.([]interface{})
+
+	if !ok {
+		return nil, vCardError("jCard property was not an array")
+	} else if len(a) < 4 {
+		return nil, vCardError("jCard property too short (>=4 array elements required)")
+	}
+
+	name, ok := a[0].(string)
+
+	if !ok {
+		return nil, vCardError("jCard property name invalid")
+	}
+
+	var parameters map[string][]string
+	var err error
+	parameters, err = readParameters(a[1])
+
+	if err != nil {
+		return nil, err
+	}
+
+	propertyType, ok := a[2].(string)
+
+	if !ok {
+		return nil, vCardError("jCard property type invalid")
+	}
+
+	var value interface{}
+	if len(a) == 4 {
+		value, err = readValue(a[3], 0)
+	} else {
+		value, err = readValue(a[3:], 0)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	property := &VCardProperty{
+		Name:       name,
+		Type:       propertyType,
+		Parameters: parameters,
+		Value:      value,
+	}
+
+	return property, nil
 }
 
 // Get returns a list of the vCard Properties with VCardProperty name |name|.
