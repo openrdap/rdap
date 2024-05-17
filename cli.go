@@ -35,7 +35,7 @@ Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL
        rdap 192.0.2.0
        rdap 2001:db8::
        rdap AS2856
-	   rdap OPS4-RIPE
+       rdap OPS4-RIPE
        rdap https://rdap.nic.cz/domain/example.cz
 
        rdap --json https://rdap.nic.cz/domain/example.cz
