@@ -1,0 +1,98 @@
+.TH RDAP 1 "May 2025" "OpenRDAP v0.9.1" "User Commands"
+.SH NAME
+rdap \- command-line RDAP client
+
+.SH SYNOPSIS
+.B rdap
+[\fIOPTIONS\fR] \fIDOMAIN\fR|\fIIP\fR|\fIASN\fR|\fIENTITY\fR|\fINAMESERVER\fR|\fIRDAP-URL\fR
+
+.SH DESCRIPTION
+OpenRDAP is a command-line client for querying the Registration Data Access Protocol (RDAP). 
+
+.SH OPTIONS
+.TP
+\fB-h\fR, \fB--help\fR
+Show help message.
+.TP
+\fB-V\fR, \fB--version\fR
+Print version and quit.
+.TP
+\fB-v\fR, \fB--verbose\fR
+Print verbose messages on STDERR.
+
+.SH USAGE EXAMPLES
+.TP
+rdap example.com
+.TP
+rdap 192.0.2.0
+.TP
+rdap 2001:db8::
+.TP
+rdap AS2856
+.TP
+rdap OPS4-RIPE
+.TP
+rdap https://rdap.nic.cz/domain/example.cz
+.TP
+rdap --json https://rdap.nic.cz/domain/example.cz
+.TP
+rdap -s https://rdap.nic.cz -t help
+
+.SH TIMEOUT OPTIONS
+.TP
+\fB-T\fR, \fB--timeout\fR=\fISECS\fR
+Timeout after SECS seconds (default: 30).
+
+.SH SECURITY OPTIONS
+.TP
+\fB-k\fR, \fB--insecure\fR
+Disable SSL certificate verification.
+
+.SH OUTPUT FORMATS
+.TP
+\fB--text\fR
+Output RDAP in plain text tree format (default).
+.TP
+\fB-w\fR, \fB--whois\fR
+Output WHOIS style (domain queries only).
+.TP
+\fB-j\fR, \fB--json\fR
+Output JSON, pretty-printed format.
+.TP
+\fB-r\fR, \fB--raw\fR
+Output the raw server response.
+
+.SH ADVANCED QUERY OPTIONS
+.TP
+\fB-s\fR, \fB--server\fR=\fIURL\fR
+Specify RDAP server to query.
+.TP
+\fB-t\fR, \fB--type\fR=\fITYPE\fR
+Specify RDAP query type (e.g., domain, ip, autnum, nameserver, etc.).
+
+.SH BOOTSTRAPPING OPTIONS
+.TP
+\fB--cache-dir\fR=\fIDIR\fR
+Specify bootstrap cache directory (default: $HOME/.openrdap).
+.TP
+\fB--bs-url\fR=\fIURL\fR
+Set bootstrap service URL (default: https://data.iana.org/rdap).
+.TP
+\fB--bs-ttl\fR=\fISECS\fR
+Set bootstrap cache time in seconds (default: 3600).
+
+.SH AUTHENTICATION OPTIONS
+.TP
+\fB-P\fR, \fB--p12\fR=\fIcert.p12[:password]\fR
+Use client certificate & private key (PKCS#12 format).
+.TP
+\fB-C\fR, \fB--cert\fR=\fIcert.pem\fR
+Use client certificate (PEM format).
+.TP
+\fB-K\fR, \fB--key\fR=\fIcert.key\fR
+Use client private key (PEM format).
+
+.SH SEE ALSO
+More information is available at
+.UR https://www.openrdap.org
+.UE
