@@ -48,7 +48,7 @@ import (
 //	&rdap.IPNetwork{}               - Responses with objectClassName="ip network".
 //	&rdap.Nameserver{}              - Responses with objectClassName="nameserver".
 //	&rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
-//	&rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
+//	&rdap.EntitySearchResults{}     - Responses with an entitySearchResults array.
 //	&rdap.NameserverSearchResults{} - Responses with a nameserverSearchResults array.
 //	&rdap.Help{}                    - All other valid JSON responses.
 //
@@ -104,7 +104,7 @@ func NewDecoder(jsonBlob []byte, opts ...DecoderOption) *Decoder {
 //	&rdap.IPNetwork{}               - Responses with objectClassName="ip network".
 //	&rdap.Nameserver{}              - Responses with objectClassName="nameserver".
 //	&rdap.DomainSearchResults{}     - Responses with a domainSearchResults array.
-//	&rdap.EntitySearchResults{}     - Responses with a entitySearchResults array.
+//	&rdap.EntitySearchResults{}     - Responses with an entitySearchResults array.
 //	&rdap.NameserverSearchResults{} - Responses with a nameserverSearchResults array.
 //	&rdap.Help{}                    - All other valid JSON responses.
 //
