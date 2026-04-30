@@ -809,9 +809,9 @@ func (p *Printer) printUnknowns(d *DecodeData, indentLevel uint) {
 
 	for k, v := range d.values {
 		isKnown, _ := d.isKnown[k]
-		isOverrided, _ := d.overrideKnownValue[k]
+		isOverridden, _ := d.overrideKnownValue[k]
 
-		if !(isKnown && !isOverrided) {
+		if !(isKnown && !isOverridden) {
 			p.printUnknown(k, v, indentLevel)
 		}
 	}
