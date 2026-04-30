@@ -502,7 +502,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		return 1
 	}
 
-	// Insert a blank line to seperate verbose messages/proper output.
+	// Insert a blank line to separate verbose messages/proper output.
 	if *verboseFlag {
 		fmt.Fprintln(stderr, "")
 	}
