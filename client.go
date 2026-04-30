@@ -243,7 +243,7 @@ func (c *Client) get(rdapReq *Request) *HTTPResponse {
 
 	start := time.Now()
 
-	// Setup the HTTP request.
+	// Set up the HTTP request.
 	req, err := http.NewRequest("GET", httpResponse.URL, nil)
 	if err != nil {
 		httpResponse.Error = err
