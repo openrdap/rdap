@@ -65,7 +65,7 @@ import (
 //
 //	client := &rdap.Client{}
 //	client.HTTP = &http.Client{} // Custom HTTP client.
-//	client.Bootstrap = &bootstrap.Client{} // Custom bootstapper.
+//	client.Bootstrap = &bootstrap.Client{} // Custom bootstrapper.
 //
 //	resp, err := client.Do(req)
 //
