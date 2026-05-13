@@ -67,8 +67,8 @@ func (r *Response) ToWhoisStyleResponse() *WhoisStyleResponse {
 	// Registry Domain ID
 	w.add("Handle", d.Handle)
 
-	// "Registrar WHOIS Server"
-	w.add("Registrar WHOIS Server", d.Port43)
+	// "WHOIS Server"
+	w.add("WHOIS Server", d.Port43)
 
 	// Events.
 	for _, e := range d.Events {
