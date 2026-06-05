@@ -842,6 +842,12 @@ func (p *Printer) printUnknown(key string, value any, indentLevel uint) {
 }
 
 func (p *Printer) cleanString(str string) string {
+	// Fast path: most RDAP values contain no bad runes, so skip the
+	// rune-by-rune strings.Map scan (and its allocation) entirely.
+	if !strings.ContainsAny(str, "\n\r\x00") {
+		return str
+	}
+
 	return strings.Map(removeBadRunes, str)
 }
 

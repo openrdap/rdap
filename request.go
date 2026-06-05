@@ -322,9 +322,27 @@ func (r *Request) WithServer(server *url.URL) *Request {
 }
 
 func escapePath(text string) string {
-	var escaped []byte
-
+	// Fast path: find the first byte that needs escaping. The common case
+	// (clean ASCII domains / IPs) finds none and returns the input unchanged
+	// with no allocation.
+	j := -1
 	for i := 0; i < len(text); i++ {
+		if shouldPathEscape(text[i]) {
+			j = i
+			break
+		}
+	}
+
+	if j == -1 {
+		return text
+	}
+
+	// Worst case: every remaining byte expands to "%XX" (3 bytes). Sizing for
+	// it guarantees a single allocation with no re-growth; RDAP paths are short.
+	escaped := make([]byte, 0, j+(len(text)-j)*3)
+	escaped = append(escaped, text[:j]...)
+
+	for i := j; i < len(text); i++ {
 		b := text[i]
 
 		if !shouldPathEscape(b) {

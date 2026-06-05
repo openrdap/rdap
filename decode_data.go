@@ -99,10 +99,3 @@ func (r *DecodeData) UnknownFields() []string {
 
 	return fields
 }
-
-func (r *DecodeData) init() {
-	r.isKnown = map[string]bool{}
-	r.values = map[string]any{}
-	r.overrideKnownValue = map[string]bool{}
-	r.notes = map[string][]string{}
-}

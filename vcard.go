@@ -430,8 +430,10 @@ func (v *VCard) Tel() string {
 			isVoice = true
 		}
 
-		if isVoice && len(p.Values()) > 0 {
-			return (p.Values())[0]
+		if isVoice {
+			if values := p.Values(); len(values) > 0 {
+				return values[0]
+			}
 		}
 	}
 
@@ -446,11 +448,9 @@ func (v *VCard) Fax() string {
 
 	for _, p := range properties {
 		if types, ok := p.Parameters["type"]; ok {
-			for _, t := range types {
-				if t == "fax" {
-					if len(p.Values()) > 0 {
-						return (p.Values())[0]
-					}
+			if slices.Contains(types, "fax") {
+				if values := p.Values(); len(values) > 0 {
+					return values[0]
 				}
 			}
 		}

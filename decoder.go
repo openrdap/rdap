@@ -6,11 +6,11 @@ package rdap
 
 import (
 	"encoding/json"
-	"maps"
 	"math"
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // Decoder decodes an RDAP response (https://tools.ietf.org/html/rfc7483) into a Go value.
@@ -584,8 +584,6 @@ func (d *Decoder) decodeBool(keyName string, src any, dst reflect.Value, decodeD
 //
 // The parameters and return variables are as per decode().
 func (d *Decoder) decodeStruct(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
-	var err error
-
 	// |src| must be a JSON object.
 	srcMap, ok := src.(map[string]any)
 	if !ok {
@@ -593,117 +591,116 @@ func (d *Decoder) decodeStruct(keyName string, src any, dst reflect.Value, decod
 		return false, nil
 	}
 
-	// Identify the fields in the struct we'll decode into.
-	// e.g. fields["port43"] => [some reflect.Value]
-	var fields map[string]reflect.Value
+	// The decode plan (where each RDAP field lives, and where the DecodeData
+	// field lives) is resolved once per struct type and cached. Here we only
+	// bind it to this particular instance |dst|.
+	plan := structPlanFor(dst.Type())
+
+	// If the struct has a DecodeData field, populate it. values references the
+	// freshly-parsed srcMap directly (it is not retained anywhere else), and
+	// isKnown shares the plan's read-only set of known field names; both are
+	// only read after decoding. notes and overrideKnownValue stay nil and are
+	// allocated lazily, since most decodes produce neither.
 	var myDecodeData *DecodeData
-
-	fields, myDecodeData = d.chooseFields(dst)
-
-	// If the result struct has a DecodeData...
-	if myDecodeData != nil {
-		// Save a snapshot of each field.
-		maps.Copy(myDecodeData.values, srcMap)
-
-		// Note the fields we know about, so unknown fields can be identified.
-		for name := range fields {
-			myDecodeData.isKnown[name] = true
+	if plan.decodeDataIndex != nil {
+		myDecodeData = &DecodeData{
+			isKnown: plan.knownFields,
+			values:  srcMap,
 		}
+		dst.FieldByIndex(plan.decodeDataIndex).Set(reflect.ValueOf(myDecodeData))
 	}
 
-	// Foreach field in |srcMap|...
+	// Decode each JSON field that has a matching Go field.
 	for name, value := range srcMap {
-		// If there's a matching Go field, decode into it...
-		if _, ok := fields[name]; ok {
-			_, err := d.decode(name, value, fields[name], myDecodeData)
-
-			if err != nil {
+		if index, ok := plan.fieldIndex[name]; ok {
+			if _, err := d.decode(name, value, dst.FieldByIndex(index), myDecodeData); err != nil {
 				return false, err
 			}
 		}
 	}
 
-	return true, err
+	return true, nil
 }
 
-func (d *Decoder) chooseFields(v reflect.Value) (map[string]reflect.Value, *DecodeData) {
-	if v.Kind() != reflect.Struct {
-		panic("BUG: chooseFields called on non-struct")
+// structPlan is the cached, instance-independent decode plan for a struct type:
+// where each decodable RDAP field lives (flattened across embedded structs),
+// and where the DecodeData field lives, if any.
+type structPlan struct {
+	fieldIndex      map[string][]int // RDAP field name -> field index path.
+	knownFields     map[string]bool  // Shared, read-only set of known field names (a DecodeData's isKnown).
+	decodeDataIndex []int            // Index path to the *DecodeData field, nil if absent.
+}
+
+// structPlanCache memoises decode plans, keyed by reflect.Type.
+var structPlanCache sync.Map // map[reflect.Type]*structPlan
+
+// structPlanFor returns the decode plan for struct type |t|, building and
+// caching it on first use. It flattens embedded structs and panics on a
+// misconfigured struct (the same invariants the decoder previously re-checked
+// on every decode).
+func structPlanFor(t reflect.Type) *structPlan {
+	if cached, ok := structPlanCache.Load(t); ok {
+		return cached.(*structPlan)
 	}
 
-	var decodeData *DecodeData
-	fields := map[string]reflect.Value{}
+	plan := &structPlan{
+		fieldIndex:  map[string][]int{},
+		knownFields: map[string]bool{},
+	}
 
-	vt := v.Type()
-	for i := 0; i < vt.NumField(); i++ {
-		structField := vt.Field(i)
+	var walk func(t reflect.Type, prefix []int)
+	walk = func(t reflect.Type, prefix []int) {
+		for i := 0; i < t.NumField(); i++ {
+			structField := t.Field(i)
+			index := append(append([]int{}, prefix...), i)
 
-		if structField.Type.Kind() == reflect.Pointer && structField.Type.Elem().Name() == "DecodeData" {
-			if decodeData != nil {
-				panic("BUG: Multiple DecodeData fields in struct")
-			} else {
-				decodeData = &DecodeData{}
-				decodeData.init()
-				v.Field(i).Set(reflect.ValueOf(decodeData))
+			if structField.Type.Kind() == reflect.Pointer && structField.Type.Elem().Name() == "DecodeData" {
+				if plan.decodeDataIndex != nil {
+					panic("BUG: Multiple DecodeData fields in struct")
+				}
+				plan.decodeDataIndex = index
+				continue
 			}
-		} else {
+
 			if structField.Anonymous {
-				subFields, subDecodeData := d.chooseFields(v.Field(i))
-
-				if subDecodeData != nil {
-					if decodeData != nil {
-						panic("BUG: Multiple DecodeData fields in struct")
-					} else {
-						decodeData = subDecodeData
-					}
-				}
-
-				for k, v := range subFields {
-					if _, exists := fields[k]; exists {
-						panic("BUG: Duplicate field " + k + " in struct")
-					}
-
-					fields[k] = v
-				}
-			} else if name, ok := d.getFieldName(structField); ok {
-				if _, exists := fields[name]; exists {
-					panic("BUG: Duplicate field " + name + " in struct")
-				}
-
-				fields[name] = v.Field(i)
-
-				switch fields[name].Kind() {
-				case reflect.Uint8,
-					reflect.Uint16,
-					reflect.Uint32,
-					reflect.Uint64,
-					reflect.Int8,
-					reflect.Int16,
-					reflect.Int32,
-					reflect.Int64,
-					reflect.Float64,
-					reflect.Bool,
-					reflect.Struct,
-					reflect.Pointer,
-					reflect.String,
-					reflect.Slice,
-					reflect.Map:
-					// These types are all supported.
-				default:
-					panic("BUG: Unsupported field type for " + name)
-				}
+				walk(structField.Type, index)
+				continue
 			}
+
+			name, ok := getFieldName(structField)
+			if !ok {
+				continue
+			}
+
+			if _, exists := plan.fieldIndex[name]; exists {
+				panic("BUG: Duplicate field " + name + " in struct")
+			}
+
+			switch structField.Type.Kind() {
+			case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64,
+				reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64,
+				reflect.Float64, reflect.Bool, reflect.Struct, reflect.Pointer,
+				reflect.String, reflect.Slice, reflect.Map:
+				// These types are all supported.
+			default:
+				panic("BUG: Unsupported field type for " + name)
+			}
+
+			plan.fieldIndex[name] = index
+			plan.knownFields[name] = true
 		}
 	}
+	walk(t, nil)
 
-	return fields, decodeData
+	actual, _ := structPlanCache.LoadOrStore(t, plan)
+	return actual.(*structPlan)
 }
 
 // getFieldName returns the RDAP field name (if any) of |sf|.
 //
 // Returns the field name and true if |sf| has an RDAP field name. Otherwise
 // returns empty string and false.
-func (d *Decoder) getFieldName(sf reflect.StructField) (string, bool) {
+func getFieldName(sf reflect.StructField) (string, bool) {
 	// Handle non-exported fields.
 	if sf.Name[0:1] != strings.ToUpper(sf.Name[0:1]) {
 		if sf.Tag.Get("rdap") != "" {
@@ -762,8 +759,8 @@ func (d *Decoder) addDecodeNote(decodeData *DecodeData, key string, msg string) 
 		return
 	}
 
-	if _, ok := decodeData.notes[key]; !ok {
-		decodeData.notes[key] = []string{}
+	if decodeData.notes == nil {
+		decodeData.notes = map[string][]string{}
 	}
 
 	decodeData.notes[key] = append(decodeData.notes[key], msg)
