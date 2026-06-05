@@ -5,7 +5,7 @@
 package test
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 
@@ -59,7 +59,7 @@ func Get(url string) []byte {
 		log.Panic(err)
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
 	if err != nil {

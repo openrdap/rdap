@@ -6,7 +6,6 @@ package cache
 
 import (
 	"bytes"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"testing"
@@ -14,14 +13,14 @@ import (
 )
 
 func TestDiskCache(t *testing.T) {
-	dir, err := ioutil.TempDir("", "test")
+	dir, err := os.MkdirTemp("", "test")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.RemoveAll(dir)
 
 	rdapDir := filepath.Join(dir, ".openrdap")
-	
+
 	m1 := NewDiskCache()
 	m1.Dir = rdapDir
 
@@ -101,4 +100,3 @@ func TestDiskCache(t *testing.T) {
 		t.Fatalf("loaded2(%v) != asn2(%v)", loaded2, asn2)
 	}
 }
-

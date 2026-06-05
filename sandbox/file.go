@@ -6,8 +6,8 @@ package sandbox
 
 import (
 	"errors"
-	"io/ioutil"
 	"log"
+	"os"
 	"path"
 	"runtime"
 )
@@ -25,7 +25,7 @@ func LoadFile(filename string) ([]byte, error) {
 		sandboxPath = findPackagePath()
 	}
 
-	body, err := ioutil.ReadFile(path.Join(sandboxPath, filename))
+	body, err := os.ReadFile(path.Join(sandboxPath, filename))
 
 	if err != nil {
 		log.Panic(err)

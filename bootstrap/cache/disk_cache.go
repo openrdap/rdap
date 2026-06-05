@@ -7,7 +7,6 @@ package cache
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"time"
@@ -98,7 +97,7 @@ func (d *DiskCache) Save(filename string, data []byte) error {
 		return err
 	}
 
-	err = ioutil.WriteFile(d.cacheDirPath(filename), data, 0664)
+	err = os.WriteFile(d.cacheDirPath(filename), data, 0664)
 	if err != nil {
 		return err
 	}
@@ -126,7 +125,7 @@ func (d *DiskCache) Load(filename string) ([]byte, error) {
 	}
 
 	var bytes []byte
-	bytes, err = ioutil.ReadFile(d.cacheDirPath(filename))
+	bytes, err = os.ReadFile(d.cacheDirPath(filename))
 
 	if err != nil {
 		return nil, err

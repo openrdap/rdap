@@ -8,10 +8,10 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -421,7 +421,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		if options.Sandbox {
 			p12, err = sandbox.LoadFile(p12FilenameAndPassword[0])
 		} else {
-			p12, err = ioutil.ReadFile(p12FilenameAndPassword[0])
+			p12, err = os.ReadFile(p12FilenameAndPassword[0])
 		}
 
 		// Check the file was read correctly.
