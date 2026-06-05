@@ -10,7 +10,41 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"github.com/mitchellh/go-homedir"
 )
+
+func TestNewDiskCacheDir(t *testing.T) {
+	homedir.DisableCache = true
+	defer func() { homedir.DisableCache = false }()
+
+	home, err := os.MkdirTemp("", "home")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(home)
+
+	t.Setenv("HOME", home)
+
+	// XDG_CACHE_HOME set (absolute).
+	xdg := filepath.Join(home, "custom-cache")
+	t.Setenv("XDG_CACHE_HOME", xdg)
+	if got, want := NewDiskCache().Dir, filepath.Join(xdg, "openrdap"); got != want {
+		t.Errorf("with XDG_CACHE_HOME set: got %q, want %q", got, want)
+	}
+
+	// XDG_CACHE_HOME unset -> $HOME/.cache/openrdap.
+	t.Setenv("XDG_CACHE_HOME", "")
+	if got, want := NewDiskCache().Dir, filepath.Join(home, ".cache", "openrdap"); got != want {
+		t.Errorf("with XDG_CACHE_HOME unset: got %q, want %q", got, want)
+	}
+
+	// Relative XDG_CACHE_HOME is ignored per the XDG spec.
+	t.Setenv("XDG_CACHE_HOME", "relative/path")
+	if got, want := NewDiskCache().Dir, filepath.Join(home, ".cache", "openrdap"); got != want {
+		t.Errorf("with relative XDG_CACHE_HOME: got %q, want %q", got, want)
+	}
+}
 
 func TestDiskCache(t *testing.T) {
 	dir, err := os.MkdirTemp("", "test")

@@ -73,7 +73,7 @@ Specify RDAP query type (e.g., domain, ip, autnum, nameserver, etc.).
 .SH BOOTSTRAPPING OPTIONS
 .TP
 \fB--cache-dir\fR=\fIDIR\fR
-Specify bootstrap cache directory (default: $HOME/.openrdap).
+Specify bootstrap cache directory (default: $XDG_CACHE_HOME/openrdap, falling back to $HOME/.cache/openrdap).
 .TP
 \fB--bs-url\fR=\fIURL\fR
 Set bootstrap service URL (default: https://data.iana.org/rdap).
