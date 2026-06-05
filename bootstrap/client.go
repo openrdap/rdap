@@ -113,6 +113,7 @@ const (
 	ServiceProvider
 )
 
+// String returns the lowercase name of the registry type (e.g. "dns", "asn").
 func (r RegistryType) String() string {
 	switch r {
 	case DNS:

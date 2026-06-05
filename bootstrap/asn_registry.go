@@ -42,14 +42,18 @@ func (a asnRange) String() string {
 
 type asnRangeSorter []asnRange
 
+// Len reports the number of ASN ranges, implementing sort.Interface.
 func (a asnRangeSorter) Len() int {
 	return len(a)
 }
 
+// Swap exchanges the ranges at i and j, implementing sort.Interface.
 func (a asnRangeSorter) Swap(i int, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
+// Less orders ASN ranges by their starting AS number, implementing
+// sort.Interface.
 func (a asnRangeSorter) Less(i int, j int) bool {
 	return a[i].MinASN < a[j].MinASN
 }

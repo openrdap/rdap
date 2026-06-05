@@ -33,6 +33,8 @@ type response struct {
 var responses map[TestDataset][]response
 var activatedURLs map[string]bool
 
+// Start activates HTTP mocking and registers the responders for the given test
+// dataset. It panics if two datasets register the same URL.
 func Start(set TestDataset) {
 	httpmock.Activate()
 
@@ -48,11 +50,14 @@ func Start(set TestDataset) {
 	}
 }
 
+// Finish deactivates HTTP mocking and clears the registered URLs, undoing
+// Start.
 func Finish() {
 	activatedURLs = make(map[string]bool)
 	httpmock.DeactivateAndReset()
 }
 
+// Get performs an HTTP GET and returns the response body, panicking on error.
 func Get(url string) []byte {
 	resp, err := http.Get(url)
 	if err != nil {

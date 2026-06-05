@@ -73,6 +73,7 @@ type DecoderError struct {
 	text string
 }
 
+// Error returns the decoder error's text, implementing the error interface.
 func (d DecoderError) Error() string {
 	return d.text
 }

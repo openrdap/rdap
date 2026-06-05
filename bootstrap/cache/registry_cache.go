@@ -27,6 +27,7 @@ const (
 	Expired
 )
 
+// String returns a human readable description of the cache file state.
 func (f FileState) String() string {
 	switch f {
 	case Absent:

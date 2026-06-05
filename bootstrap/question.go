@@ -8,10 +8,10 @@ import "context"
 
 // Question represents a bootstrap query.
 //
-//  question := &bootstrap.Question{
-//    RegistryType: bootstrap.DNS,
-//    Query: "example.cz",
-//  }
+//	question := &bootstrap.Question{
+//	  RegistryType: bootstrap.DNS,
+//	  Query: "example.cz",
+//	}
 type Question struct {
 	// Bootstrap registry to query.
 	RegistryType

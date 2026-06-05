@@ -31,14 +31,17 @@ type netEntry struct {
 
 type netEntrySorter []netEntry
 
+// Len reports the number of network entries, implementing sort.Interface.
 func (a netEntrySorter) Len() int {
 	return len(a)
 }
 
+// Swap exchanges the entries at i and j, implementing sort.Interface.
 func (a netEntrySorter) Swap(i int, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
+// Less orders network entries by their IP address, implementing sort.Interface.
 func (a netEntrySorter) Less(i int, j int) bool {
 	return bytes.Compare(a[i].Net.IP, a[j].Net.IP) <= 0
 }

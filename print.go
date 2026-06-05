@@ -51,6 +51,8 @@ type Printer struct {
 	BriefLinks bool
 }
 
+// Print writes the RDAP object obj to the configured Writer as human readable
+// text, applying default formatting options (Writer, indentation) if unset.
 func (p *Printer) Print(obj RDAPObject) {
 	if p.Writer == nil {
 		p.Writer = os.Stdout
@@ -67,6 +69,7 @@ func (p *Printer) Print(obj RDAPObject) {
 	p.printObject(obj, 0)
 }
 
+// printObject dispatches obj to the print routine for its concrete RDAP type.
 func (p *Printer) printObject(obj RDAPObject, indentLevel uint) {
 	if obj == nil {
 		return
@@ -96,6 +99,8 @@ func (p *Printer) printObject(obj RDAPObject, indentLevel uint) {
 	}
 }
 
+// printNameserverSearchResults prints a nameserver search result set: its
+// conformance, notices, and matching nameservers.
 func (p *Printer) printNameserverSearchResults(sr *NameserverSearchResults, indentLevel uint) {
 	p.printHeading("Nameserver Search Results", indentLevel)
 	indentLevel++
@@ -119,6 +124,8 @@ func (p *Printer) printNameserverSearchResults(sr *NameserverSearchResults, inde
 	p.printUnknowns(sr.DecodeData, indentLevel)
 }
 
+// printEntitySearchResults prints an entity search result set: its
+// conformance, notices, and matching entities.
 func (p *Printer) printEntitySearchResults(sr *EntitySearchResults, indentLevel uint) {
 	p.printHeading("Entity Search Results", indentLevel)
 	indentLevel++
@@ -142,6 +149,8 @@ func (p *Printer) printEntitySearchResults(sr *EntitySearchResults, indentLevel 
 	p.printUnknowns(sr.DecodeData, indentLevel)
 }
 
+// printDomainSearchResults prints a domain search result set: its conformance,
+// notices, and matching domains.
 func (p *Printer) printDomainSearchResults(sr *DomainSearchResults, indentLevel uint) {
 	p.printHeading("Domain Search Results", indentLevel)
 	indentLevel++
@@ -165,6 +174,7 @@ func (p *Printer) printDomainSearchResults(sr *DomainSearchResults, indentLevel 
 	p.printUnknowns(sr.DecodeData, indentLevel)
 }
 
+// printError prints an RDAP error response: its code, title, and description.
 func (p *Printer) printError(e *Error, indentLevel uint) {
 	p.printHeading("Error", indentLevel)
 	indentLevel++
@@ -196,6 +206,7 @@ func (p *Printer) printError(e *Error, indentLevel uint) {
 	p.printUnknowns(e.DecodeData, indentLevel)
 }
 
+// printHelp prints a help response: its conformance and notices.
 func (p *Printer) printHelp(h *Help, indentLevel uint) {
 	p.printHeading("Help", indentLevel)
 	indentLevel++
@@ -215,6 +226,8 @@ func (p *Printer) printHelp(h *Help, indentLevel uint) {
 	p.printUnknowns(h.DecodeData, indentLevel)
 }
 
+// printDomain prints a domain object along with its nested entities,
+// nameservers, and related fields.
 func (p *Printer) printDomain(d *Domain, indentLevel uint) {
 	p.printHeading("Domain", indentLevel)
 	indentLevel++
@@ -286,6 +299,7 @@ func (p *Printer) printDomain(d *Domain, indentLevel uint) {
 	p.printUnknowns(d.DecodeData, indentLevel)
 }
 
+// printAutnum prints an autnum (AS number) object and its related fields.
 func (p *Printer) printAutnum(a *Autnum, indentLevel uint) {
 	p.printHeading("Autnum", indentLevel)
 
@@ -353,6 +367,8 @@ func (p *Printer) printAutnum(a *Autnum, indentLevel uint) {
 	p.printUnknowns(a.DecodeData, indentLevel)
 }
 
+// printNameserver prints a nameserver object, including its IP addresses and
+// related fields.
 func (p *Printer) printNameserver(n *Nameserver, indentLevel uint) {
 	p.printHeading("Nameserver", indentLevel)
 
@@ -409,6 +425,7 @@ func (p *Printer) printNameserver(n *Nameserver, indentLevel uint) {
 	p.printUnknowns(n.DecodeData, indentLevel)
 }
 
+// printIPAddressSet prints a nameserver's IPv4 and IPv6 addresses.
 func (p *Printer) printIPAddressSet(s *IPAddressSet, indentLevel uint) {
 	p.printHeading("IP Addresses", indentLevel)
 
@@ -425,6 +442,8 @@ func (p *Printer) printIPAddressSet(s *IPAddressSet, indentLevel uint) {
 	p.printUnknowns(s.DecodeData, indentLevel)
 }
 
+// printEntity prints an entity object, including its vCard, roles, and nested
+// objects.
 func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 	p.printHeading("Entity", indentLevel)
 
@@ -505,6 +524,7 @@ func (p *Printer) printEntity(e *Entity, indentLevel uint) {
 	p.printUnknowns(e.DecodeData, indentLevel)
 }
 
+// printIPNetwork prints an IP network object and its related fields.
 func (p *Printer) printIPNetwork(n *IPNetwork, indentLevel uint) {
 	p.printHeading("IP Network", indentLevel)
 
@@ -556,6 +576,7 @@ func (p *Printer) printIPNetwork(n *IPNetwork, indentLevel uint) {
 	p.printUnknowns(n.DecodeData, indentLevel)
 }
 
+// printPublicID prints a public identifier's type and value.
 func (p *Printer) printPublicID(pid PublicID, indentLevel uint) {
 	p.printHeading("Public ID", indentLevel)
 
@@ -567,6 +588,8 @@ func (p *Printer) printPublicID(pid PublicID, indentLevel uint) {
 	p.printUnknowns(pid.DecodeData, indentLevel)
 }
 
+// printSecureDNS prints a domain's DNSSEC information, including its DS and key
+// records.
 func (p *Printer) printSecureDNS(s *SecureDNS, indentLevel uint) {
 	p.printHeading("Secure DNS", indentLevel)
 
@@ -601,6 +624,7 @@ func (p *Printer) printSecureDNS(s *SecureDNS, indentLevel uint) {
 	p.printUnknowns(s.DecodeData, indentLevel)
 }
 
+// printKeyData prints a DNSSEC key record.
 func (p *Printer) printKeyData(k KeyData, indentLevel uint) {
 	p.printHeading("Key", indentLevel)
 
@@ -639,6 +663,7 @@ func (p *Printer) printKeyData(k KeyData, indentLevel uint) {
 	p.printUnknowns(k.DecodeData, indentLevel)
 }
 
+// printDSData prints a DNSSEC delegation signer (DS) record.
 func (p *Printer) printDSData(d DSData, indentLevel uint) {
 	p.printHeading("DSData", indentLevel)
 
@@ -677,6 +702,7 @@ func (p *Printer) printDSData(d DSData, indentLevel uint) {
 	p.printUnknowns(d.DecodeData, indentLevel)
 }
 
+// printVariant prints a domain variant and its variant names.
 func (p *Printer) printVariant(v Variant, indentLevel uint) {
 	p.printHeading("Variant", indentLevel)
 
@@ -694,6 +720,7 @@ func (p *Printer) printVariant(v Variant, indentLevel uint) {
 	p.printUnknowns(v.DecodeData, indentLevel)
 }
 
+// printVariantName prints a single domain variant name.
 func (p *Printer) printVariantName(vn VariantName, indentLevel uint) {
 	p.printHeading("Variant Name", indentLevel)
 
@@ -704,6 +731,7 @@ func (p *Printer) printVariantName(vn VariantName, indentLevel uint) {
 	p.printUnknowns(vn.DecodeData, indentLevel)
 }
 
+// printRemark prints a remark: its title, type, description, and links.
 func (p *Printer) printRemark(r Remark, indentLevel uint) {
 	p.printHeading("Remark", indentLevel)
 
@@ -721,6 +749,7 @@ func (p *Printer) printRemark(r Remark, indentLevel uint) {
 	p.printUnknowns(r.DecodeData, indentLevel)
 }
 
+// printNotice prints a notice: its title, type, description, and links.
 func (p *Printer) printNotice(n Notice, indentLevel uint) {
 	p.printHeading("Notice", indentLevel)
 
@@ -738,6 +767,8 @@ func (p *Printer) printNotice(n Notice, indentLevel uint) {
 	p.printUnknowns(n.DecodeData, indentLevel)
 }
 
+// printLink formats and displays information about a `Link` instance,
+// considering indentation and brief output settings.
 func (p *Printer) printLink(l Link, indent uint) {
 	if p.BriefLinks {
 		p.printValue("Link", l.Href, indent)
@@ -761,12 +792,16 @@ func (p *Printer) printLink(l Link, indent uint) {
 	p.printUnknowns(l.DecodeData, indent)
 }
 
+// printHeading formats and prints a heading string with the
+// specified indentation level.
 func (p *Printer) printHeading(heading string, indentLevel uint) {
 	fmt.Fprintf(p.Writer, "%s%s:\n",
 		strings.Repeat(string(p.IndentChar), int(indentLevel*p.IndentSize)),
 		p.cleanString(heading))
 }
 
+// printValue formats and prints a key-value pair with the specified
+// indentation level to the output Writer.
 func (p *Printer) printValue(name string, value string, indentLevel uint) {
 	if value == "" {
 		return
@@ -778,6 +813,8 @@ func (p *Printer) printValue(name string, value string, indentLevel uint) {
 		p.cleanString(value))
 }
 
+// printEvent processes and prints details of an Event with
+// configurable indentation and actor context display.
 func (p *Printer) printEvent(e Event, indentLevel uint, asEventActor bool) {
 	if p.BriefOutput {
 		return
@@ -802,6 +839,8 @@ func (p *Printer) printEvent(e Event, indentLevel uint, asEventActor bool) {
 	p.printUnknowns(e.DecodeData, indentLevel)
 }
 
+// printUnknowns prints all unknown fields from the provided
+// DecodeData object at the given indentation level.
 func (p *Printer) printUnknowns(d *DecodeData, indentLevel uint) {
 	if d == nil {
 		return
@@ -817,6 +856,8 @@ func (p *Printer) printUnknowns(d *DecodeData, indentLevel uint) {
 	}
 }
 
+// printUnknown prints the key and value of an unknown field
+// recursively, with formatting based on the value's type.
 func (p *Printer) printUnknown(key string, value any, indentLevel uint) {
 	switch value.(type) {
 	case bool:
@@ -841,8 +882,10 @@ func (p *Printer) printUnknown(key string, value any, indentLevel uint) {
 	}
 }
 
+// cleanString returns str with output-breaking runes (newlines, carriage
+// returns, and nulls) removed.
 func (p *Printer) cleanString(str string) string {
-	// Fast path: most RDAP values contain no bad runes, so skip the
+	// Most RDAP values contain no bad runes, so skip the
 	// rune-by-rune strings.Map scan (and its allocation) entirely.
 	if !strings.ContainsAny(str, "\n\r\x00") {
 		return str
@@ -851,6 +894,8 @@ func (p *Printer) cleanString(str string) string {
 	return strings.Map(removeBadRunes, str)
 }
 
+// removeBadRunes replaces unwanted runes ('\n', '\r', '\000')
+// with -1; returns the rune otherwise.
 func removeBadRunes(r rune) rune {
 	switch r {
 	case '\n', '\r', '\000':

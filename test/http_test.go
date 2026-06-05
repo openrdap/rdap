@@ -5,8 +5,8 @@
 package test
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestSmoke(t *testing.T) {

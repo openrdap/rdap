@@ -19,8 +19,8 @@ type MemoryCache struct {
 // NewMemoryCache creates a new MemoryCache.
 func NewMemoryCache() *MemoryCache {
 	return &MemoryCache{
-		cache: make(map[string][]byte),
-		mtime: make(map[string]time.Time),
+		cache:   make(map[string][]byte),
+		mtime:   make(map[string]time.Time),
 		Timeout: time.Hour * 24,
 	}
 }

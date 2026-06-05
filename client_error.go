@@ -28,6 +28,7 @@ type ClientError struct {
 	Text string
 }
 
+// Error returns the client error's text, implementing the error interface.
 func (c ClientError) Error() string {
 	return c.Text
 }

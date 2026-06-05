@@ -53,6 +53,9 @@ func newWhoisStyleResponse() *WhoisStyleResponse {
 	return w
 }
 
+// ToWhoisStyleResponse converts the response into an ordered set of WHOIS-style
+// key/value fields. Only Domain responses are supported; others yield an empty
+// result.
 func (r *Response) ToWhoisStyleResponse() *WhoisStyleResponse {
 	w := newWhoisStyleResponse()
 

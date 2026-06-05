@@ -86,6 +86,12 @@ type Client struct {
 	ServiceProviderExperiment bool
 }
 
+// Do runs the RDAP request req and returns its Response.
+//
+// When req has no server set, the query is bootstrapped to find the
+// authoritative RDAP servers, each of which is tried until one responds
+// successfully. Uninitialised client fields (HTTP, Bootstrap, Verbose) are
+// given defaults on first use.
 func (c *Client) Do(req *Request) (*Response, error) {
 	// Response struct.
 	resp := &Response{}

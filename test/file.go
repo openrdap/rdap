@@ -13,6 +13,8 @@ import (
 
 var testDataPath string
 
+// LoadFile reads the named file from the test data directory and returns its
+// contents, panicking on error.
 func LoadFile(filename string) []byte {
 	var body []byte
 
