@@ -52,7 +52,7 @@ func NewDiskCache() *DiskCache {
 	if !filepath.IsAbs(cacheDir) {
 		home, err := homedir.Dir()
 		if err != nil {
-			panic("Can't determine your home directory")
+			panic("Cannot determine home directory: HOME environment variable not set or inaccessible")
 		}
 
 		cacheDir = filepath.Join(home, ".cache")
