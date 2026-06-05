@@ -6,6 +6,7 @@ package rdap
 
 import (
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/openrdap/rdap/bootstrap"
@@ -17,7 +18,7 @@ type Response struct {
 	HTTP            []*HTTPResponse
 }
 
-type RDAPObject interface{}
+type RDAPObject any
 
 type HTTPResponse struct {
 	URL      string
@@ -144,10 +145,8 @@ func addEntityFields(w *WhoisStyleResponse, t string, e *Entity) {
 
 func findFirstEntity(role string, entities []Entity) *Entity {
 	for _, e := range entities {
-		for _, r := range e.Roles {
-			if r == role {
-				return &e
-			}
+		if slices.Contains(e.Roles, role) {
+			return &e
 		}
 	}
 

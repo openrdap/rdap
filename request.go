@@ -7,6 +7,7 @@ package rdap
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"net/url"
 	"strconv"
@@ -281,12 +282,8 @@ func (r *Request) URL() *url.URL {
 		}
 
 		query := r.Server.Query()
-		for k, v := range r.Params {
-			query[k] = v
-		}
-		for k, v := range values {
-			query[k] = v
-		}
+		maps.Copy(query, r.Params)
+		maps.Copy(query, values)
 		resultURL.RawQuery = query.Encode()
 
 		resultURL.Fragment = r.Server.Fragment

@@ -342,7 +342,7 @@ func TestDecodeMismatchedTypes(t *testing.T) {
 	})
 }
 
-func runDecode(t *testing.T, target interface{}, jsonBlob string) (interface{}, bool) {
+func runDecode(t *testing.T, target any, jsonBlob string) (any, bool) {
 	d := NewDecoder([]byte(jsonBlob))
 	d.target = target
 
@@ -356,7 +356,7 @@ func runDecode(t *testing.T, target interface{}, jsonBlob string) (interface{}, 
 	return result, true
 }
 
-func runDecodeAndCompareTest(t *testing.T, target interface{}, jsonBlob string, expected interface{}) {
+func runDecodeAndCompareTest(t *testing.T, target any, jsonBlob string, expected any) {
 	result, ok := runDecode(t, target, jsonBlob)
 
 	if !ok {

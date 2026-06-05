@@ -59,8 +59,8 @@ func (a asnRangeSorter) Less(i int, j int) bool {
 // The document format is specified in https://tools.ietf.org/html/rfc7484#section-5.3.
 func NewASNRegistry(json []byte) (*ASNRegistry, error) {
 	var registry *File
-	registry, err := NewFile(json)
 
+	registry, err := NewFile(json)
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing ASN registry: %s\n", err)
 	}
@@ -69,9 +69,9 @@ func NewASNRegistry(json []byte) (*ASNRegistry, error) {
 
 	var asn string
 	var urls []*url.URL
+
 	for asn, urls = range registry.Entries {
 		minASN, maxASN, err := parseASNRange(asn)
-
 		if err != nil {
 			continue
 		}
@@ -111,8 +111,8 @@ func (a *ASNRegistry) Lookup(question *Question) (*Answer, error) {
 	}
 
 	return &Answer{
-		Query: fmt.Sprintf("%d", asn),
 		Entry: entry,
+		Query: fmt.Sprintf("%d", asn),
 		URLs:  urls,
 	}, nil
 }
@@ -125,8 +125,8 @@ func (a *ASNRegistry) File() *File {
 func parseASN(asn string) (uint32, error) {
 	asn = strings.ToLower(asn)
 	asn = strings.TrimLeft(asn, "as")
-	result, err := strconv.ParseUint(asn, 10, 32)
 
+	result, err := strconv.ParseUint(asn, 10, 32)
 	if err != nil {
 		return 0, err
 	}
@@ -135,8 +135,7 @@ func parseASN(asn string) (uint32, error) {
 }
 
 func parseASNRange(asnRange string) (uint32, uint32, error) {
-	var minASN uint64
-	var maxASN uint64
+	var minASN, maxASN uint64
 	var err error
 
 	asns := strings.Split(asnRange, "-")
@@ -150,13 +149,13 @@ func parseASNRange(asnRange string) (uint32, uint32, error) {
 		return 0, 0, err
 	}
 
+	maxASN = minASN
+
 	if len(asns) == 2 {
 		maxASN, err = strconv.ParseUint(asns[1], 10, 32)
 		if err != nil {
 			return 0, 0, err
 		}
-	} else {
-		maxASN = minASN
 	}
 
 	if minASN > maxASN {

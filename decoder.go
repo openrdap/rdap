@@ -6,6 +6,7 @@ package rdap
 
 import (
 	"encoding/json"
+	"maps"
 	"math"
 	"reflect"
 	"strconv"
@@ -31,9 +32,9 @@ import (
 //	`)
 //
 //	d := rdap.NewDecoder(jsonBlob)
-//	result, err := d.Decode()
 //
-//	if err != nil {
+//	result, err := d.Decode()
+//	if err == nil {
 //	  if domain, ok := result.(*rdap.Domain); ok {
 //	    fmt.Printf("Domain name = %s\n", domain.LDHName)
 //	  }
@@ -61,7 +62,7 @@ import (
 // This avoids minor errors rendering a response undecodable.
 type Decoder struct {
 	data   []byte
-	target interface{}
+	target any
 }
 
 // DecoderOption sets a Decoder option.
@@ -115,8 +116,8 @@ func NewDecoder(jsonBlob []byte, opts ...DecoderOption) *Decoder {
 //
 // Minor error messages (e.g. type conversions, type errors) are embedded within
 // each result struct, see the DecodeData fields.
-func (d *Decoder) Decode() (interface{}, error) {
-	var s map[string]interface{}
+func (d *Decoder) Decode() (any, error) {
+	var s map[string]any
 	var err error
 
 	// Unmarshal the JSON document.
@@ -126,14 +127,14 @@ func (d *Decoder) Decode() (interface{}, error) {
 	}
 
 	// Decode the RDAP response.
-	var result interface{}
+	var result any
 	result, err = d.decodeTopLevel(s)
 
 	return result, err
 }
 
 // decodeTopLevel decodes the top level object |src|.
-func (d *Decoder) decodeTopLevel(src map[string]interface{}) (interface{}, error) {
+func (d *Decoder) decodeTopLevel(src map[string]any) (any, error) {
 	// Choose the target struct type.
 	if d.target != nil {
 		// Target already selected, e.g. tests use this.
@@ -193,7 +194,7 @@ func (d *Decoder) decodeTopLevel(src map[string]interface{}) (interface{}, error
 // |keyName| is used while storing minor errors.
 //
 // Returns true if |dst| was set successfully.
-func (d *Decoder) decode(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decode(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	var success bool
 	var err error
 
@@ -209,7 +210,7 @@ func (d *Decoder) decode(keyName string, src interface{}, dst reflect.Value, dec
 		success, err = d.decodeBool(keyName, src, dst, decodeData)
 	case reflect.Struct:
 		success, err = d.decodeStruct(keyName, src, dst, decodeData)
-	case reflect.Ptr:
+	case reflect.Pointer:
 		success, err = d.decodePtr(keyName, src, dst, decodeData)
 	case reflect.String:
 		success, err = d.decodeString(keyName, src, dst, decodeData)
@@ -230,9 +231,9 @@ func (d *Decoder) decode(keyName string, src interface{}, dst reflect.Value, dec
 // returned in the resulting slice.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeSlice(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodeSlice(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	// Cast the input to a slice.
-	srcSlice, ok := src.([]interface{})
+	srcSlice, ok := src.([]any)
 	if !ok {
 		d.addDecodeNote(decodeData, keyName, "invalid JSON type, expecting array")
 		return false, nil
@@ -272,12 +273,12 @@ func (d *Decoder) decodeSlice(keyName string, src interface{}, dst reflect.Value
 // not returned in the resulting map.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeMap(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodeMap(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	if dst.Type().Key().Kind() != reflect.String {
 		panic("BUG: map key is not string")
 	}
 
-	srcMap, ok := src.(map[string]interface{})
+	srcMap, ok := src.(map[string]any)
 	if !ok {
 		d.addDecodeNote(decodeData, keyName, "invalid JSON type, expecting object")
 		return false, nil
@@ -315,7 +316,7 @@ func (d *Decoder) decodeMap(keyName string, src interface{}, dst reflect.Value, 
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeUint(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodeUint(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	var err error
 	var result uint64
 
@@ -385,8 +386,7 @@ func (d *Decoder) decodeUint(keyName string, src interface{}, dst reflect.Value,
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeInt(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
-	var err error
+func (d *Decoder) decodeInt(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	var result int64
 
 	success := true
@@ -405,7 +405,6 @@ func (d *Decoder) decodeInt(keyName string, src interface{}, dst reflect.Value, 
 		var convError error
 
 		result, convError = strconv.ParseInt(src.(string), 10, 64)
-
 		if convError != nil {
 			result = 0
 			success = false
@@ -452,7 +451,7 @@ func (d *Decoder) decodeInt(keyName string, src interface{}, dst reflect.Value, 
 
 	}
 
-	return success, err
+	return success, nil
 }
 
 // decodeFloat64 decodes |src| into the float64 |dst|.
@@ -461,7 +460,7 @@ func (d *Decoder) decodeInt(keyName string, src interface{}, dst reflect.Value, 
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeFloat64(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodeFloat64(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	var err error
 	var result float64
 
@@ -507,7 +506,7 @@ func (d *Decoder) decodeFloat64(keyName string, src interface{}, dst reflect.Val
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeString(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodeString(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	var err error
 	var result string
 
@@ -541,7 +540,7 @@ func (d *Decoder) decodeString(keyName string, src interface{}, dst reflect.Valu
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeBool(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodeBool(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	var err error
 	var result bool
 
@@ -559,8 +558,8 @@ func (d *Decoder) decodeBool(keyName string, src interface{}, dst reflect.Value,
 		d.addDecodeNote(decodeData, keyName, "float64 to bool conversion")
 	case string:
 		var convError error
-		result, convError = strconv.ParseBool(src.(string))
 
+		result, convError = strconv.ParseBool(src.(string))
 		if convError != nil {
 			d.addDecodeNote(decodeData, keyName, "error converting string to bool")
 			result = false
@@ -584,11 +583,11 @@ func (d *Decoder) decodeBool(keyName string, src interface{}, dst reflect.Value,
 // decodeStruct decodes |src| into the struct |dst|.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeStruct(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodeStruct(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	var err error
 
 	// |src| must be a JSON object.
-	srcMap, ok := src.(map[string]interface{})
+	srcMap, ok := src.(map[string]any)
 	if !ok {
 		d.addDecodeNote(decodeData, keyName, "invalid JSON type, expecting object")
 		return false, nil
@@ -604,9 +603,7 @@ func (d *Decoder) decodeStruct(keyName string, src interface{}, dst reflect.Valu
 	// If the result struct has a DecodeData...
 	if myDecodeData != nil {
 		// Save a snapshot of each field.
-		for name, value := range srcMap {
-			myDecodeData.values[name] = value
-		}
+		maps.Copy(myDecodeData.values, srcMap)
 
 		// Note the fields we know about, so unknown fields can be identified.
 		for name := range fields {
@@ -641,7 +638,7 @@ func (d *Decoder) chooseFields(v reflect.Value) (map[string]reflect.Value, *Deco
 	for i := 0; i < vt.NumField(); i++ {
 		structField := vt.Field(i)
 
-		if structField.Type.Kind() == reflect.Ptr && structField.Type.Elem().Name() == "DecodeData" {
+		if structField.Type.Kind() == reflect.Pointer && structField.Type.Elem().Name() == "DecodeData" {
 			if decodeData != nil {
 				panic("BUG: Multiple DecodeData fields in struct")
 			} else {
@@ -687,7 +684,7 @@ func (d *Decoder) chooseFields(v reflect.Value) (map[string]reflect.Value, *Deco
 					reflect.Float64,
 					reflect.Bool,
 					reflect.Struct,
-					reflect.Ptr,
+					reflect.Pointer,
 					reflect.String,
 					reflect.Slice,
 					reflect.Map:
@@ -734,7 +731,7 @@ func (d *Decoder) getFieldName(sf reflect.StructField) (string, bool) {
 // value if nil.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodePtr(keyName string, src interface{}, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodePtr(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
 	var success bool
 	var err error
 

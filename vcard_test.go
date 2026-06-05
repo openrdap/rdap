@@ -74,7 +74,7 @@ func TestVCardExample(t *testing.T) {
 		Name:       "n",
 		Parameters: make(map[string][]string),
 		Type:       "text",
-		Value:      []interface{}{"Perreault", "Simon", "", "", []interface{}{"ing. jr", "M.Sc."}},
+		Value:      []any{"Perreault", "Simon", "", "", []any{"ing. jr", "M.Sc."}},
 	}
 
 	expectedFlatN := []string{
@@ -116,7 +116,7 @@ func TestVCardMixedDatatypes(t *testing.T) {
 		Name:       "mixed",
 		Parameters: make(map[string][]string),
 		Type:       "text",
-		Value:      []interface{}{"abc", true, float64(42), nil, []interface{}{"def", false, float64(43)}},
+		Value:      []any{"abc", true, float64(42), nil, []any{"def", false, float64(43)}},
 	}
 
 	expectedFlatMixed := []string{
