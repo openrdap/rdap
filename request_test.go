@@ -165,6 +165,11 @@ func TestNewSearchRequests(t *testing.T) {
 			"MY-HANDLE*&x=1",
 			"entities?handle=MY-HANDLE%2A%26x%3D1",
 		},
+		{
+			AutnumSearchRequest,
+			"AS6006*&x=1",
+			"autnums?handle=AS6006%2A%26x%3D1",
+		},
 	}
 
 	for _, test := range tests {

@@ -72,6 +72,7 @@ Advanced options (query):
                       - nameserver-search-by-ip
                       - entity-search
                       - entity-search-by-handle
+                      - autnum-search
                       The servers for domain, ip, autnum, url queries can be
                       determined automatically. Otherwise, the RDAP server
                       (--server=URL) must be specified.
@@ -286,6 +287,8 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		req = NewRequest(NameserverSearchRequest, queryText)
 	case "nameserver-search-by-ip":
 		req = NewRequest(NameserverSearchByNameserverIPRequest, queryText)
+	case "autnum-search":
+		req = NewRequest(AutnumSearchRequest, queryText)
 	default:
 		printError(stderr, fmt.Sprintf("Unknown query type '%s'", *queryType))
 		return 1
