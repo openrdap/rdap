@@ -8,6 +8,7 @@ https://www.openrdap.org - homepage
 https://www.openrdap.org/demo - live demo
 
 ## Features
+
 * Command line RDAP client
 * Output formats: text, JSON, WHOIS style
 * Query types supported:
@@ -27,7 +28,7 @@ https://www.openrdap.org/demo - live demo
     * entity-search-by-handle
 * Automatic server detection for ip/domain/autnum/entities
 * Object tags support
-* Bootstrap cache (optional, uses ~/.openrdap by default)
+* Bootstrap cache (optional, uses $XDG_CACHE_HOME/openrdap by default, falling back to ~/.cache/openrdap)
 * X.509 client authentication
 
 ## Installation
@@ -44,17 +45,18 @@ This will install the "rdap" binary in your $GOPATH/go/bin directory. Try runnin
 
 ## Usage
 
-| Query type                | Usage                                                                    |
-| ------------------------- | ------------------------------------------------------------------------ |
-| Domain (.com)             | rdap -v example.com                                                      |
-| IPv4 Address              | rdap -v 192.0.2.0                                                        |
-| IPv6 Address              | rdap -v 2001:db8::                                                       |
-| Autonomous System (ASN)   | rdap -v AS15169                                                          |
-| Entity (with object tag)  | rdap -v OPS4-RIPE                                                        |
+| Query type               | Usage               |
+|--------------------------|---------------------|
+| Domain (.com)            | rdap -v example.com |
+| IPv4 Address             | rdap -v 192.0.2.0   |
+| IPv6 Address             | rdap -v 2001:db8::  |
+| Autonomous System (ASN)  | rdap -v AS15169     |
+| Entity (with object tag) | rdap -v OPS4-RIPE   |
 
 ## Advanced usage (server must be specified using -s; not all servers support all query types)
+
 | Query type                | Usage                                                                    |
-| ------------------------- | ------------------------------------------------------------------------ |
+|---------------------------|--------------------------------------------------------------------------|
 | Nameserver                | rdap -v -t nameserver -s https://rdap.verisign.com/com/v1 ns1.google.com |
 | Help                      | rdap -v -t help -s https://rdap.verisign.com/com/v1                      |
 | Domain Search             | rdap -v -t domain-search -s $SERVER_URL example*.gtld                    |
@@ -724,12 +726,15 @@ Click the examples to see the output:
 </details>
 
 ## Go docs
+
 [![godoc](https://godoc.org/github.com/openrdap/rdap?status.png)](https://godoc.org/github.com/openrdap/rdap)
 
 ## Uses
+
 Go 1.20+
 
 ## Links
+
 - Wikipedia - [Registration Data Access Protocol](https://en.wikipedia.org/wiki/Registration_Data_Access_Protocol)
 - ICANN - [RDAP](https://www.icann.org/rdap)
 

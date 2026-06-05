@@ -11,17 +11,17 @@ import (
 	"path/filepath"
 	"time"
 
-	homedir "github.com/mitchellh/go-homedir"
+	"github.com/mitchellh/go-homedir"
 )
 
 const (
-	defaultCacheDirName = ".openrdap"
+	defaultCacheDirName = "openrdap"
 )
 
 // A DiskCache caches Service Registry files on disk.
 //
-// By default they're saved as $HOME/.openrdap/{asn,dns,ipv4,ipv6}.json. File
-// mtimes are used to calculate cache expiry.
+// By default they're saved as $XDG_CACHE_HOME/openrdap/{asn,dns,ipv4,ipv6}.json.
+// File mtimes are used to calculate cache expiry.
 //
 // The cache directory is created automatically as needed.
 type DiskCache struct {
@@ -32,7 +32,8 @@ type DiskCache struct {
 
 	// Directory to store cached files in.
 	//
-	// The default is $HOME/.openrdap.
+	// The default is $XDG_CACHE_HOME/openrdap (falling back to
+	// $HOME/.cache/openrdap).
 	Dir string
 
 	lastLoadedModTime map[string]time.Time
@@ -41,17 +42,23 @@ type DiskCache struct {
 // NewDiskCache creates a new DiskCache.
 func NewDiskCache() *DiskCache {
 	d := &DiskCache{
-		lastLoadedModTime: make(map[string]time.Time),
 		Timeout:           time.Hour * 24,
+		lastLoadedModTime: make(map[string]time.Time),
 	}
 
-	dir, err := homedir.Dir()
+	// Honor $XDG_CACHE_HOME, falling back to $HOME/.cache. Relative values are
+	// ignored, per the XDG Base Directory spec.
+	cacheDir := os.Getenv("XDG_CACHE_HOME")
+	if !filepath.IsAbs(cacheDir) {
+		home, err := homedir.Dir()
+		if err != nil {
+			panic("Can't determine your home directory")
+		}
 
-	if err != nil {
-		panic("Can't determine your home directory")
+		cacheDir = filepath.Join(home, ".cache")
 	}
 
-	d.Dir = filepath.Join(dir, defaultCacheDirName)
+	d.Dir = filepath.Join(cacheDir, defaultCacheDirName)
 
 	return d
 }
@@ -65,21 +72,20 @@ func (d *DiskCache) InitDir() (bool, error) {
 	if err == nil {
 		if fileInfo.IsDir() {
 			return false, nil
-		} else {
-			return false, errors.New("Cache dir is not a dir")
 		}
+
+		return false, errors.New("Cache dir is not a dir")
 	}
 
 	if os.IsNotExist(err) {
-		err := os.Mkdir(d.Dir, 0775)
-		if err == nil {
-			return true, nil
-		} else {
+		if err = os.MkdirAll(d.Dir, 0775); err != nil {
 			return false, err
 		}
-	} else {
-		return false, err
+
+		return true, nil
 	}
+
+	return false, err
 }
 
 // SetTimeout sets the duration each Service Registry file can be stored before
@@ -92,22 +98,20 @@ func (d *DiskCache) SetTimeout(timeout time.Duration) {
 //
 // The cache directory is created if necessary.
 func (d *DiskCache) Save(filename string, data []byte) error {
-	_, err := d.InitDir()
-	if err != nil {
+	if _, err := d.InitDir(); err != nil {
 		return err
 	}
 
-	err = os.WriteFile(d.cacheDirPath(filename), data, 0664)
-	if err != nil {
+	if err := os.WriteFile(d.cacheDirPath(filename), data, 0664); err != nil {
 		return err
 	}
 
 	fileModTime, err := d.modTime(filename)
-	if err == nil {
-		d.lastLoadedModTime[filename] = fileModTime
-	} else {
+	if err != nil {
 		return fmt.Errorf("File %s failed to save correctly: %s", filename, err)
 	}
+
+	d.lastLoadedModTime[filename] = fileModTime
 
 	return nil
 }
@@ -125,8 +129,8 @@ func (d *DiskCache) Load(filename string) ([]byte, error) {
 	}
 
 	var bytes []byte
-	bytes, err = os.ReadFile(d.cacheDirPath(filename))
 
+	bytes, err = os.ReadFile(d.cacheDirPath(filename))
 	if err != nil {
 		return nil, err
 	}
@@ -140,8 +144,8 @@ func (d *DiskCache) Load(filename string) ([]byte, error) {
 //
 // The returned state is one of: Absent, Good, ShouldReload, Expired.
 func (d *DiskCache) State(filename string) FileState {
-	var expiry time.Time = time.Now().Add(-d.Timeout)
-	var state FileState = Absent
+	var expiry = time.Now().Add(-d.Timeout)
+	var state = Absent
 
 	fileModTime, err := d.modTime(filename)
 	if err == nil {

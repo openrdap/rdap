@@ -80,7 +80,9 @@ Advanced options (query):
 Advanced options (bootstrapping):
       --cache-dir=DIR Bootstrap cache directory to use. Specify empty string
                       to disable bootstrap caching. The directory is created
-                      automatically as needed. (default: $HOME/.openrdap).
+                      automatically as needed.
+                      (default: $XDG_CACHE_HOME/openrdap, falling back to
+                      $HOME/.cache/openrdap).
       --bs-url=URL    Bootstrap service URL (default: https://data.iana.org/rdap)
       --bs-ttl=SECS   Bootstrap cache time in seconds (default: 3600)
 

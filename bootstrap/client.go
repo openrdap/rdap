@@ -66,7 +66,7 @@
 // By default, Service Registry files are cached in memory. bootstrap.Client
 // also supports caching the Service Registry files on disk. The default cache
 // location is
-// $HOME/.openrdap/.
+// $XDG_CACHE_HOME/openrdap/ (falling back to $HOME/.cache/openrdap/).
 //
 // Disk cache usage:
 //
