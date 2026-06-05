@@ -1,6 +1,6 @@
 <img src="https://www.openrdap.org/public/img/logo.png">
 
-OpenRDAP is an command line [RDAP](https://datatracker.ietf.org/wg/weirds/documents/) client implementation in Go.
+OpenRDAP is a command line [RDAP](https://datatracker.ietf.org/wg/weirds/documents/) client implementation in Go.
 [![Build Status](https://travis-ci.org/openrdap/rdap.svg?branch=master)](https://travis-ci.org/openrdap/rdap)
 
 https://www.openrdap.org - homepage

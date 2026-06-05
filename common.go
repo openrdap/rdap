@@ -55,7 +55,7 @@ type Remark struct {
 //
 // https://tools.ietf.org/html/rfc7483#section-4.4
 
-// Event represents some event which has occured/may occur in the future..
+// Event represents some event which has occurred/may occur in the future..
 //
 // https://tools.ietf.org/html/rfc7483#section-4.5
 type Event struct {

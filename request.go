@@ -432,7 +432,7 @@ func NewRequest(requestType RequestType, query string) *Request {
 
 // NewAutoRequest creates a Request by guessing the type required for |queryText|.
 //
-// The following types are suppported:
+// The following types are supported:
 //   - RawRequest    - e.g. https://example.com/domain/example2.com
 //   - DomainRequest - e.g. example.com, https://example.com, http://example.com/
 //   - IPRequest     - e.g. 192.0.2.0, 2001:db8::, 192.0.2.0/24, 2001:db8::/128
