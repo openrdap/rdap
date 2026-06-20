@@ -10,6 +10,9 @@ concurrency:
   cancel-in-progress: true
   group: ${{ github.workflow }}-${{ github.ref }}
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build
@@ -17,6 +20,8 @@ jobs:
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Build
         uses: actions/setup-go@v5
