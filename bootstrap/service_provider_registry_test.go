@@ -14,11 +14,10 @@ func TestServiceProviderRegistryLookups(t *testing.T) {
 	test.Start(test.Bootstrap)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://data.iana.org/rdap/object-tags.json")
+	bytes := test.Get("https://data.iana.org/rdap/object-tags.json")
 
 	var s *ServiceProviderRegistry
 	s, err := NewServiceProviderRegistry(bytes)
-
 	if err != nil {
 		t.Fatal(err)
 	}

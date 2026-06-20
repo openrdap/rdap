@@ -23,9 +23,8 @@ type DNSRegistry struct {
 func NewDNSRegistry(json []byte) (*DNSRegistry, error) {
 	var r *File
 	r, err := NewFile(json)
-
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing DNS bootstrap: %s", err)
+		return nil, fmt.Errorf("parsing DNS bootstrap: %w", err)
 	}
 
 	return &DNSRegistry{

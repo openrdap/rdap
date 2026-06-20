@@ -671,7 +671,7 @@ func (p *Printer) printDSData(d DSData, indentLevel uint) {
 
 	if d.KeyTag != nil {
 		p.printValue("Key Tag",
-			strconv.FormatUint(uint64(*d.KeyTag), 10),
+			strconv.FormatUint(*d.KeyTag, 10),
 			indentLevel)
 	}
 
@@ -792,11 +792,17 @@ func (p *Printer) printLink(l Link, indent uint) {
 	p.printUnknowns(l.DecodeData, indent)
 }
 
+// indent returns the indentation prefix for the given nesting level.
+func (p *Printer) indent(indentLevel uint) string {
+	//nolint:gosec // indent depth is bounded by RDAP object nesting; no overflow risk.
+	return strings.Repeat(string(p.IndentChar), int(indentLevel*p.IndentSize))
+}
+
 // printHeading formats and prints a heading string with the
 // specified indentation level.
 func (p *Printer) printHeading(heading string, indentLevel uint) {
 	fmt.Fprintf(p.Writer, "%s%s:\n",
-		strings.Repeat(string(p.IndentChar), int(indentLevel*p.IndentSize)),
+		p.indent(indentLevel),
 		p.cleanString(heading))
 }
 
@@ -808,7 +814,7 @@ func (p *Printer) printValue(name string, value string, indentLevel uint) {
 	}
 
 	fmt.Fprintf(p.Writer, "%s%s: %s\n",
-		strings.Repeat(string(p.IndentChar), int(indentLevel*p.IndentSize)),
+		p.indent(indentLevel),
 		p.cleanString(name),
 		p.cleanString(value))
 }
@@ -847,10 +853,10 @@ func (p *Printer) printUnknowns(d *DecodeData, indentLevel uint) {
 	}
 
 	for k, v := range d.values {
-		isKnown, _ := d.isKnown[k]
-		isOverridden, _ := d.overrideKnownValue[k]
+		isKnown := d.isKnown[k]
+		isOverridden := d.overrideKnownValue[k]
 
-		if !(isKnown && !isOverridden) {
+		if !isKnown || isOverridden {
 			p.printUnknown(k, v, indentLevel)
 		}
 	}
@@ -859,22 +865,22 @@ func (p *Printer) printUnknowns(d *DecodeData, indentLevel uint) {
 // printUnknown prints the key and value of an unknown field
 // recursively, with formatting based on the value's type.
 func (p *Printer) printUnknown(key string, value any, indentLevel uint) {
-	switch value.(type) {
+	switch value := value.(type) {
 	case bool:
-		p.printValue(key, strconv.FormatBool(value.(bool)), indentLevel)
+		p.printValue(key, strconv.FormatBool(value), indentLevel)
 	case float64:
-		p.printValue(key, strconv.FormatFloat(value.(float64), 'f', -1, 64), indentLevel)
+		p.printValue(key, strconv.FormatFloat(value, 'f', -1, 64), indentLevel)
 	case string:
-		p.printValue(key, value.(string), indentLevel)
+		p.printValue(key, value, indentLevel)
 	case []any:
-		for _, value2 := range value.([]any) {
+		for _, value2 := range value {
 			p.printUnknown(key, value2, indentLevel)
 		}
 	case map[string]any:
 		p.printHeading(key, indentLevel)
 		indentLevel++
 
-		for key2, value2 := range value.(map[string]any) {
+		for key2, value2 := range value {
 			p.printUnknown(key2, value2, indentLevel)
 		}
 	default:

@@ -11,7 +11,7 @@ import (
 )
 
 func Example() {
-	var jsonBlob = []byte(`
+	jsonBlob := []byte(`
 		{
 			"objectClassName": "domain",
 			"rdapConformance": ["rdap_level_0"],

@@ -22,7 +22,7 @@ import (
 
 	"golang.org/x/crypto/pkcs12"
 
-	kingpin "github.com/alecthomas/kingpin/v2"
+	"github.com/alecthomas/kingpin/v2"
 )
 
 var (
@@ -115,6 +115,8 @@ type CLIOptions struct {
 // |options| specifies extra options.
 //
 // Returns the program exit code.
+//
+//nolint:gocyclo,cyclop // TODO: refactor.
 func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOptions) int {
 	// For duration timer (in --verbose output).
 	start := time.Now()
@@ -251,7 +253,6 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		autnum := strings.ToUpper(queryText)
 		autnum = strings.TrimPrefix(autnum, "AS")
 		result, err := strconv.ParseUint(autnum, 10, 32)
-
 		if err != nil {
 			printError(stderr, fmt.Sprintf("Invalid ASN '%s'", queryText))
 			return 1
@@ -307,7 +308,6 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	// Server URL specified (--server)?
 	if *serverFlag != "" {
 		serverURL, err := url.Parse(*serverFlag)
-
 		if err != nil {
 			printError(stderr, fmt.Sprintf("--server error: %s", err))
 			return 1
@@ -322,8 +322,9 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		verbose(fmt.Sprintf("rdap: Using server '%s'", serverURL))
 	}
 
-	// Custom TLS config.
-	tlsConfig := &tls.Config{InsecureSkipVerify: *insecureFlag}
+	// Custom TLS config. The --insecure flag intentionally allows skipping
+	// certificate verification.
+	tlsConfig := &tls.Config{InsecureSkipVerify: *insecureFlag} //nolint:gosec // opt-in via --insecure flag
 
 	bs := &bootstrap.Client{}
 
@@ -339,7 +340,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 			if !options.Sandbox {
 				dc.Dir = *cacheDirFlag
 			} else {
-				verbose(fmt.Sprintf("rdap: Ignored --cache-dir option (sandbox mode enabled)"))
+				verbose("rdap: Ignored --cache-dir option (sandbox mode enabled)")
 			}
 		}
 
@@ -387,18 +388,18 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 	var clientCert tls.Certificate
 	if *clientCertFilename != "" || *clientKeyFilename != "" {
-		if *clientP12FilenameAndPassword != "" {
-			printError(stderr, fmt.Sprintf("rdap: Error: Can't use both --cert/--key and --p12 together"))
+		switch {
+		case *clientP12FilenameAndPassword != "":
+			printError(stderr, "rdap: Error: Can't use both --cert/--key and --p12 together")
 			return 1
-		} else if *clientCertFilename == "" || *clientKeyFilename == "" {
-			printError(stderr, fmt.Sprintf("rdap: Error: --cert and --key must be used together"))
+		case *clientCertFilename == "" || *clientKeyFilename == "":
+			printError(stderr, "rdap: Error: --cert and --key must be used together")
 			return 1
-		} else if options.Sandbox {
-			verbose(fmt.Sprintf("rdap: Ignored --cert and --key options (sandbox mode enabled)"))
-		} else {
+		case options.Sandbox:
+			verbose("rdap: Ignored --cert and --key options (sandbox mode enabled)")
+		default:
 			var err error
 			clientCert, err = tls.LoadX509KeyPair(*clientCertFilename, *clientKeyFilename)
-
 			if err != nil {
 				printError(stderr, fmt.Sprintf("rdap: Error: cannot load client certificate/key: %s", err))
 				return 1
@@ -411,7 +412,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	} else if *clientP12FilenameAndPassword != "" {
 		// Split the filename and optional password.
 		// [0] is the filename, [1] is the optional password.
-		var p12FilenameAndPassword []string = strings.SplitAfterN(*clientP12FilenameAndPassword, ":", 2)
+		p12FilenameAndPassword := strings.SplitAfterN(*clientP12FilenameAndPassword, ":", 2)
 		p12FilenameAndPassword[0] = strings.TrimSuffix(p12FilenameAndPassword[0], ":")
 
 		// Use a blank password if none was specified.
@@ -438,7 +439,6 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		// Convert P12 to PEM blocks.
 		var blocks []*pem.Block
 		blocks, err = pkcs12.ToPEM(p12, p12FilenameAndPassword[1])
-
 		if err != nil {
 			printError(stderr, fmt.Sprintf("rdap: Error: cannot read client certificate: %s", err))
 			return 1
@@ -451,7 +451,6 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		}
 
 		clientCert, err = tls.X509KeyPair(pemData, pemData)
-
 		if err != nil {
 			printError(stderr, fmt.Sprintf("rdap: Error: cannot read client certificate: %s", err))
 			return 1
@@ -485,7 +484,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	}
 
 	if *insecureFlag {
-		verbose(fmt.Sprintf("rdap: SSL certificate validation disabled"))
+		verbose("rdap: SSL certificate validation disabled")
 	}
 
 	// Set the request timeout.
@@ -513,7 +512,7 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	}
 
 	// Output formatting.
-	if !(*outputFormatText || *outputFormatWhois || *outputFormatJSON || *outputFormatRaw) {
+	if !*outputFormatText && !*outputFormatWhois && !*outputFormatJSON && !*outputFormatRaw {
 		*outputFormatText = true
 	}
 
@@ -535,8 +534,15 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	// Print the response, JSON pretty-printed?
 	if *outputFormatJSON {
 		var out bytes.Buffer
-		json.Indent(&out, resp.HTTP[0].Body, "", "  ")
-		out.WriteTo(stdout)
+		if err := json.Indent(&out, resp.HTTP[0].Body, "", "  "); err != nil {
+			printError(stderr, fmt.Sprintf("Error: response body is not valid JSON: %s", err))
+			return 1
+		}
+
+		if _, err := out.WriteTo(stdout); err != nil {
+			printError(stderr, fmt.Sprintf("Error writing output: %s", err))
+			return 1
+		}
 	}
 
 	// Print WHOIS style response out?
@@ -557,10 +563,10 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 
 func safePrint(v string) string {
 	removeBadChars := func(r rune) rune {
-		switch {
-		case r == '\000':
+		switch r {
+		case '\000':
 			return -1
-		case r == '\n':
+		case '\n':
 			return ' '
 		default:
 			return r

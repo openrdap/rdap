@@ -74,11 +74,11 @@ func (d *DiskCache) InitDir() (bool, error) {
 			return false, nil
 		}
 
-		return false, errors.New("Cache dir is not a dir")
+		return false, errors.New("cache dir is not a dir")
 	}
 
 	if os.IsNotExist(err) {
-		if err = os.MkdirAll(d.Dir, 0775); err != nil {
+		if err = os.MkdirAll(d.Dir, 0o750); err != nil {
 			return false, err
 		}
 
@@ -102,13 +102,13 @@ func (d *DiskCache) Save(filename string, data []byte) error {
 		return err
 	}
 
-	if err := os.WriteFile(d.cacheDirPath(filename), data, 0664); err != nil {
+	if err := os.WriteFile(d.cacheDirPath(filename), data, 0o600); err != nil {
 		return err
 	}
 
 	fileModTime, err := d.modTime(filename)
 	if err != nil {
-		return fmt.Errorf("File %s failed to save correctly: %s", filename, err)
+		return fmt.Errorf("file %s failed to save correctly: %w", filename, err)
 	}
 
 	d.lastLoadedModTime[filename] = fileModTime
@@ -125,7 +125,7 @@ func (d *DiskCache) Save(filename string, data []byte) error {
 func (d *DiskCache) Load(filename string) ([]byte, error) {
 	fileModTime, err := d.modTime(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Unable to load %s: %s", filename, err)
+		return nil, fmt.Errorf("unable to load %s: %w", filename, err)
 	}
 
 	var bytes []byte
@@ -144,8 +144,8 @@ func (d *DiskCache) Load(filename string) ([]byte, error) {
 //
 // The returned state is one of: Absent, Good, ShouldReload, Expired.
 func (d *DiskCache) State(filename string) FileState {
-	var expiry = time.Now().Add(-d.Timeout)
-	var state = Absent
+	expiry := time.Now().Add(-d.Timeout)
+	state := Absent
 
 	fileModTime, err := d.modTime(filename)
 	if err == nil {
@@ -167,7 +167,6 @@ func (d *DiskCache) State(filename string) FileState {
 func (d *DiskCache) modTime(filename string) (time.Time, error) {
 	var fileInfo os.FileInfo
 	fileInfo, err := os.Stat(d.cacheDirPath(filename))
-
 	if err != nil {
 		return time.Time{}, err
 	}

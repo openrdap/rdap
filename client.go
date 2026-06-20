@@ -120,7 +120,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	}
 
 	c.Verbose("")
-	c.Verbose(fmt.Sprintf("client: Running..."))
+	c.Verbose("client: Running...")
 	c.Verbose(fmt.Sprintf("client: Request type  : %s", req.Type))
 	c.Verbose(fmt.Sprintf("client: Request query : %s", req.Query))
 
@@ -134,7 +134,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	} else if req.Server == nil {
 		c.Verbose("client: Request URL   : TBD, bootstrap required")
 
-		var bootstrapType *bootstrap.RegistryType = bootstrapTypeFor(req)
+		bootstrapType := bootstrapTypeFor(req)
 
 		if bootstrapType == nil {
 			return nil, &ClientError{
@@ -225,10 +225,10 @@ func (c *Client) Do(req *Request) (*Response, error) {
 				// Implement additional fetches here.
 
 				return resp, nil
-			} else if hrr.StatusCode == 404 {
+			} else if hrr.StatusCode == http.StatusNotFound {
 				return resp, &ClientError{
 					Type: ObjectDoesNotExist,
-					Text: fmt.Sprintf("RDAP server returned 404, object does not exist."),
+					Text: "RDAP server returned 404, object does not exist.",
 				}
 			}
 		}
@@ -249,8 +249,8 @@ func (c *Client) get(rdapReq *Request) *HTTPResponse {
 
 	start := time.Now()
 
-	// Set up the HTTP request.
-	req, err := http.NewRequest("GET", httpResponse.URL, nil)
+	// Set up the HTTP request. The request context carries the timeout.
+	req, err := http.NewRequestWithContext(rdapReq.Context(), http.MethodGet, httpResponse.URL, http.NoBody)
 	if err != nil {
 		httpResponse.Error = err
 		httpResponse.Duration = time.Since(start)
@@ -264,9 +264,6 @@ func (c *Client) get(rdapReq *Request) *HTTPResponse {
 
 	// HTTP Accept header.
 	req.Header.Add("Accept", "application/rdap+json, application/json")
-
-	// Add context for timeout.
-	req = req.WithContext(rdapReq.Context())
 
 	// Make the HTTP request.
 	resp, err := c.HTTP.Do(req)
@@ -302,8 +299,8 @@ func (c *Client) QueryDomain(domain string) (*Domain, error) {
 		return nil, err
 	}
 
-	if domain, ok := resp.Object.(*Domain); ok {
-		return domain, nil
+	if dom, ok := resp.Object.(*Domain); ok {
+		return dom, nil
 	} else if respError, ok := resp.Object.(*Error); ok {
 		return nil, clientErrorFromRDAPError(respError)
 	}

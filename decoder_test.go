@@ -13,8 +13,7 @@ import (
 )
 
 func TestDecodeEmpty(t *testing.T) {
-	type Empty struct {
-	}
+	type Empty struct{}
 	runDecodeAndCompareTest(t, &Empty{}, `
 	{}
 `, &Empty{})
@@ -47,15 +46,16 @@ func TestDecodeDecodeData(t *testing.T) {
 		t.Errorf("Decode values bad %v", x)
 	}
 
-	if x.DecodeData == nil {
+	switch {
+	case x.DecodeData == nil:
 		t.Errorf("DecodeData not instantiated")
-	} else if len(x.DecodeData.Notes("sF")) != 1 {
+	case len(x.DecodeData.Notes("sF")) != 1:
 		t.Errorf("DecodeData notes not added")
-	} else if len(x.DecodeData.Fields()) != 4 {
+	case len(x.DecodeData.Fields()) != 4:
 		t.Errorf("DecodeData Fields() bad")
-	} else if len(x.DecodeData.UnknownFields()) != 1 {
+	case len(x.DecodeData.UnknownFields()) != 1:
 		t.Errorf("DecodeData UnknownFields() bad")
-	} else if !reflect.DeepEqual(x.DecodeData.Value("unknown"), "value") {
+	case !reflect.DeepEqual(x.DecodeData.Value("unknown"), "value"):
 		t.Errorf("DecodeData bad Value()")
 	}
 }
@@ -313,15 +313,14 @@ func TestDecodeString(t *testing.T) {
 func TestDecodeBug1(t *testing.T) {
 	jsonBlob := test.LoadFile("rdap/rdap-pilot.verisignlabs.com/entity-1-VRSN")
 
-	d := NewDecoder([]byte(jsonBlob))
+	d := NewDecoder(jsonBlob)
 	result, err := d.Decode()
 
 	t.Logf("%s %s\n", result, err)
 }
 
 func TestDecodeMismatchedTypes(t *testing.T) {
-	type C struct {
-	}
+	type C struct{}
 
 	type XYZ struct {
 		A []string
@@ -347,7 +346,6 @@ func runDecode(t *testing.T, target any, jsonBlob string) (any, bool) {
 	d.target = target
 
 	result, err := d.Decode()
-
 	if err != nil {
 		t.Errorf("While decoding '%s', got error: %s", jsonBlob, err)
 		return result, false

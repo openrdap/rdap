@@ -30,7 +30,7 @@ func BenchmarkDecodeDomain(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		if _, err := NewDecoder(blob).Decode(); err != nil {
 			b.Fatal(err)
 		}
@@ -46,14 +46,14 @@ var (
 
 func BenchmarkEscapePathClean(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = escapePath(benchEscapePathClean)
 	}
 }
 
 func BenchmarkEscapePathDirty(b *testing.B) {
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = escapePath(benchEscapePathDirty)
 	}
 }
@@ -77,7 +77,7 @@ var (
 func BenchmarkCleanStringClean(b *testing.B) {
 	p := &Printer{}
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		for _, s := range benchCleanStringInputs {
 			_ = p.cleanString(s)
 		}
@@ -87,7 +87,7 @@ func BenchmarkCleanStringClean(b *testing.B) {
 func BenchmarkCleanStringDirty(b *testing.B) {
 	p := &Printer{}
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = p.cleanString(benchCleanStringDirty)
 	}
 }
@@ -103,7 +103,7 @@ func BenchmarkVCardValues(b *testing.B) {
 	}
 
 	b.ReportAllocs()
-	for i := 0; i < b.N; i++ {
+	for range b.N {
 		_ = p.Values()
 	}
 }

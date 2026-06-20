@@ -33,11 +33,12 @@ func TestClientQueryDomain(t *testing.T) {
 
 	domain, err := client.QueryDomain("example.cz")
 
-	if err != nil {
+	switch {
+	case err != nil:
 		t.Errorf("Unexpected error: %s", err)
-	} else if domain == nil {
+	case domain == nil:
 		t.Errorf("Unexpected nil Domain")
-	} else if domain.LDHName != "example.cz" {
+	case domain.LDHName != "example.cz":
 		t.Errorf("Unexpected LDHName %s", domain.LDHName)
 	}
 }

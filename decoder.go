@@ -183,7 +183,6 @@ func (d *Decoder) decodeTopLevel(src map[string]any) (any, error) {
 	_, err := d.decode("", src, result, nil)
 
 	return result.Interface(), err
-
 }
 
 // decode decodes the JSON structure |src| into the value |dst|.
@@ -202,19 +201,19 @@ func (d *Decoder) decode(keyName string, src any, dst reflect.Value, decodeData 
 	// Choose and run the correct decoder for |dst|'s type.
 	switch dst.Kind() {
 	case reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-		success, err = d.decodeUint(keyName, src, dst, decodeData)
+		success = d.decodeUint(keyName, src, dst, decodeData)
 	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		success, err = d.decodeInt(keyName, src, dst, decodeData)
+		success = d.decodeInt(keyName, src, dst, decodeData)
 	case reflect.Float64:
-		success, err = d.decodeFloat64(keyName, src, dst, decodeData)
+		success = d.decodeFloat64(keyName, src, dst, decodeData)
 	case reflect.Bool:
-		success, err = d.decodeBool(keyName, src, dst, decodeData)
+		success = d.decodeBool(keyName, src, dst, decodeData)
 	case reflect.Struct:
 		success, err = d.decodeStruct(keyName, src, dst, decodeData)
 	case reflect.Pointer:
 		success, err = d.decodePtr(keyName, src, dst, decodeData)
 	case reflect.String:
-		success, err = d.decodeString(keyName, src, dst, decodeData)
+		success = d.decodeString(keyName, src, dst, decodeData)
 	case reflect.Slice:
 		success, err = d.decodeSlice(keyName, src, dst, decodeData)
 	case reflect.Map:
@@ -250,7 +249,6 @@ func (d *Decoder) decodeSlice(keyName string, src any, dst reflect.Value, decode
 
 		// Decode into the result value.
 		success, err := d.decode(keyName, v, reflect.Indirect(vdst), decodeData)
-
 		if err != nil {
 			return false, err
 		}
@@ -295,7 +293,6 @@ func (d *Decoder) decodeMap(keyName string, src any, dst reflect.Value, decodeDa
 
 		// Decode into the result value.
 		success, err := d.decode(keyName+":"+k, v, reflect.Indirect(vdst), decodeData)
-
 		if err != nil {
 			return false, err
 		}
@@ -317,26 +314,25 @@ func (d *Decoder) decodeMap(keyName string, src any, dst reflect.Value, decodeDa
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeUint(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
-	var err error
+func (d *Decoder) decodeUint(keyName string, src any, dst reflect.Value, decodeData *DecodeData) bool {
 	var result uint64
 
 	success := true
 
-	switch src.(type) {
+	switch src := src.(type) {
 	case bool:
-		if src.(bool) {
+		if src {
 			result = 1
 		}
 
 		d.addDecodeNote(decodeData, keyName, "bool to uint conversion")
 	case float64:
-		result = uint64(src.(float64))
+		result = uint64(src)
 		d.addDecodeNote(decodeData, keyName, "float64 to uint conversion")
 	case string:
 		var convError error
 
-		result, convError = strconv.ParseUint(src.(string), 10, 64)
+		result, convError = strconv.ParseUint(src, 10, 64)
 
 		if convError != nil {
 			result = 0
@@ -378,7 +374,7 @@ func (d *Decoder) decodeUint(keyName string, src any, dst reflect.Value, decodeD
 		}
 	}
 
-	return success, err
+	return success
 }
 
 // decodeInt decodes |src| into the int8/16/32/64 |dst|.
@@ -387,25 +383,25 @@ func (d *Decoder) decodeUint(keyName string, src any, dst reflect.Value, decodeD
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeInt(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
+func (d *Decoder) decodeInt(keyName string, src any, dst reflect.Value, decodeData *DecodeData) bool {
 	var result int64
 
 	success := true
 
-	switch src.(type) {
+	switch src := src.(type) {
 	case bool:
-		if src.(bool) {
+		if src {
 			result = 1
 		}
 
 		d.addDecodeNote(decodeData, keyName, "bool to int conversion")
 	case float64:
-		result = int64(src.(float64))
+		result = int64(src)
 		d.addDecodeNote(decodeData, keyName, "float64 to int conversion")
 	case string:
 		var convError error
 
-		result, convError = strconv.ParseInt(src.(string), 10, 64)
+		result, convError = strconv.ParseInt(src, 10, 64)
 		if convError != nil {
 			result = 0
 			success = false
@@ -449,10 +445,9 @@ func (d *Decoder) decodeInt(keyName string, src any, dst reflect.Value, decodeDa
 		} else {
 			dst.SetInt(result)
 		}
-
 	}
 
-	return success, nil
+	return success
 }
 
 // decodeFloat64 decodes |src| into the float64 |dst|.
@@ -461,25 +456,24 @@ func (d *Decoder) decodeInt(keyName string, src any, dst reflect.Value, decodeDa
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeFloat64(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
-	var err error
+func (d *Decoder) decodeFloat64(keyName string, src any, dst reflect.Value, decodeData *DecodeData) bool {
 	var result float64
 
 	success := true
 
-	switch src.(type) {
+	switch src := src.(type) {
 	case bool:
-		if src.(bool) {
+		if src {
 			result = 1.0
 		}
 
 		d.addDecodeNote(decodeData, keyName, "bool to float64 conversion")
 	case float64:
-		result = src.(float64)
+		result = src
 	case string:
 		var convError error
 
-		result, convError = strconv.ParseFloat(src.(string), 64)
+		result, convError = strconv.ParseFloat(src, 64)
 
 		if convError != nil {
 			result = 0.0
@@ -498,7 +492,7 @@ func (d *Decoder) decodeFloat64(keyName string, src any, dst reflect.Value, deco
 
 	dst.SetFloat(result)
 
-	return success, err
+	return success
 }
 
 // decodeString decodes |src| into the string |dst|.
@@ -507,21 +501,20 @@ func (d *Decoder) decodeFloat64(keyName string, src any, dst reflect.Value, deco
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeString(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
-	var err error
+func (d *Decoder) decodeString(keyName string, src any, dst reflect.Value, decodeData *DecodeData) bool {
 	var result string
 
 	success := true
 
-	switch src.(type) {
+	switch src := src.(type) {
 	case bool:
-		result = strconv.FormatBool(src.(bool))
+		result = strconv.FormatBool(src)
 		d.addDecodeNote(decodeData, keyName, "bool to string conversion")
 	case float64:
-		result = strconv.FormatFloat(src.(float64), 'f', -1, 64)
+		result = strconv.FormatFloat(src, 'f', -1, 64)
 		d.addDecodeNote(decodeData, keyName, "float64 to string conversion")
 	case string:
-		result = src.(string)
+		result = src
 	case nil:
 		result = ""
 		d.addDecodeNote(decodeData, keyName, "null to empty string conversion")
@@ -532,7 +525,7 @@ func (d *Decoder) decodeString(keyName string, src any, dst reflect.Value, decod
 
 	dst.SetString(result)
 
-	return success, err
+	return success
 }
 
 // decodeBool decodes |src| into the bool |dst|.
@@ -541,17 +534,16 @@ func (d *Decoder) decodeString(keyName string, src any, dst reflect.Value, decod
 // these.
 //
 // The parameters and return variables are as per decode().
-func (d *Decoder) decodeBool(keyName string, src any, dst reflect.Value, decodeData *DecodeData) (bool, error) {
-	var err error
+func (d *Decoder) decodeBool(keyName string, src any, dst reflect.Value, decodeData *DecodeData) bool {
 	var result bool
 
 	success := true
 
-	switch src.(type) {
+	switch s := src.(type) {
 	case bool:
-		result = src.(bool)
+		result = s
 	case float64:
-		f := src.(float64)
+		f := s
 		if f != 0 {
 			result = true
 		}
@@ -560,7 +552,7 @@ func (d *Decoder) decodeBool(keyName string, src any, dst reflect.Value, decodeD
 	case string:
 		var convError error
 
-		result, convError = strconv.ParseBool(src.(string))
+		result, convError = strconv.ParseBool(s)
 		if convError != nil {
 			d.addDecodeNote(decodeData, keyName, "error converting string to bool")
 			result = false
@@ -578,7 +570,7 @@ func (d *Decoder) decodeBool(keyName string, src any, dst reflect.Value, decodeD
 
 	dst.SetBool(result)
 
-	return success, err
+	return success
 }
 
 // decodeStruct decodes |src| into the struct |dst|.
@@ -651,7 +643,7 @@ func structPlanFor(t reflect.Type) *structPlan {
 
 	var walk func(t reflect.Type, prefix []int)
 	walk = func(t reflect.Type, prefix []int) {
-		for i := 0; i < t.NumField(); i++ {
+		for i := range t.NumField() {
 			structField := t.Field(i)
 			index := append(append([]int{}, prefix...), i)
 

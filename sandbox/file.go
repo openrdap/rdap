@@ -18,7 +18,7 @@ var sandboxPath string
 // an error if the file is not one of the recognised sandbox files.
 func LoadFile(filename string) ([]byte, error) {
 	if !IsFileInSandbox(filename) {
-		return nil, errors.New("File not found in sandbox")
+		return nil, errors.New("file not found in sandbox")
 	}
 
 	var body []byte
@@ -28,7 +28,6 @@ func LoadFile(filename string) ([]byte, error) {
 	}
 
 	body, err := os.ReadFile(path.Join(sandboxPath, filename))
-
 	if err != nil {
 		log.Panic(err)
 	}

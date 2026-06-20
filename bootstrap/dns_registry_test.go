@@ -14,11 +14,10 @@ func TestNetRegistryLookupsDNSNested(t *testing.T) {
 	test.Start(test.BootstrapComplex)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://rdap.example.org/dns.json")
+	bytes := test.Get("https://rdap.example.org/dns.json")
 
 	var d *DNSRegistry
 	d, err := NewDNSRegistry(bytes)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,11 +62,10 @@ func TestNetRegistryLookupsDNS(t *testing.T) {
 	test.Start(test.Bootstrap)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://data.iana.org/rdap/dns.json")
+	bytes := test.Get("https://data.iana.org/rdap/dns.json")
 
 	var d *DNSRegistry
 	d, err := NewDNSRegistry(bytes)
-
 	if err != nil {
 		t.Fatal(err)
 	}

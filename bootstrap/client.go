@@ -193,7 +193,6 @@ func (c *Client) DownloadWithContext(ctx context.Context, registry RegistryType)
 	var s Registry
 
 	json, s, err := c.download(ctx, registry)
-
 	if err != nil {
 		return err
 	}
@@ -206,7 +205,6 @@ func (c *Client) DownloadWithContext(ctx context.Context, registry RegistryType)
 	c.registries[registry] = s
 
 	return nil
-
 }
 
 func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, Registry, error) {
@@ -222,12 +220,11 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 		baseURL.Path += "/"
 	}
 
-	var fetchURL *url.URL = baseURL.ResolveReference(u)
-	req, err := http.NewRequest("GET", fetchURL.String(), nil)
+	fetchURL := baseURL.ResolveReference(u)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, fetchURL.String(), http.NoBody)
 	if err != nil {
 		return nil, nil, err
 	}
-	req = req.WithContext(ctx)
 
 	resp, err := c.HTTP.Do(req)
 	if err != nil {
@@ -235,8 +232,8 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != 200 {
-		return nil, nil, fmt.Errorf("Server returned non-200 status code: %s", resp.Status)
+	if resp.StatusCode != http.StatusOK {
+		return nil, nil, fmt.Errorf("server returned non-200 status code: %s", resp.Status)
 	}
 
 	json, err := io.ReadAll(resp.Body)
@@ -246,7 +243,6 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 
 	var s Registry
 	s, err = newRegistry(registry, json)
-
 	if err != nil {
 		return json, nil, err
 	}
@@ -256,20 +252,19 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 
 func (c *Client) freshenFromCache(registry RegistryType) {
 	if c.Cache.State(c.filenameFor(registry)) == cache.ShouldReload {
-		c.reloadFromCache(registry)
+		// Best-effort refresh; on failure the existing in-memory registry is kept.
+		_ = c.reloadFromCache(registry)
 	}
 }
 
 func (c *Client) reloadFromCache(registry RegistryType) error {
 	json, err := c.Cache.Load(c.filenameFor(registry))
-
 	if err != nil {
 		return err
 	}
 
 	var s Registry
 	s, err = newRegistry(registry, json)
-
 	if err != nil {
 		return err
 	}
@@ -314,7 +309,7 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 
 	registry := question.RegistryType
 
-	var state cache.FileState = c.Cache.State(c.filenameFor(registry))
+	state := c.Cache.State(c.filenameFor(registry))
 	c.Verbose(fmt.Sprintf("  bootstrap: Cache state: %s: %s", c.filenameFor(registry), state))
 
 	var forceDownload bool
@@ -344,7 +339,7 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 		if answer.Entry != "" {
 			c.Verbose(fmt.Sprintf("  bootstrap: Matching entry '%s'", answer.Entry))
 		} else {
-			c.Verbose(fmt.Sprintf("  bootstrap: No match"))
+			c.Verbose("  bootstrap: No match")
 		}
 
 		for i, url := range answer.URLs {

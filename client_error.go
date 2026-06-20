@@ -5,6 +5,7 @@
 package rdap
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -34,7 +35,8 @@ func (c ClientError) Error() string {
 }
 
 func isClientError(t ClientErrorType, err error) bool {
-	if ce, ok := err.(*ClientError); ok {
+	ce := &ClientError{}
+	if errors.As(err, &ce) {
 		if ce.Type == t {
 			return true
 		}

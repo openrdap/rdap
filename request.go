@@ -263,7 +263,7 @@ func (r *Request) URL() *url.URL {
 		resultURL = new(url.URL)
 		*resultURL = *r.Server
 	} else {
-		tempURL := &*r.Server
+		tempURL := r.Server
 		tempURL.RawQuery = ""
 		tempURL.Fragment = ""
 		tempURLString := tempURL.String()
@@ -275,8 +275,8 @@ func (r *Request) URL() *url.URL {
 		tempURLString += path
 
 		var err error
-		resultURL, err = url.Parse(tempURLString)
 
+		resultURL, err = url.Parse(tempURLString)
 		if err != nil {
 			return nil
 		}
@@ -322,11 +322,12 @@ func (r *Request) WithServer(server *url.URL) *Request {
 }
 
 func escapePath(text string) string {
-	// Fast path: find the first byte that needs escaping. The common case
-	// (clean ASCII domains / IPs) finds none and returns the input unchanged
-	// with no allocation.
+	// Find the first byte that needs escaping. The common case (clean ASCII
+	// domains / IPs) finds none and returns the input unchanged with no
+	// allocation.
+
 	j := -1
-	for i := 0; i < len(text); i++ {
+	for i := range len(text) {
 		if shouldPathEscape(text[i]) {
 			j = i
 			break
@@ -337,8 +338,9 @@ func escapePath(text string) string {
 		return text
 	}
 
-	// Worst case: every remaining byte expands to "%XX" (3 bytes). Sizing for
-	// it guarantees a single allocation with no re-growth; RDAP paths are short.
+	// Every remaining byte expands to "%XX" (3 bytes). Sizing for it
+	// guarantees a single allocation with no re-growth; RDAP paths are
+	// short.
 	escaped := make([]byte, 0, j+(len(text)-j)*3)
 	escaped = append(escaped, text[:j]...)
 
@@ -384,7 +386,7 @@ func NewHelpRequest() *Request {
 func NewAutnumRequest(asn uint32) *Request {
 	return &Request{
 		Type:  AutnumRequest,
-		Query: fmt.Sprintf("%d", asn),
+		Query: strconv.FormatUint(uint64(asn), 10),
 	}
 }
 
@@ -481,8 +483,7 @@ func NewAutoRequest(queryText string) *Request {
 	}
 
 	// IP network?
-	_, ipNet, err := net.ParseCIDR(queryText)
-	if ipNet != nil {
+	if _, ipNet, err := net.ParseCIDR(queryText); err == nil {
 		return NewIPNetRequest(ipNet)
 	}
 
@@ -505,7 +506,6 @@ func parseAutnum(autnum string) (uint32, error) {
 	autnum = strings.ToUpper(autnum)
 	autnum = strings.TrimPrefix(autnum, "AS")
 	result, err := strconv.ParseUint(autnum, 10, 32)
-
 	if err != nil {
 		return 0, err
 	}

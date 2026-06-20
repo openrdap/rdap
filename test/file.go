@@ -23,7 +23,6 @@ func LoadFile(filename string) []byte {
 	}
 
 	body, err := os.ReadFile(path.Join(testDataPath, filename))
-
 	if err != nil {
 		log.Panic(err)
 	}

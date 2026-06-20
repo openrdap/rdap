@@ -5,6 +5,7 @@
 package rdap
 
 import (
+	"io"
 	"testing"
 
 	"github.com/openrdap/rdap/test"
@@ -15,21 +16,18 @@ func TestPrintDomain(t *testing.T) {
 
 	printer := &Printer{
 		BriefLinks: true,
+		Writer:     io.Discard,
 	}
 
-	_ = obj
-	_ = printer
-	//printer.Print(obj)
+	printer.Print(obj)
 }
 
 func loadObject(filename string) RDAPObject {
-	jsonBlob := test.LoadFile(filename)
+	d := NewDecoder(test.LoadFile(filename))
 
-	d := NewDecoder([]byte(jsonBlob))
 	result, err := d.Decode()
-
 	if err != nil {
-		panic("Decode unexpectedly failed")
+		panic("Decode unexpectedly failed: " + err.Error())
 	}
 
 	return result

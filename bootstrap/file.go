@@ -31,15 +31,14 @@ type File struct {
 // NewFile constructs a File from a bootstrap registry file.
 func NewFile(jsonDocument []byte) (*File, error) {
 	var doc struct {
-		Description string
-		Publication string
-		Version     string
+		Description string `json:"description"`
+		Publication string `json:"publication"`
+		Version     string `json:"version"`
 
-		Services [][][]string
+		Services [][][]string `json:"services"`
 	}
 
-	err := json.Unmarshal(jsonDocument, &doc)
-	if err != nil {
+	if err := json.Unmarshal(jsonDocument, &doc); err != nil {
 		return nil, err
 	}
 
@@ -65,14 +64,13 @@ func NewFile(jsonDocument []byte) (*File, error) {
 			entries = s[1]
 			rawURLs = s[2]
 		default:
-			return nil, errors.New("Malformed bootstrap (bad services array)")
+			return nil, errors.New("malformed bootstrap (bad services array)")
 		}
 
 		var urls []*url.URL
 
 		for _, rawURL := range rawURLs {
 			url, err := url.Parse(rawURL)
-
 			// Ignore unparsable URLs.
 			if err != nil {
 				continue

@@ -51,7 +51,7 @@ func (m *MemoryCache) Load(filename string) ([]byte, error) {
 	data, ok := m.cache[filename]
 
 	if !ok {
-		return nil, fmt.Errorf("File %s not in cache", filename)
+		return nil, fmt.Errorf("file %s not in cache", filename)
 	}
 
 	result := make([]byte, len(data))
@@ -77,5 +77,4 @@ func (m *MemoryCache) State(filename string) FileState {
 	}
 
 	return Good
-
 }

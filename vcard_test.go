@@ -96,7 +96,7 @@ func TestVCardExample(t *testing.T) {
 
 	expectedTel0 := &VCardProperty{
 		Name:       "tel",
-		Parameters: map[string][]string{"type": []string{"work", "voice"}, "pref": []string{"1"}},
+		Parameters: map[string][]string{"type": {"work", "voice"}, "pref": {"1"}},
 		Type:       "uri",
 		Value:      "tel:+1-418-656-9254;ext=102",
 	}

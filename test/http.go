@@ -5,6 +5,7 @@
 package test
 
 import (
+	"context"
 	"io"
 	"log"
 	"net/http"
@@ -30,8 +31,10 @@ type response struct {
 	Body   string
 }
 
-var responses map[TestDataset][]response
-var activatedURLs map[string]bool
+var (
+	responses     = buildResponses()
+	activatedURLs = map[string]bool{}
+)
 
 // Start activates HTTP mocking and registers the responders for the given test
 // dataset. It panics if two datasets register the same URL.
@@ -59,7 +62,12 @@ func Finish() {
 
 // Get performs an HTTP GET and returns the response body, panicking on error.
 func Get(url string) []byte {
-	resp, err := http.Get(url)
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, http.NoBody)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -74,45 +82,42 @@ func Get(url string) []byte {
 	return data
 }
 
-func init() {
-	responses = make(map[TestDataset][]response)
-	activatedURLs = make(map[string]bool)
+// buildResponses loads every test dataset's mock HTTP responses from testdata.
+func buildResponses() map[TestDataset][]response {
+	r := map[TestDataset][]response{}
 
-	loadTestDatasets()
-}
+	load := func(set TestDataset, status int, url, filename string) {
+		body := LoadFile(filename)
+		r[set] = append(r[set], response{status, url, string(body)})
+	}
 
-func loadTestDatasets() {
 	// Valid snapshot of the IANA bootstrap files.
-	load(Bootstrap, 200, "https://data.iana.org/rdap/asn.json", "bootstrap/asn.json")
-	load(Bootstrap, 200, "https://data.iana.org/rdap/dns.json", "bootstrap/dns.json")
-	load(Bootstrap, 200, "https://data.iana.org/rdap/ipv4.json", "bootstrap/ipv4.json")
-	load(Bootstrap, 200, "https://data.iana.org/rdap/ipv6.json", "bootstrap/ipv6.json")
-	load(Bootstrap, 200, "https://data.iana.org/rdap/object-tags.json", "bootstrap/object-tags.json")
+	load(Bootstrap, http.StatusOK, "https://data.iana.org/rdap/asn.json", "bootstrap/asn.json")
+	load(Bootstrap, http.StatusOK, "https://data.iana.org/rdap/dns.json", "bootstrap/dns.json")
+	load(Bootstrap, http.StatusOK, "https://data.iana.org/rdap/ipv4.json", "bootstrap/ipv4.json")
+	load(Bootstrap, http.StatusOK, "https://data.iana.org/rdap/ipv6.json", "bootstrap/ipv6.json")
+	load(Bootstrap, http.StatusOK, "https://data.iana.org/rdap/object-tags.json", "bootstrap/object-tags.json")
 
 	// Malformed bootstrap files.
-	load(BootstrapMalformed, 200, "https://www.example.org/dns_bad_services.json", "bootstrap_malformed/dns_bad_services.json")
-	load(BootstrapMalformed, 200, "https://www.example.org/dns_bad_url.json", "bootstrap_malformed/dns_bad_url.json")
-	load(BootstrapMalformed, 200, "https://www.example.org/dns_empty.json", "bootstrap_malformed/dns_empty.json")
-	load(BootstrapMalformed, 200, "https://www.example.org/dns_syntax_error.json", "bootstrap_malformed/dns_syntax_error.json")
+	load(BootstrapMalformed, http.StatusOK, "https://www.example.org/dns_bad_services.json", "bootstrap_malformed/dns_bad_services.json")
+	load(BootstrapMalformed, http.StatusOK, "https://www.example.org/dns_bad_url.json", "bootstrap_malformed/dns_bad_url.json")
+	load(BootstrapMalformed, http.StatusOK, "https://www.example.org/dns_empty.json", "bootstrap_malformed/dns_empty.json")
+	load(BootstrapMalformed, http.StatusOK, "https://www.example.org/dns_syntax_error.json", "bootstrap_malformed/dns_syntax_error.json")
 
 	// Valid bootstrap files testing more features than yet used by IANA.
-	load(BootstrapComplex, 200, "https://rdap.example.org/dns.json", "bootstrap_complex/dns.json")
+	load(BootstrapComplex, http.StatusOK, "https://rdap.example.org/dns.json", "bootstrap_complex/dns.json")
 
 	// Bootstrap HTTP errors.
-	load(BootstrapHTTPError, 404, "https://data.iana.org/rdap/asn.json", "bootstrap_http_error/404.html")
-	load(BootstrapHTTPError, 404, "https://data.iana.org/rdap/dns.json", "bootstrap_http_error/404.html")
-	load(BootstrapHTTPError, 404, "https://data.iana.org/rdap/ipv4.json", "bootstrap_http_error/404.html")
-	load(BootstrapHTTPError, 404, "https://data.iana.org/rdap/ipv6.json", "bootstrap_http_error/404.html")
+	load(BootstrapHTTPError, http.StatusNotFound, "https://data.iana.org/rdap/asn.json", "bootstrap_http_error/404.html")
+	load(BootstrapHTTPError, http.StatusNotFound, "https://data.iana.org/rdap/dns.json", "bootstrap_http_error/404.html")
+	load(BootstrapHTTPError, http.StatusNotFound, "https://data.iana.org/rdap/ipv4.json", "bootstrap_http_error/404.html")
+	load(BootstrapHTTPError, http.StatusNotFound, "https://data.iana.org/rdap/ipv6.json", "bootstrap_http_error/404.html")
 
 	// RDAP responses.
-	load(Responses, 200, "https://rdap.nic.cz/domain/example.cz", "rdap/rdap.nic.cz/domain-example.cz.json")
-	load(Responses, 404, "https://rdap.nic.cz/domain/non-existent.cz", "misc/empty.html")
-	load(Responses, 200, "https://rdap.nic.cz/domain/wrong-response-type.cz", "rdap/rdap.nic.cz/nameserver-ns2.pipni.cz.json")
-	load(Responses, 200, "https://rdap.nic.cz/domain/malformed.cz", "misc/malformed.json")
-}
+	load(Responses, http.StatusOK, "https://rdap.nic.cz/domain/example.cz", "rdap/rdap.nic.cz/domain-example.cz.json")
+	load(Responses, http.StatusNotFound, "https://rdap.nic.cz/domain/non-existent.cz", "misc/empty.html")
+	load(Responses, http.StatusOK, "https://rdap.nic.cz/domain/wrong-response-type.cz", "rdap/rdap.nic.cz/nameserver-ns2.pipni.cz.json")
+	load(Responses, http.StatusOK, "https://rdap.nic.cz/domain/malformed.cz", "misc/malformed.json")
 
-func load(set TestDataset, status int, url string, filename string) {
-	var body []byte = LoadFile(filename)
-
-	responses[set] = append(responses[set], response{status, url, string(body)})
+	return r
 }
