@@ -350,7 +350,8 @@ func escapePath(text string) string {
 		if !shouldPathEscape(b) {
 			escaped = append(escaped, b)
 		} else {
-			escaped = append(escaped, '%',
+			escaped = append(
+				escaped, '%',
 				"0123456789ABCDEF"[b>>4],
 				"0123456789ABCDEF"[b&0xF],
 			)

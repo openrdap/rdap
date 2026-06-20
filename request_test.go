@@ -116,7 +116,8 @@ func TestNewRawRequest(t *testing.T) {
 
 	actualURL := r.URL()
 	if actualURL.String() != urlString {
-		t.Errorf("Raw query for %s got %s, expected %s\n",
+		t.Errorf(
+			"Raw query for %s got %s, expected %s\n",
 			urlString,
 			actualURL.String(),
 			urlString,
