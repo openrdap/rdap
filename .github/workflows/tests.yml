@@ -17,6 +17,13 @@ jobs:
   tests-unit:
     name: Tests (Unit)
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # 1.25.x is the floor declared in go.mod; 1.26.x is the latest release.
+        # Testing both ensures the declared minimum stays buildable while the
+        # latest toolchain is exercised.
+        go-version: ['1.25.x', '1.26.x']
 
     steps:
       - name: Checkout
@@ -25,7 +32,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: '^1.26.0'
+          go-version: ${{ matrix.go-version }}
 
       - name: Download dependencies
         run: go mod download
