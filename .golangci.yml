@@ -471,6 +471,11 @@ linters:
       # cli.go is the CLI argument-dispatch entrypoint; branchy by nature.
       - path: 'cli\.go'
         linters: [ nestif ]
+      # Printer indent depth is bounded by RDAP object nesting; the uint->int
+      # conversion for strings.Repeat cannot realistically overflow.
+      - path: 'print\.go'
+        text: 'G115'
+        linters: [ gosec ]
       - source: 'TODO'
         linters: [ godot ]
       - text: 'should have a package comment'
