@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -794,6 +795,7 @@ func (p *Printer) printLink(l Link, indent uint) {
 
 // indent returns the indentation prefix for the given nesting level.
 func (p *Printer) indent(indentLevel uint) string {
+	//nolint:gosec // Indent depth is bounded by RDAP object nesting; no overflow risk.
 	return strings.Repeat(string(p.IndentChar), int(indentLevel*p.IndentSize))
 }
 
@@ -851,12 +853,19 @@ func (p *Printer) printUnknowns(d *DecodeData, indentLevel uint) {
 		return
 	}
 
-	for k, v := range d.values {
+	// Iterate in sorted key order so output is deterministic.
+	keys := make([]string, 0, len(d.values))
+	for k := range d.values {
+		keys = append(keys, k)
+	}
+	slices.Sort(keys)
+
+	for _, k := range keys {
 		isKnown := d.isKnown[k]
 		isOverridden := d.overrideKnownValue[k]
 
 		if !isKnown || isOverridden {
-			p.printUnknown(k, v, indentLevel)
+			p.printUnknown(k, d.values[k], indentLevel)
 		}
 	}
 }
@@ -879,8 +888,15 @@ func (p *Printer) printUnknown(key string, value any, indentLevel uint) {
 		p.printHeading(key, indentLevel)
 		indentLevel++
 
-		for key2, value2 := range value {
-			p.printUnknown(key2, value2, indentLevel)
+		// Iterate in sorted key order so output is deterministic.
+		keys := make([]string, 0, len(value))
+		for k := range value {
+			keys = append(keys, k)
+		}
+		slices.Sort(keys)
+
+		for _, key2 := range keys {
+			p.printUnknown(key2, value[key2], indentLevel)
 		}
 	default:
 		p.printValue(key, "[unprintable value]", indentLevel)

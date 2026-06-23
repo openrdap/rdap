@@ -1,0 +1,13 @@
+exit: 0
+--- stdout ---
+Domain Name: example.cz
+Handle: example.cz
+Registrar WHOIS Server: whois.nic.cz
+Creation Date: 2004-08-30T22:55:00+00:00
+Expiration Date: 2019-08-30T12:00:00+00:00
+Domain Status: active
+Name Server: ns2.pipni.cz
+Name Server: ns3.pipni.cz
+Name Server: ns.pipni.cz
+
+--- stderr ---

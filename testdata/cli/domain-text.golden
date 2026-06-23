@@ -1,0 +1,82 @@
+exit: 0
+--- stdout ---
+Domain:
+  Domain Name: example.cz
+  Handle: example.cz
+  Status: active
+  Port43: whois.nic.cz
+  Conformance: rdap_level_0
+  Conformance: fred_version_0
+  Notice:
+    Title: Disclaimer
+    Description: (c) 2015 CZ.NIC, z.s.p.o.Intended use of supplied data and informationData contained in the domain name register, as well as information supplied through public information services of CZ.NIC association, are appointed only for purposes connected with Internet network administration and operation, or for the purpose of legal or other similar proceedings, in process as regards a matter connected particularly with holding and using a concrete domain name.
+  Link: https://rdap.nic.cz/domain/example.cz
+  Event:
+    Action: registration
+    Date: 2004-08-30T22:55:00+00:00
+  Event:
+    Action: expiration
+    Date: 2019-08-30T12:00:00+00:00
+  Event:
+    Action: transfer
+    Date: 2007-01-25T02:05:00+00:00
+  Entity:
+    Handle: SB:EXAMPLE
+    Link: https://rdap.nic.cz/entity/SB:EXAMPLE
+    Role: registrant
+  Entity:
+    Handle: REG-INTERNET-CZ
+    Role: registrar
+  Entity:
+    Handle: EXAMPLE
+    Link: https://rdap.nic.cz/entity/EXAMPLE
+    Role: administrative
+  Nameserver:
+    Nameserver: ns2.pipni.cz
+    Handle: ns2.pipni.cz
+    Link: https://rdap.nic.cz/nameserver/ns2.pipni.cz
+  Nameserver:
+    Nameserver: ns3.pipni.cz
+    Handle: ns3.pipni.cz
+    Link: https://rdap.nic.cz/nameserver/ns3.pipni.cz
+  Nameserver:
+    Nameserver: ns.pipni.cz
+    Handle: ns.pipni.cz
+    Link: https://rdap.nic.cz/nameserver/ns.pipni.cz
+  fred_nsset:
+    handle: NSS:PIPNI:1
+    links:
+      href: https://rdap.nic.cz/fred_nsset/NSS:PIPNI:1
+      rel: self
+      type: application/rdap+json
+      value: https://rdap.nic.cz/fred_nsset/NSS:PIPNI:1
+    nameservers:
+      handle: ns2.pipni.cz
+      ldhName: ns2.pipni.cz
+      links:
+        href: https://rdap.nic.cz/nameserver/ns2.pipni.cz
+        rel: self
+        type: application/rdap+json
+        value: https://rdap.nic.cz/nameserver/ns2.pipni.cz
+      objectClassName: nameserver
+    nameservers:
+      handle: ns3.pipni.cz
+      ldhName: ns3.pipni.cz
+      links:
+        href: https://rdap.nic.cz/nameserver/ns3.pipni.cz
+        rel: self
+        type: application/rdap+json
+        value: https://rdap.nic.cz/nameserver/ns3.pipni.cz
+      objectClassName: nameserver
+    nameservers:
+      handle: ns.pipni.cz
+      ldhName: ns.pipni.cz
+      links:
+        href: https://rdap.nic.cz/nameserver/ns.pipni.cz
+        rel: self
+        type: application/rdap+json
+        value: https://rdap.nic.cz/nameserver/ns.pipni.cz
+      objectClassName: nameserver
+    objectClassName: fred_nsset
+
+--- stderr ---
