@@ -179,3 +179,19 @@ func TestVCardQuickAccessors(t *testing.T) {
 		t.Errorf("Got %v expected %v\n", got, expected)
 	}
 }
+
+// BenchmarkVCardValues guards the flattening cost of VCardProperty.Values,
+// which Tel/Fax now call once per property rather than twice.
+func BenchmarkVCardValues(b *testing.B) {
+	p := &VCardProperty{
+		Name:       "tel",
+		Type:       "uri",
+		Parameters: map[string][]string{"type": {"voice"}},
+		Value:      "tel:+1.5551234567",
+	}
+
+	b.ReportAllocs()
+	for range b.N {
+		_ = p.Values()
+	}
+}

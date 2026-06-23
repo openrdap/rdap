@@ -368,3 +368,20 @@ func runDecodeAndCompareTest(t *testing.T, target any, jsonBlob string, expected
 			spew.Sdump(result))
 	}
 }
+
+// BenchmarkDecodeDomain decodes a realistic nested domain response (entities,
+// nameservers, links). It is the headline benchmark for the chooseFields
+// type-plan cache, which resolves a struct type's decodable fields once instead
+// of on every decode.
+func BenchmarkDecodeDomain(b *testing.B) {
+	blob := test.LoadFile("rdap/rdap.nic.cz/domain-example.cz.json")
+
+	b.ReportAllocs()
+	b.ResetTimer()
+
+	for range b.N {
+		if _, err := NewDecoder(blob).Decode(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
