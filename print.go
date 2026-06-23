@@ -795,7 +795,6 @@ func (p *Printer) printLink(l Link, indent uint) {
 
 // indent returns the indentation prefix for the given nesting level.
 func (p *Printer) indent(indentLevel uint) string {
-	//nolint:gosec // Indent depth is bounded by RDAP object nesting; no overflow risk.
 	return strings.Repeat(string(p.IndentChar), int(indentLevel*p.IndentSize))
 }
 
