@@ -7,6 +7,7 @@ package rdap
 import (
 	"context"
 	"fmt"
+	"maps"
 	"net"
 	"net/url"
 	"strconv"
@@ -262,7 +263,7 @@ func (r *Request) URL() *url.URL {
 		resultURL = new(url.URL)
 		*resultURL = *r.Server
 	} else {
-		tempURL := &*r.Server
+		tempURL := r.Server
 		tempURL.RawQuery = ""
 		tempURL.Fragment = ""
 		tempURLString := tempURL.String()
@@ -274,19 +275,15 @@ func (r *Request) URL() *url.URL {
 		tempURLString += path
 
 		var err error
-		resultURL, err = url.Parse(tempURLString)
 
+		resultURL, err = url.Parse(tempURLString)
 		if err != nil {
 			return nil
 		}
 
 		query := r.Server.Query()
-		for k, v := range r.Params {
-			query[k] = v
-		}
-		for k, v := range values {
-			query[k] = v
-		}
+		maps.Copy(query, r.Params)
+		maps.Copy(query, values)
 		resultURL.RawQuery = query.Encode()
 
 		resultURL.Fragment = r.Server.Fragment
@@ -325,15 +322,36 @@ func (r *Request) WithServer(server *url.URL) *Request {
 }
 
 func escapePath(text string) string {
-	var escaped []byte
+	// Find the first byte that needs escaping. The common case (clean ASCII
+	// domains / IPs) finds none and returns the input unchanged with no
+	// allocation.
 
-	for i := 0; i < len(text); i++ {
+	j := -1
+	for i := range len(text) {
+		if shouldPathEscape(text[i]) {
+			j = i
+			break
+		}
+	}
+
+	if j == -1 {
+		return text
+	}
+
+	// Every remaining byte expands to "%XX" (3 bytes). Sizing for it
+	// guarantees a single allocation with no re-growth; RDAP paths are
+	// short.
+	escaped := make([]byte, 0, j+(len(text)-j)*3)
+	escaped = append(escaped, text[:j]...)
+
+	for i := j; i < len(text); i++ {
 		b := text[i]
 
 		if !shouldPathEscape(b) {
 			escaped = append(escaped, b)
 		} else {
-			escaped = append(escaped, '%',
+			escaped = append(
+				escaped, '%',
 				"0123456789ABCDEF"[b>>4],
 				"0123456789ABCDEF"[b&0xF],
 			)
@@ -369,7 +387,7 @@ func NewHelpRequest() *Request {
 func NewAutnumRequest(asn uint32) *Request {
 	return &Request{
 		Type:  AutnumRequest,
-		Query: fmt.Sprintf("%d", asn),
+		Query: strconv.FormatUint(uint64(asn), 10),
 	}
 }
 
@@ -466,8 +484,7 @@ func NewAutoRequest(queryText string) *Request {
 	}
 
 	// IP network?
-	_, ipNet, err := net.ParseCIDR(queryText)
-	if ipNet != nil {
+	if _, ipNet, err := net.ParseCIDR(queryText); err == nil {
 		return NewIPNetRequest(ipNet)
 	}
 
@@ -490,7 +507,6 @@ func parseAutnum(autnum string) (uint32, error) {
 	autnum = strings.ToUpper(autnum)
 	autnum = strings.TrimPrefix(autnum, "AS")
 	result, err := strconv.ParseUint(autnum, 10, 32)
-
 	if err != nil {
 		return 0, err
 	}

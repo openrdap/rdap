@@ -1,0 +1,5 @@
+exit: 1
+--- stdout ---
+
+--- stderr ---
+# Unknown query type 'bogus'

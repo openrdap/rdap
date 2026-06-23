@@ -19,23 +19,22 @@ func TestMemoryCache(t *testing.T) {
 	var data []byte
 	var err error
 
-	data, err = m.Load("not-in-cache.json")
+	_, err = m.Load("not-in-cache.json")
 
 	if err == nil {
 		t.Fatal("Load of not-in-cache.json unexpected result")
 	}
 
-	var testData []byte = []byte("test")
+	testData := []byte("test")
 
 	err = m.Save("file.json", testData)
-
 	if err != nil {
 		t.Fatal("Save failed")
 	}
 
 	data, err = m.Load("file.json")
 
-	if len(data) == 0 || err != nil || bytes.Compare(data, testData) != 0 {
+	if len(data) == 0 || err != nil || !bytes.Equal(data, testData) {
 		t.Fatal("Load of file.json unexpected result")
 	}
 
@@ -55,5 +54,4 @@ func TestMemoryCache(t *testing.T) {
 	if m.State("file.json") != Expired {
 		t.Fatal("m.State() returned non-Expired for expired file")
 	}
-
 }

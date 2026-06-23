@@ -19,8 +19,8 @@ type MemoryCache struct {
 // NewMemoryCache creates a new MemoryCache.
 func NewMemoryCache() *MemoryCache {
 	return &MemoryCache{
-		cache: make(map[string][]byte),
-		mtime: make(map[string]time.Time),
+		cache:   make(map[string][]byte),
+		mtime:   make(map[string]time.Time),
 		Timeout: time.Hour * 24,
 	}
 }
@@ -51,7 +51,7 @@ func (m *MemoryCache) Load(filename string) ([]byte, error) {
 	data, ok := m.cache[filename]
 
 	if !ok {
-		return nil, fmt.Errorf("File %s not in cache", filename)
+		return nil, fmt.Errorf("file %s not in cache", filename)
 	}
 
 	result := make([]byte, len(data))
@@ -77,5 +77,4 @@ func (m *MemoryCache) State(filename string) FileState {
 	}
 
 	return Good
-
 }

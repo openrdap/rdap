@@ -4,6 +4,8 @@
 
 package rdap
 
+import "strings"
+
 // DecodeData stores a snapshot of all fields in an RDAP object (in raw
 // interface{} form), at the time of decoding. This allows the values of unknown
 // fields to be retrieved.
@@ -18,22 +20,23 @@ package rdap
 // not synchronised in any way.
 type DecodeData struct {
 	isKnown            map[string]bool
-	values             map[string]interface{}
+	values             map[string]any
 	overrideKnownValue map[string]bool
 	notes              map[string][]string
 }
 
 // TODO (temporary, using for spew output)
-func (r DecodeData) String() string {
-	result := "["
+func (r *DecodeData) String() string {
+	var result strings.Builder
+	result.WriteString("[")
 	for name, notes := range r.notes {
 		for _, note := range notes {
-			result += "\n !!!" + name + ": " + note
+			result.WriteString("\n !!!" + name + ": " + note)
 		}
 	}
-	result += "\n"
+	result.WriteString("\n")
 
-	return result
+	return result.String()
 }
 
 // Notes returns a list of minor warnings/errors encountered while decoding the
@@ -43,7 +46,7 @@ func (r DecodeData) String() string {
 // "Port43". For a full list of decoded field names, use Fields().
 //
 // The warnings/errors returned look like: "invalid JSON type, expecting float".
-func (r DecodeData) Notes(name string) []string {
+func (r *DecodeData) Notes(name string) []string {
 	if notes, ok := r.notes[name]; ok {
 		return notes
 	}
@@ -51,16 +54,16 @@ func (r DecodeData) Notes(name string) []string {
 	return nil
 }
 
-//func (r DecodeData) OverrideValue(key string, value interface{}) {
+// func (r DecodeData) OverrideValue(key string, value interface{}) {
 //	r.values[key] = value
 //	r.overrideKnownValue[key] = true
-//}
+// }
 
 // Value returns the value of the field |name| as an interface{}.
 //
 // |name| is the RDAP field name (not the Go field name), so "port43", not
 // "Port43". For a full list of decoded field names, use Fields().
-func (r DecodeData) Value(name string) interface{} {
+func (r *DecodeData) Value(name string) any {
 	if v, ok := r.values[name]; ok {
 		return v
 	}
@@ -74,7 +77,7 @@ func (r DecodeData) Value(name string) interface{} {
 //
 // The names returned are the RDAP field names (not the Go field names), so
 // "port43", not "Port43".
-func (r DecodeData) Fields() []string {
+func (r *DecodeData) Fields() []string {
 	var fields []string
 
 	for f := range r.values {
@@ -85,7 +88,7 @@ func (r DecodeData) Fields() []string {
 }
 
 // UnknownFields returns a list of unknown RDAP fields decoded.
-func (r DecodeData) UnknownFields() []string {
+func (r *DecodeData) UnknownFields() []string {
 	var fields []string
 
 	for f := range r.values {
@@ -95,11 +98,4 @@ func (r DecodeData) UnknownFields() []string {
 	}
 
 	return fields
-}
-
-func (r *DecodeData) init() {
-	r.isKnown = map[string]bool{}
-	r.values = map[string]interface{}{}
-	r.overrideKnownValue = map[string]bool{}
-	r.notes = map[string][]string{}
 }

@@ -7,6 +7,7 @@ package rdap
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -70,7 +71,7 @@ type VCardProperty struct {
 	//   * []interface{}. Can contain a mixture of these five types.
 	//
 	// To retrieve the property value flattened into a []string, use Values().
-	Value interface{}
+	Value any
 }
 
 // VCardOptions specifies options for the VCard decoder routine.
@@ -88,14 +89,14 @@ type VCardOptions struct {
 // The simplified []string representation is created by flattening the
 // (potentially nested) VCardProperty value, and converting all values to strings.
 func (p *VCardProperty) Values() []string {
-	strings := make([]string, 0, 1)
+	strs := make([]string, 0, 1)
 
-	p.appendValueStrings(p.Value, &strings)
+	p.appendValueStrings(p.Value, &strs)
 
-	return strings
+	return strs
 }
 
-func (p *VCardProperty) appendValueStrings(v interface{}, strings *[]string) {
+func (p *VCardProperty) appendValueStrings(v any, strings *[]string) {
 	switch v := v.(type) {
 	case nil:
 		*strings = append(*strings, "")
@@ -105,14 +106,13 @@ func (p *VCardProperty) appendValueStrings(v interface{}, strings *[]string) {
 		*strings = append(*strings, strconv.FormatFloat(v, 'f', -1, 64))
 	case string:
 		*strings = append(*strings, v)
-	case []interface{}:
+	case []any:
 		for _, v2 := range v {
 			p.appendValueStrings(v2, strings)
 		}
 	default:
 		panic("Unknown type")
 	}
-
 }
 
 // String returns the vCard as a multiline human readable string. For example:
@@ -157,9 +157,8 @@ func NewVCard(jsonBlob []byte) (*VCard, error) {
 //
 //	vcard, err := NewVCardWithOptions(jsonBlob, VCardOptions{IgnoreInvalidProperties: true})
 func NewVCardWithOptions(jsonBlob []byte, options VCardOptions) (*VCard, error) {
-	var top []interface{}
+	var top []any
 	err := json.Unmarshal(jsonBlob, &top)
-
 	if err != nil {
 		return nil, err
 	}
@@ -170,18 +169,18 @@ func NewVCardWithOptions(jsonBlob []byte, options VCardOptions) (*VCard, error) 
 	return vcard, err
 }
 
-func newVCardImpl(src interface{}, options VCardOptions) (*VCard, error) {
-	top, ok := src.([]interface{})
+func newVCardImpl(src any, options VCardOptions) (*VCard, error) {
+	top, ok := src.([]any)
 
 	if !ok || len(top) != 2 {
 		return nil, vCardError("structure is not a jCard (expected len=2 top level array)")
-	} else if s, ok := top[0].(string); !(ok && s == "vcard") {
+	} else if s, ok := top[0].(string); !ok || s != "vcard" {
 		return nil, vCardError("structure is not a jCard (missing 'vcard')")
 	}
 
-	var properties []interface{}
+	var properties []any
 
-	properties, ok = top[1].([]interface{})
+	properties, ok = top[1].([]any)
 	if !ok {
 		return nil, vCardError("structure is not a jCard (bad properties array)")
 	}
@@ -190,10 +189,9 @@ func newVCardImpl(src interface{}, options VCardOptions) (*VCard, error) {
 		Properties: make([]*VCardProperty, 0, len(properties)),
 	}
 
-	var p interface{}
-	for _, p = range top[1].([]interface{}) {
+	var p any
+	for _, p = range top[1].([]any) {
 		property, err := decodeVCardProperty(p)
-
 		if err != nil {
 			if options.IgnoreInvalidProperties {
 				continue
@@ -208,11 +206,8 @@ func newVCardImpl(src interface{}, options VCardOptions) (*VCard, error) {
 	return v, nil
 }
 
-func decodeVCardProperty(p interface{}) (*VCardProperty, error) {
-	var a []interface{}
-	var ok bool
-	a, ok = p.([]interface{})
-
+func decodeVCardProperty(p any) (*VCardProperty, error) {
+	a, ok := p.([]any)
 	if !ok {
 		return nil, vCardError("jCard property was not an array")
 	} else if len(a) < 4 {
@@ -220,26 +215,21 @@ func decodeVCardProperty(p interface{}) (*VCardProperty, error) {
 	}
 
 	name, ok := a[0].(string)
-
 	if !ok {
 		return nil, vCardError("jCard property name invalid")
 	}
 
-	var parameters map[string][]string
-	var err error
-	parameters, err = readParameters(a[1])
-
+	parameters, err := readParameters(a[1])
 	if err != nil {
 		return nil, err
 	}
 
 	propertyType, ok := a[2].(string)
-
 	if !ok {
 		return nil, vCardError("jCard property type invalid")
 	}
 
-	var value interface{}
+	var value any
 	if len(a) == 4 {
 		value, err = readValue(a[3], 0)
 	} else {
@@ -290,17 +280,17 @@ func vCardError(e string) error {
 	return fmt.Errorf("jCard error: %s", e)
 }
 
-func readParameters(p interface{}) (map[string][]string, error) {
+func readParameters(p any) (map[string][]string, error) {
 	params := map[string][]string{}
 
-	if _, ok := p.(map[string]interface{}); !ok {
+	if _, ok := p.(map[string]any); !ok {
 		return nil, vCardError("jCard parameters invalid")
 	}
 
-	for k, v := range p.(map[string]interface{}) {
+	for k, v := range p.(map[string]any) {
 		if s, ok := v.(string); ok {
 			params[k] = append(params[k], s)
-		} else if arr, ok := v.([]interface{}); ok {
+		} else if arr, ok := v.([]any); ok {
 			for _, value := range arr {
 				if s, ok := value.(string); ok {
 					params[k] = append(params[k], s)
@@ -312,26 +302,26 @@ func readParameters(p interface{}) (map[string][]string, error) {
 	return params, nil
 }
 
-func readValue(value interface{}, depth int) (interface{}, error) {
-	switch value := value.(type) {
+func readValue(value any, depth int) (any, error) {
+	switch val := value.(type) {
 	case nil:
+		//nolint:nilnil // JSON null is a valid jCard value, not an error.
 		return nil, nil
 	case string:
-		return value, nil
+		return val, nil
 	case bool:
-		return value, nil
+		return val, nil
 	case float64:
-		return value, nil
-	case []interface{}:
+		return val, nil
+	case []any:
 		if depth == 3 {
 			return "", vCardError("Structured value too deep")
 		}
 
-		result := make([]interface{}, 0, len(value))
+		result := make([]any, 0, len(val))
 
-		for _, v2 := range value {
+		for _, v2 := range val {
 			v3, err := readValue(v2, depth+1)
-
 			if err != nil {
 				return nil, err
 			}
@@ -367,7 +357,7 @@ func (v *VCard) POBox() string {
 	return v.getFirstAddressField(0)
 }
 
-// ExtendedAddress returns the "extended address", e.g. an apartment
+// ExtendedAddress returns the "extended address", e.g., an apartment
 // or suite number.
 //
 // Returns empty string if no address is present.
@@ -422,18 +412,17 @@ func (v *VCard) Tel() string {
 		isVoice := false
 
 		if types, ok := p.Parameters["type"]; ok {
-			for _, t := range types {
-				if t == "voice" {
-					isVoice = true
-					break
-				}
+			if slices.Contains(types, "voice") {
+				isVoice = true
 			}
 		} else {
 			isVoice = true
 		}
 
-		if isVoice && len(p.Values()) > 0 {
-			return (p.Values())[0]
+		if isVoice {
+			if values := p.Values(); len(values) > 0 {
+				return values[0]
+			}
 		}
 	}
 
@@ -442,17 +431,15 @@ func (v *VCard) Tel() string {
 
 // Fax returns the VCard's first fax number.
 //
-// Returns empty string if the VCard contains no fax number.
+// Returns an empty string if the VCard contains no fax number.
 func (v *VCard) Fax() string {
 	properties := v.Get("tel")
 
 	for _, p := range properties {
 		if types, ok := p.Parameters["type"]; ok {
-			for _, t := range types {
-				if t == "fax" {
-					if len(p.Values()) > 0 {
-						return (p.Values())[0]
-					}
+			if slices.Contains(types, "fax") {
+				if values := p.Values(); len(values) > 0 {
+					return values[0]
 				}
 			}
 		}
@@ -470,7 +457,7 @@ func (v *VCard) Email() string {
 
 // Org returns the VCard's org.
 //
-// Returns empty string if the VCard contains no  organization.
+// Returns empty string if the VCard contains no organization.
 func (v *VCard) Org() string {
 	return v.getFirstPropertySingleString("org")
 }

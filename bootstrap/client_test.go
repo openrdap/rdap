@@ -17,7 +17,6 @@ func TestDownload(t *testing.T) {
 	c := &Client{}
 
 	err := c.Download(DNS)
-
 	if err != nil {
 		t.Fatalf("Download() error: %s", err)
 	}
@@ -103,7 +102,6 @@ func TestLookups(t *testing.T) {
 				continue
 			}
 		}
-
 	}
 }
 

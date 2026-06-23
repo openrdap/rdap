@@ -1,0 +1,5 @@
+exit: 0
+--- stdout ---
+OpenRDAP v0.9.1
+
+--- stderr ---

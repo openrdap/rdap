@@ -1,0 +1,32 @@
+name: Go Build
+on:
+  pull_request:
+    paths:
+      - "**/*.go"
+      - "go.mod"
+      - "go.sum"
+
+concurrency:
+  cancel-in-progress: true
+  group: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Build
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.26.0'
+      - run: |
+          cd cmd/rdap
+          go build -o rdap

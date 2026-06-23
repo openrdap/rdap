@@ -14,9 +14,11 @@ import (
 
 var sandboxPath string
 
+// LoadFile reads the named sandboxed file and returns its contents. It returns
+// an error if the file is not one of the recognised sandbox files.
 func LoadFile(filename string) ([]byte, error) {
 	if !IsFileInSandbox(filename) {
-		return nil, errors.New("File not found in sandbox")
+		return nil, errors.New("file not found in sandbox")
 	}
 
 	var body []byte
@@ -26,7 +28,6 @@ func LoadFile(filename string) ([]byte, error) {
 	}
 
 	body, err := os.ReadFile(path.Join(sandboxPath, filename))
-
 	if err != nil {
 		log.Panic(err)
 	}
@@ -45,6 +46,8 @@ func findPackagePath() string {
 	return dir
 }
 
+// IsFileInSandbox reports whether filename is one of the recognised sandbox
+// files.
 func IsFileInSandbox(filename string) bool {
 	switch filename {
 	case "DigiCert_RDAP_Pilot_Client_Certificate.p12",

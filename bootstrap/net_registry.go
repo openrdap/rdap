@@ -31,14 +31,17 @@ type netEntry struct {
 
 type netEntrySorter []netEntry
 
+// Len reports the number of network entries, implementing sort.Interface.
 func (a netEntrySorter) Len() int {
 	return len(a)
 }
 
+// Swap exchanges the entries at i and j, implementing sort.Interface.
 func (a netEntrySorter) Swap(i int, j int) {
 	a[i], a[j] = a[j], a[i]
 }
 
+// Less orders network entries by their IP address, implementing sort.Interface.
 func (a netEntrySorter) Less(i int, j int) bool {
 	return bytes.Compare(a[i].Net.IP, a[j].Net.IP) <= 0
 }
@@ -48,14 +51,13 @@ func (a netEntrySorter) Less(i int, j int) bool {
 // The document formats are specified in https://tools.ietf.org/html/rfc7484#section-5.1 and https://tools.ietf.org/html/rfc7484#section-5.2.
 func NewNetRegistry(json []byte, ipVersion int) (*NetRegistry, error) {
 	if ipVersion != 4 && ipVersion != 6 {
-		return nil, fmt.Errorf("Unknown IP version %d", ipVersion)
+		return nil, fmt.Errorf("unknown IP version %d", ipVersion)
 	}
 
 	var registry *File
 	registry, err := NewFile(json)
-
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing net registry file: %s", err)
+		return nil, fmt.Errorf("parsing net registry file: %w", err)
 	}
 
 	n := &NetRegistry{
@@ -98,7 +100,6 @@ func (n *NetRegistry) Lookup(question *Question) (*Answer, error) {
 	}
 
 	_, lookupNet, err := net.ParseCIDR(input)
-
 	if err != nil {
 		return nil, err
 	}
@@ -142,18 +143,18 @@ func (n *NetRegistry) Lookup(question *Question) (*Answer, error) {
 }
 
 func numIPBytesForVersion(ipVersion int) int {
-	len := 0
+	var length int
 
 	switch ipVersion {
 	case 4:
-		len = net.IPv4len
+		length = net.IPv4len
 	case 6:
-		len = net.IPv6len
+		length = net.IPv6len
 	default:
 		panic("Unknown IP version")
 	}
 
-	return len
+	return length
 }
 
 // File returns a struct describing the registry's JSON document.

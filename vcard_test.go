@@ -74,7 +74,7 @@ func TestVCardExample(t *testing.T) {
 		Name:       "n",
 		Parameters: make(map[string][]string),
 		Type:       "text",
-		Value:      []interface{}{"Perreault", "Simon", "", "", []interface{}{"ing. jr", "M.Sc."}},
+		Value:      []any{"Perreault", "Simon", "", "", []any{"ing. jr", "M.Sc."}},
 	}
 
 	expectedFlatN := []string{
@@ -96,7 +96,7 @@ func TestVCardExample(t *testing.T) {
 
 	expectedTel0 := &VCardProperty{
 		Name:       "tel",
-		Parameters: map[string][]string{"type": []string{"work", "voice"}, "pref": []string{"1"}},
+		Parameters: map[string][]string{"type": {"work", "voice"}, "pref": {"1"}},
 		Type:       "uri",
 		Value:      "tel:+1-418-656-9254;ext=102",
 	}
@@ -116,7 +116,7 @@ func TestVCardMixedDatatypes(t *testing.T) {
 		Name:       "mixed",
 		Parameters: make(map[string][]string),
 		Type:       "text",
-		Value:      []interface{}{"abc", true, float64(42), nil, []interface{}{"def", false, float64(43)}},
+		Value:      []any{"abc", true, float64(42), nil, []any{"def", false, float64(43)}},
 	}
 
 	expectedFlatMixed := []string{
@@ -177,5 +177,21 @@ func TestVCardQuickAccessors(t *testing.T) {
 
 	if !reflect.DeepEqual(got, expected) {
 		t.Errorf("Got %v expected %v\n", got, expected)
+	}
+}
+
+// BenchmarkVCardValues guards the flattening cost of VCardProperty.Values,
+// which Tel/Fax now call once per property rather than twice.
+func BenchmarkVCardValues(b *testing.B) {
+	p := &VCardProperty{
+		Name:       "tel",
+		Type:       "uri",
+		Parameters: map[string][]string{"type": {"voice"}},
+		Value:      "tel:+1.5551234567",
+	}
+
+	b.ReportAllocs()
+	for range b.N {
+		_ = p.Values()
 	}
 }

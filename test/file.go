@@ -13,6 +13,8 @@ import (
 
 var testDataPath string
 
+// LoadFile reads the named file from the test data directory and returns its
+// contents, panicking on error.
 func LoadFile(filename string) []byte {
 	var body []byte
 
@@ -21,7 +23,6 @@ func LoadFile(filename string) []byte {
 	}
 
 	body, err := os.ReadFile(path.Join(testDataPath, filename))
-
 	if err != nil {
 		log.Panic(err)
 	}

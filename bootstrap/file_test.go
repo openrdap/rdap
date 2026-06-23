@@ -14,11 +14,10 @@ func TestParseValid(t *testing.T) {
 	test.Start(test.Bootstrap)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://data.iana.org/rdap/dns.json")
+	bytes := test.Get("https://data.iana.org/rdap/dns.json")
 
 	var r *File
 	r, err := NewFile(bytes)
-
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -32,7 +31,7 @@ func TestParseEmpty(t *testing.T) {
 	test.Start(test.BootstrapMalformed)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://www.example.org/dns_empty.json")
+	bytes := test.Get("https://www.example.org/dns_empty.json")
 
 	_, err := NewFile(bytes)
 
@@ -45,7 +44,7 @@ func TestParseSyntaxError(t *testing.T) {
 	test.Start(test.BootstrapMalformed)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://www.example.org/dns_syntax_error.json")
+	bytes := test.Get("https://www.example.org/dns_syntax_error.json")
 
 	_, err := NewFile(bytes)
 
@@ -58,7 +57,7 @@ func TestParseBadServices(t *testing.T) {
 	test.Start(test.BootstrapMalformed)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://www.example.org/dns_bad_services.json")
+	bytes := test.Get("https://www.example.org/dns_bad_services.json")
 
 	_, err := NewFile(bytes)
 
@@ -71,17 +70,13 @@ func TestParseBadURL(t *testing.T) {
 	test.Start(test.BootstrapMalformed)
 	defer test.Finish()
 
-	var bytes []byte = test.Get("https://www.example.org/dns_bad_url.json")
+	bytes := test.Get("https://www.example.org/dns_bad_url.json")
 
 	var r *File
+
 	r, err := NewFile(bytes)
-
 	if err != nil {
-		t.Fatal(err)
-	}
-
-	if err != nil {
-		t.Fatal("Unexpected error parsing file with bad URL")
+		t.Fatal("Unexpected error parsing file with bad URL: ", err)
 	}
 
 	if len(r.Entries) != 3 {

@@ -5,6 +5,7 @@
 package rdap
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 )
@@ -28,12 +29,14 @@ type ClientError struct {
 	Text string
 }
 
+// Error returns the client error's text, implementing the error interface.
 func (c ClientError) Error() string {
 	return c.Text
 }
 
 func isClientError(t ClientErrorType, err error) bool {
-	if ce, ok := err.(*ClientError); ok {
+	ce := &ClientError{}
+	if errors.As(err, &ce) {
 		if ce.Type == t {
 			return true
 		}

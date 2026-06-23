@@ -26,9 +26,8 @@ type ServiceProviderRegistry struct {
 func NewServiceProviderRegistry(json []byte) (*ServiceProviderRegistry, error) {
 	var r *File
 	r, err := NewFile(json)
-
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing Service Provider bootstrap: %s", err)
+		return nil, fmt.Errorf("parsing Service Provider bootstrap: %w", err)
 	}
 
 	return &ServiceProviderRegistry{
