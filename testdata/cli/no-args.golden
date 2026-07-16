@@ -4,7 +4,7 @@ exit: 1
 --- stderr ---
 # Error: Query object required, e.g. rdap example.cz
 
-OpenRDAP v0.9.1
+OpenRDAP vX.Y.Z
 (www.openrdap.org)
 
 Usage: rdap [OPTIONS] DOMAIN|IP|ASN|ENTITY|NAMESERVER|RDAP-URL

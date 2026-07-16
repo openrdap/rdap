@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -26,7 +27,13 @@ import (
 )
 
 var (
-	version   = "OpenRDAP v0.9.1"
+	// releaseVersion is injected into released binaries at build time via
+	// -ldflags "-X github.com/openrdap/rdap.releaseVersion=<tag>". It is empty
+	// for plain `go build` / `go install`, where the version falls back to the
+	// module build info instead.
+	releaseVersion string
+
+	version   = versionString()
 	usageText = version + `
 (www.openrdap.org)
 
@@ -98,6 +105,25 @@ or:
 const (
 	experimentalBootstrapURL = "https://test.rdap.net/rdap"
 )
+
+// versionString resolves the version to display. Released binaries carry the
+// tag injected via ldflags (releaseVersion); a `go install ...@vX.Y.Z` build
+// reports its module version from the build info; everything else is "(dev)".
+func versionString() string {
+	v := releaseVersion
+
+	if v == "" {
+		if info, ok := debug.ReadBuildInfo(); ok && info.Main.Version != "" && info.Main.Version != "(devel)" {
+			v = info.Main.Version
+		}
+	}
+
+	if v == "" {
+		v = "(dev)"
+	}
+
+	return "OpenRDAP " + v
+}
 
 // CLIOptions specifies options for the command line client.
 type CLIOptions struct {
