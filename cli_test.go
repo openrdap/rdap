@@ -12,6 +12,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/openrdap/rdap/test"
@@ -69,6 +70,10 @@ func TestRunCLIGolden(t *testing.T) {
 
 			got := fmt.Sprintf("exit: %d\n--- stdout ---\n%s\n--- stderr ---\n%s",
 				code, stdout.String(), stderr.String())
+
+			// version is derived from build info at runtime, so normalize it to
+			// keep the golden files deterministic across build environments.
+			got = strings.ReplaceAll(got, version, "OpenRDAP vX.Y.Z")
 
 			assertGolden(t, tc.name, got)
 		})

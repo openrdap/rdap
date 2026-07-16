@@ -1,0 +1,49 @@
+name: Release
+on:
+  release:
+    types: [ released ]
+
+concurrency:
+  cancel-in-progress: false
+  group: ${{ github.workflow }}-${{ github.event.release.tag_name }}
+
+permissions:
+  contents: read
+
+jobs:
+  binary:
+    name: Build and Release Binaries
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Go Environment
+        uses: actions/setup-go@v5
+        with:
+          go-version: '^1.26.0'
+          # Release build off the deploy path; skip the module cache so a
+          # poisoned cache can't corrupt released binaries.
+          cache: false
+
+      - name: Build Binaries
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mkdir -p builds/compressed
+          go install github.com/mitchellh/gox@latest
+          cd cmd/rdap
+          gox --output "../../builds/rdap-{{.OS}}-{{.Arch}}" -ldflags "-s -w -X github.com/openrdap/rdap.releaseVersion=${TAG}" -osarch 'darwin/amd64 darwin/arm64 linux/386 linux/amd64 linux/arm linux/arm64 freebsd/amd64 freebsd/arm64 windows/386 windows/amd64 windows/arm64'
+          cd ../../builds
+          find . -maxdepth 1 -type f -execdir zip 'compressed/{}.zip' '{}' \;
+
+      - name: Upload Release Assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: builds/compressed/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
