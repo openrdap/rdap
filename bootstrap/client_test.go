@@ -121,9 +121,15 @@ func TestLookupUsesPrePopulatedCache(t *testing.T) {
 
 	c := &Client{Cache: memCache}
 
+	downloads := httpmock.GetTotalCallCount()
+
 	answer, err := c.Lookup(&Question{RegistryType: DNS, Query: "example.br"})
 	if err != nil {
 		t.Fatalf("Lookup() error: %s", err)
+	}
+
+	if got := httpmock.GetTotalCallCount() - downloads; got != 0 {
+		t.Errorf("pre-populated cache triggered %d downloads, want 0", got)
 	}
 
 	if len(answer.URLs) != 1 || answer.URLs[0].String() != "https://rdap.registro.br/" {
@@ -154,9 +160,15 @@ func TestLookupFallsBackToExpiredCache(t *testing.T) {
 
 	c := &Client{Cache: memCache}
 
+	downloads := httpmock.GetTotalCallCount()
+
 	answer, err := c.Lookup(&Question{RegistryType: DNS, Query: "example.br"})
 	if err != nil {
 		t.Fatalf("Lookup() error: %s", err)
+	}
+
+	if got := httpmock.GetTotalCallCount() - downloads; got != 1 {
+		t.Errorf("expired cache triggered %d refresh attempts, want 1", got)
 	}
 
 	if len(answer.URLs) != 1 || answer.URLs[0].String() != "https://rdap.registro.br/" {
