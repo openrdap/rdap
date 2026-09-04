@@ -20,10 +20,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 1.25.x is the floor declared in go.mod; 1.26.x is the latest release.
-        # Testing both ensures the declared minimum stays buildable while the
-        # latest toolchain is exercised.
-        go-version: ['1.25.x', '1.26.x']
+        # 1.26.x is both the floor declared in go.mod and the latest release.
+        # Add older versions here if go.mod ever lowers its floor.
+        go-version: ['1.26.x']
 
     steps:
       - name: Checkout
