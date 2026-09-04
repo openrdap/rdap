@@ -81,6 +81,19 @@
 //
 //	dsr2 := b.DNS()  // Loads dns.json from disk cache.
 //
+// You can pre-populate the cache with your own copy of a Service Registry file
+// (e.g. one embedded with //go:embed), to avoid downloading it:
+//
+//	c := cache.NewMemoryCache()
+//	c.Save(bootstrap.DNS.Filename(), embeddedDNSJSON)
+//
+//	b := &bootstrap.Client{Cache: c}  // Lookup() uses the cached file.
+//
+// The file is still refreshed once it expires (see SetTimeout), falling back to
+// the cached copy if the download fails. Note this only works with the default
+// BaseURL: files cached for a custom bootstrap service are stored under a
+// different, unexported filename.
+//
 // This package also implements the experimental Service Provider registry. Due
 // to the experimental nature, no Service Registry file exists on data.iana.org
 // yet, additionally the filename isn't known. The current filename used is
@@ -250,8 +263,10 @@ func (c *Client) download(ctx context.Context, registry RegistryType) ([]byte, R
 	return json, s, nil
 }
 
+// freshenFromCache attempts to refresh the specified registry from the cache
+// if it is outdated or missing in memory.
 func (c *Client) freshenFromCache(registry RegistryType) {
-	if c.Cache.State(c.filenameFor(registry)) == cache.ShouldReload {
+	if c.shouldLoadFromCache(registry, c.Cache.State(c.filenameFor(registry))) {
 		// Best-effort refresh; on failure the existing in-memory registry is kept.
 		_ = c.reloadFromCache(registry)
 	}
@@ -272,6 +287,13 @@ func (c *Client) reloadFromCache(registry RegistryType) error {
 	c.registries[registry] = s
 
 	return nil
+}
+
+// shouldLoadFromCache reports whether the cached registry file should be parsed
+// into memory: either the cache holds a newer copy, or nothing is in memory yet
+// and the cache holds an unexpired one (e.g., a caller pre-populated the cache).
+func (c *Client) shouldLoadFromCache(registry RegistryType, state cache.FileState) bool {
+	return state == cache.ShouldReload || (state == cache.Good && c.registries[registry] == nil)
 }
 
 func newRegistry(registry RegistryType, json []byte) (Registry, error) {
@@ -312,8 +334,10 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 	state := c.Cache.State(c.filenameFor(registry))
 	c.Verbose(fmt.Sprintf("  bootstrap: Cache state: %s: %s", c.filenameFor(registry), state))
 
-	var forceDownload bool
-	if state == cache.ShouldReload {
+	// An expired file is refreshed even if it's already parsed into memory.
+	forceDownload := state == cache.Expired
+
+	if c.shouldLoadFromCache(registry, state) {
 		if err := c.reloadFromCache(registry); err != nil {
 			forceDownload = true
 
@@ -324,9 +348,16 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 	if c.registries[registry] == nil || forceDownload {
 		c.Verbose(fmt.Sprintf("  bootstrap: Downloading %s", registry.Filename()))
 
-		err := c.DownloadWithContext(question.Context(), registry)
-		if err != nil {
-			return nil, err
+		if err := c.DownloadWithContext(question.Context(), registry); err != nil {
+			// Service Registry files change rarely, so an expired copy still
+			// answers most queries. Prefer one to failing the lookup.
+			if c.registries[registry] == nil {
+				if cacheErr := c.reloadFromCache(registry); cacheErr != nil {
+					return nil, err
+				}
+			}
+
+			c.Verbose(fmt.Sprintf("  bootstrap: Download failed (%s), using expired Service Registry file", err))
 		}
 	} else {
 		c.Verbose("  bootstrap: Using cached Service Registry file")
