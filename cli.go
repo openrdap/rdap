@@ -491,6 +491,10 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	transport := &http.Transport{
 		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: tlsConfig,
+		// A custom TLS config disables Go's automatic HTTP/2 attempt unless
+		// this is explicitly enabled. Some RDAP servers, including TWNIC,
+		// reject HTTP/1.1 with 426 Upgrade Required.
+		ForceAttemptHTTP2: true,
 	}
 
 	// Setup http.RoundTripper for http clients
