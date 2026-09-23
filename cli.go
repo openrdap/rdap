@@ -488,14 +488,15 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 	}
 
 	// Custom HTTP client. Used to disable TLS certificate verification.
-	transport := &http.Transport{
-		Proxy:           http.ProxyFromEnvironment,
-		TLSClientConfig: tlsConfig,
-		// A custom TLS config disables Go's automatic HTTP/2 attempt unless
-		// this is explicitly enabled. Some RDAP servers, including TWNIC,
-		// reject HTTP/1.1 with 426 Upgrade Required.
-		ForceAttemptHTTP2: true,
+	// Clone keeps the defaults (proxy, timeouts, HTTP/2) without mutating the
+	// shared global. HTTP/2 matters: some servers, including TWNIC, reject
+	// HTTP/1.1 with 426 Upgrade Required.
+	transport := &http.Transport{Proxy: http.ProxyFromEnvironment, ForceAttemptHTTP2: true}
+	// Embedders may have replaced the global with a non-*http.Transport.
+	if t, ok := http.DefaultTransport.(*http.Transport); ok {
+		transport = t.Clone()
 	}
+	transport.TLSClientConfig = tlsConfig
 
 	// Setup http.RoundTripper for http clients
 	bs.HTTP = &http.Client{
