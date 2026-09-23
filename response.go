@@ -130,8 +130,10 @@ func (r *Response) ToWhoisStyleResponse() *WhoisStyleResponse {
 			} else {
 				w.add("DNSSEC", "unsigned")
 			}
-		case len(s.DS) > 0 || len(s.Keys) > 0:
-			// Some servers omit delegationSigned but still publish DS or key data.
+		case len(s.DS) > 0:
+			// Some servers omit delegationSigned but still publish DS records.
+			// keyData is deliberately ignored: it is child DNSKEY data and does
+			// not prove the parent has published DS records.
 			w.add("DNSSEC", "signedDelegation")
 		}
 	}

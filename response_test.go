@@ -19,7 +19,7 @@ func TestWhoisStyleDNSSEC(t *testing.T) {
 		{"unsigned", &SecureDNS{DelegationSigned: &no}, []string{"unsigned"}},
 		{"unsigned wins over DS", &SecureDNS{DelegationSigned: &no, DS: []DSData{{}}}, []string{"unsigned"}},
 		{"DS without delegationSigned", &SecureDNS{DS: []DSData{{}}}, []string{"signedDelegation"}},
-		{"keyData without delegationSigned", &SecureDNS{Keys: []KeyData{{}}}, []string{"signedDelegation"}},
+		{"keyData without delegationSigned", &SecureDNS{Keys: []KeyData{{}}}, nil},
 		{"empty secureDNS", &SecureDNS{}, nil},
 	}
 
