@@ -39,6 +39,47 @@ func fixtureServer(t *testing.T) *httptest.Server {
 	return srv
 }
 
+func http2FixtureServer(t *testing.T) *httptest.Server {
+	t.Helper()
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/domain/example.cz", func(w http.ResponseWriter, r *http.Request) {
+		if r.ProtoMajor != 2 {
+			w.WriteHeader(http.StatusUpgradeRequired)
+			return
+		}
+
+		w.Header().Set("Content-Type", "application/rdap+json")
+		_, _ = w.Write(test.LoadFile("rdap/rdap.nic.cz/domain-example.cz.json"))
+	})
+
+	srv := httptest.NewUnstartedServer(mux)
+	srv.EnableHTTP2 = true
+	srv.StartTLS()
+	t.Cleanup(srv.Close)
+
+	return srv
+}
+
+func TestRunCLIUsesHTTP2WhenTLSConfigIsCustomised(t *testing.T) {
+	srv := http2FixtureServer(t)
+
+	var stdout, stderr bytes.Buffer
+	code := RunCLI([]string{
+		"--insecure",
+		"--cache-dir", "",
+		"--server", srv.URL,
+		"example.cz",
+	}, &stdout, &stderr, CLIOptions{})
+
+	if code != 0 {
+		t.Fatalf("RunCLI() exit code = %d, want 0; stderr = %s", code, stderr.String())
+	}
+	if !strings.Contains(stdout.String(), "Domain Name: example.cz") {
+		t.Errorf("RunCLI() output does not contain the decoded domain: %s", stdout.String())
+	}
+}
+
 // TestRunCLIGolden drives RunCLI end-to-end for a range of commands and output
 // modes, comparing exit code, stdout, and stderr against committed golden files.
 // Network-backed cases point --server at an in-process fixture server and use an
