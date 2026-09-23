@@ -121,6 +121,23 @@ func (r *Response) ToWhoisStyleResponse() *WhoisStyleResponse {
 		w.add("Name Server", n.LDHName)
 	}
 
+	// "DNSSEC"
+	if s := d.SecureDNS; s != nil {
+		switch {
+		case s.DelegationSigned != nil:
+			if *s.DelegationSigned {
+				w.add("DNSSEC", "signedDelegation")
+			} else {
+				w.add("DNSSEC", "unsigned")
+			}
+		case len(s.DS) > 0:
+			// Some servers omit delegationSigned but still publish DS records.
+			// keyData is deliberately ignored: it is child DNSKEY data and does
+			// not prove the parent has published DS records.
+			w.add("DNSSEC", "signedDelegation")
+		}
+	}
+
 	return w
 }
 
