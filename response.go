@@ -111,6 +111,15 @@ func (r *Response) ToWhoisStyleResponse() *WhoisStyleResponse {
 		w.add("Domain Status", s)
 	}
 
+	// "DNSSEC"
+	if d.SecureDNS != nil && d.SecureDNS.DelegationSigned != nil {
+		if *d.SecureDNS.DelegationSigned {
+			w.add("DNSSEC", "signedDelegation")
+		} else {
+			w.add("DNSSEC", "unsigned")
+		}
+	}
+
 	addEntityFields(w, "Registrant", findFirstEntity("registrant", d.Entities))
 	addEntityFields(w, "Admin", findFirstEntity("administrative", d.Entities))
 	addEntityFields(w, "Tech", findFirstEntity("technical", d.Entities))
