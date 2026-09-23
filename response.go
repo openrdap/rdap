@@ -111,15 +111,6 @@ func (r *Response) ToWhoisStyleResponse() *WhoisStyleResponse {
 		w.add("Domain Status", s)
 	}
 
-	// "DNSSEC"
-	if d.SecureDNS != nil && d.SecureDNS.DelegationSigned != nil {
-		if *d.SecureDNS.DelegationSigned {
-			w.add("DNSSEC", "signedDelegation")
-		} else {
-			w.add("DNSSEC", "unsigned")
-		}
-	}
-
 	addEntityFields(w, "Registrant", findFirstEntity("registrant", d.Entities))
 	addEntityFields(w, "Admin", findFirstEntity("administrative", d.Entities))
 	addEntityFields(w, "Tech", findFirstEntity("technical", d.Entities))
@@ -128,6 +119,21 @@ func (r *Response) ToWhoisStyleResponse() *WhoisStyleResponse {
 	// "Name Server"
 	for _, n := range d.Nameservers {
 		w.add("Name Server", n.LDHName)
+	}
+
+	// "DNSSEC"
+	if s := d.SecureDNS; s != nil {
+		switch {
+		case s.DelegationSigned != nil:
+			if *s.DelegationSigned {
+				w.add("DNSSEC", "signedDelegation")
+			} else {
+				w.add("DNSSEC", "unsigned")
+			}
+		case len(s.DS) > 0 || len(s.Keys) > 0:
+			// Some servers omit delegationSigned but still publish DS or key data.
+			w.add("DNSSEC", "signedDelegation")
+		}
 	}
 
 	return w
