@@ -86,8 +86,8 @@ type Client struct {
 	// This field is ignored.
 	ServiceProviderExperiment bool
 
-	// mu guards lazy initialisation and the bootstrap Verbose swap, so one
-	// Client can be shared by many goroutines.
+	// mu guards lazy initialisation, so one Client can be shared by many
+	// goroutines. It is never held across network I/O.
 	mu sync.Mutex
 }
 
@@ -161,14 +161,10 @@ func (c *Client) Do(req *Request) (*Response, error) {
 		var answer *bootstrap.Answer
 		var err error
 
-		// The Verbose swap writes to the shared bootstrap client, so it and
-		// the lookup run under the lock.
-		c.mu.Lock()
-		origBootstrapVerbose := c.Bootstrap.Verbose
-		c.Bootstrap.Verbose = c.Verbose
-		answer, err = c.Bootstrap.Lookup(question)
-		c.Bootstrap.Verbose = origBootstrapVerbose
-		c.mu.Unlock()
+		// Verbose is passed per call rather than set on the bootstrap client,
+		// which may be shared with other Clients. The lookup runs without mu,
+		// so a slow registry download does not block other requests.
+		answer, err = c.Bootstrap.LookupVerbose(question, c.Verbose)
 		resp.BootstrapAnswer = answer
 
 		if err != nil {
