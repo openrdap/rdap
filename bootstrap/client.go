@@ -110,6 +110,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/openrdap/rdap/bootstrap/cache"
@@ -162,6 +163,11 @@ type Client struct {
 	Verbose func(text string)
 
 	registries map[RegistryType]Registry
+
+	// mu guards registries, the Cache and lazy initialisation, so one Client
+	// can be shared by many goroutines. It is never held across network I/O
+	// or while calling Verbose.
+	mu sync.Mutex
 }
 
 // A Registry implements bootstrap lookups.
@@ -187,6 +193,10 @@ func (c *Client) init() {
 	if c.BaseURL == nil {
 		c.BaseURL, _ = url.Parse(DefaultBaseURL)
 	}
+
+	if c.Verbose == nil {
+		c.Verbose = func(text string) {}
+	}
 }
 
 // Download downloads a single bootstrap registry file.
@@ -200,18 +210,24 @@ func (c *Client) Download(registry RegistryType) error {
 //
 // On success, the relevant Registry is refreshed. Use the matching accessor (ASN(), DNS(), IPv4(), or IPv6()) to access it.
 func (c *Client) DownloadWithContext(ctx context.Context, registry RegistryType) error {
+	c.mu.Lock()
 	c.init()
+	c.mu.Unlock()
+	return c.downloadAndStore(ctx, registry)
+}
 
-	var json []byte
-	var s Registry
-
+// downloadAndStore fetches a registry file without holding mu, so a slow
+// download never blocks other callers, then stores it under mu.
+func (c *Client) downloadAndStore(ctx context.Context, registry RegistryType) error {
 	json, s, err := c.download(ctx, registry)
 	if err != nil {
 		return err
 	}
 
-	err = c.Cache.Save(c.filenameFor(registry), json)
-	if err != nil {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if err := c.Cache.Save(c.filenameFor(registry), json); err != nil {
 		return err
 	}
 
@@ -319,62 +335,92 @@ func newRegistry(registry RegistryType, json []byte) (Registry, error) {
 }
 
 // Lookup returns the RDAP base URLs for the bootstrap question |question|.
+//
+// Verbose messages go to c.Verbose. Lookup is safe for concurrent use.
 func (c *Client) Lookup(question *Question) (*Answer, error) {
-	c.init()
-	if c.Verbose == nil {
-		c.Verbose = func(text string) {}
-	}
+	return c.LookupVerbose(question, nil)
+}
 
-	c.Verbose("  bootstrap: Looking up...")
-	c.Verbose(fmt.Sprintf("  bootstrap: Question type : %s", question.RegistryType))
-	c.Verbose(fmt.Sprintf("  bootstrap: Question query: %s", question.Query))
+// LookupVerbose is Lookup with verbose messages sent to verbose. A nil verbose
+// falls back to c.Verbose. Verbose is never called with a lock held, so it may
+// call the registry accessors such as DNS(). Unlike writing c.Verbose, it does
+// not modify the Client, so one Client may serve several callers at once.
+func (c *Client) LookupVerbose(question *Question, verbose func(text string)) (*Answer, error) {
+	c.mu.Lock()
+	c.init()
+	if verbose == nil {
+		verbose = c.Verbose
+	}
+	c.mu.Unlock()
+
+	verbose("  bootstrap: Looking up...")
+	verbose(fmt.Sprintf("  bootstrap: Question type : %s", question.RegistryType))
+	verbose(fmt.Sprintf("  bootstrap: Question query: %s", question.Query))
 
 	registry := question.RegistryType
 
-	state := c.Cache.State(c.filenameFor(registry))
-	c.Verbose(fmt.Sprintf("  bootstrap: Cache state: %s: %s", c.filenameFor(registry), state))
+	c.mu.Lock()
+	filename := c.filenameFor(registry)
+	state := c.Cache.State(filename)
+	c.mu.Unlock()
+	verbose(fmt.Sprintf("  bootstrap: Cache state: %s: %s", filename, state))
 
 	// An expired file is refreshed even if it's already parsed into memory.
 	forceDownload := state == cache.Expired
 
+	c.mu.Lock()
+	var loadErr error
 	if c.shouldLoadFromCache(registry, state) {
-		if err := c.reloadFromCache(registry); err != nil {
+		if loadErr = c.reloadFromCache(registry); loadErr != nil {
 			forceDownload = true
-
-			c.Verbose(fmt.Sprintf("  bootstrap: Cache load error (%s), downloading...", err))
 		}
 	}
+	c.mu.Unlock()
+	if loadErr != nil {
+		verbose(fmt.Sprintf("  bootstrap: Cache load error (%s), downloading...", loadErr))
+	}
 
-	if c.registries[registry] == nil || forceDownload {
-		c.Verbose(fmt.Sprintf("  bootstrap: Downloading %s", registry.Filename()))
+	c.mu.Lock()
+	needDownload := c.registries[registry] == nil || forceDownload
+	c.mu.Unlock()
 
-		if err := c.DownloadWithContext(question.Context(), registry); err != nil {
+	if needDownload {
+		verbose(fmt.Sprintf("  bootstrap: Downloading %s", registry.Filename()))
+
+		if err := c.downloadAndStore(question.Context(), registry); err != nil {
 			// Service Registry files change rarely, so an expired copy still
 			// answers most queries. Prefer one to failing the lookup.
+			c.mu.Lock()
 			if c.registries[registry] == nil {
 				if cacheErr := c.reloadFromCache(registry); cacheErr != nil {
+					c.mu.Unlock()
 					return nil, err
 				}
 			}
+			c.mu.Unlock()
 
-			c.Verbose(fmt.Sprintf("  bootstrap: Download failed (%s), using expired Service Registry file", err))
+			verbose(fmt.Sprintf("  bootstrap: Download failed (%s), using expired Service Registry file", err))
 		}
 	} else {
-		c.Verbose("  bootstrap: Using cached Service Registry file")
+		verbose("  bootstrap: Using cached Service Registry file")
 	}
 
-	answer, err := c.registries[registry].Lookup(question)
+	c.mu.Lock()
+	reg := c.registries[registry]
+	c.mu.Unlock()
+
+	answer, err := reg.Lookup(question)
 
 	if answer != nil {
-		c.Verbose(fmt.Sprintf("  bootstrap: Looked up '%s'", answer.Query))
+		verbose(fmt.Sprintf("  bootstrap: Looked up '%s'", answer.Query))
 		if answer.Entry != "" {
-			c.Verbose(fmt.Sprintf("  bootstrap: Matching entry '%s'", answer.Entry))
+			verbose(fmt.Sprintf("  bootstrap: Matching entry '%s'", answer.Entry))
 		} else {
-			c.Verbose("  bootstrap: No match")
+			verbose("  bootstrap: No match")
 		}
 
 		for i, url := range answer.URLs {
-			c.Verbose(fmt.Sprintf("  bootstrap: Service URL #%d: '%s'", i+1, url))
+			verbose(fmt.Sprintf("  bootstrap: Service URL #%d: '%s'", i+1, url))
 		}
 	}
 
@@ -385,6 +431,8 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 //
 // This function never initiates a network transfer.
 func (c *Client) ASN() *ASNRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(ASN)
 
@@ -396,6 +444,8 @@ func (c *Client) ASN() *ASNRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) DNS() *DNSRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(DNS)
 
@@ -407,6 +457,8 @@ func (c *Client) DNS() *DNSRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) IPv4() *NetRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(IPv4)
 
@@ -418,6 +470,8 @@ func (c *Client) IPv4() *NetRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) IPv6() *NetRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(IPv6)
 
@@ -429,6 +483,8 @@ func (c *Client) IPv6() *NetRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) ServiceProvider() *ServiceProviderRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(ServiceProvider)
 

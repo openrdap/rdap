@@ -263,7 +263,9 @@ func (r *Request) URL() *url.URL {
 		resultURL = new(url.URL)
 		*resultURL = *r.Server
 	} else {
-		tempURL := r.Server
+		// Copy: r.Server is shared (bootstrap answers, callers' URLs) and
+		// must not be modified.
+		tempURL := *r.Server
 		tempURL.RawQuery = ""
 		tempURL.Fragment = ""
 		tempURLString := tempURL.String()
