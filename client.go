@@ -10,6 +10,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/openrdap/rdap/bootstrap"
@@ -84,6 +85,10 @@ type Client struct {
 	// Service Provider support is now always enabled.
 	// This field is ignored.
 	ServiceProviderExperiment bool
+
+	// mu guards lazy initialisation and the bootstrap Verbose swap, so one
+	// Client can be shared by many goroutines.
+	mu sync.Mutex
 }
 
 // Do runs the RDAP request req and returns its Response.
@@ -104,6 +109,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 		}
 	}
 
+	c.mu.Lock()
 	// Init HTTP client?
 	if c.HTTP == nil {
 		c.HTTP = &http.Client{}
@@ -118,6 +124,7 @@ func (c *Client) Do(req *Request) (*Response, error) {
 	if c.Verbose == nil {
 		c.Verbose = func(text string) {}
 	}
+	c.mu.Unlock()
 
 	c.Verbose("")
 	c.Verbose("client: Running...")
@@ -145,12 +152,6 @@ func (c *Client) Do(req *Request) (*Response, error) {
 			}
 		}
 
-		origBootstrapVerbose := c.Bootstrap.Verbose
-		c.Bootstrap.Verbose = c.Verbose
-		defer func() {
-			c.Bootstrap.Verbose = origBootstrapVerbose
-		}()
-
 		question := &bootstrap.Question{
 			RegistryType: *bootstrapType,
 			Query:        req.Query,
@@ -160,7 +161,14 @@ func (c *Client) Do(req *Request) (*Response, error) {
 		var answer *bootstrap.Answer
 		var err error
 
+		// The Verbose swap writes to the shared bootstrap client, so it and
+		// the lookup run under the lock.
+		c.mu.Lock()
+		origBootstrapVerbose := c.Bootstrap.Verbose
+		c.Bootstrap.Verbose = c.Verbose
 		answer, err = c.Bootstrap.Lookup(question)
+		c.Bootstrap.Verbose = origBootstrapVerbose
+		c.mu.Unlock()
 		resp.BootstrapAnswer = answer
 
 		if err != nil {

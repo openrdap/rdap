@@ -110,6 +110,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/openrdap/rdap/bootstrap/cache"
@@ -162,6 +163,10 @@ type Client struct {
 	Verbose func(text string)
 
 	registries map[RegistryType]Registry
+
+	// mu guards registries, Verbose initialisation and the Cache, so one
+	// Client can be shared by many goroutines.
+	mu sync.Mutex
 }
 
 // A Registry implements bootstrap lookups.
@@ -200,6 +205,12 @@ func (c *Client) Download(registry RegistryType) error {
 //
 // On success, the relevant Registry is refreshed. Use the matching accessor (ASN(), DNS(), IPv4(), or IPv6()) to access it.
 func (c *Client) DownloadWithContext(ctx context.Context, registry RegistryType) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.downloadWithContext(ctx, registry)
+}
+
+func (c *Client) downloadWithContext(ctx context.Context, registry RegistryType) error {
 	c.init()
 
 	var json []byte
@@ -320,6 +331,8 @@ func newRegistry(registry RegistryType, json []byte) (Registry, error) {
 
 // Lookup returns the RDAP base URLs for the bootstrap question |question|.
 func (c *Client) Lookup(question *Question) (*Answer, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	if c.Verbose == nil {
 		c.Verbose = func(text string) {}
@@ -348,7 +361,7 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 	if c.registries[registry] == nil || forceDownload {
 		c.Verbose(fmt.Sprintf("  bootstrap: Downloading %s", registry.Filename()))
 
-		if err := c.DownloadWithContext(question.Context(), registry); err != nil {
+		if err := c.downloadWithContext(question.Context(), registry); err != nil {
 			// Service Registry files change rarely, so an expired copy still
 			// answers most queries. Prefer one to failing the lookup.
 			if c.registries[registry] == nil {
@@ -385,6 +398,8 @@ func (c *Client) Lookup(question *Question) (*Answer, error) {
 //
 // This function never initiates a network transfer.
 func (c *Client) ASN() *ASNRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(ASN)
 
@@ -396,6 +411,8 @@ func (c *Client) ASN() *ASNRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) DNS() *DNSRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(DNS)
 
@@ -407,6 +424,8 @@ func (c *Client) DNS() *DNSRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) IPv4() *NetRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(IPv4)
 
@@ -418,6 +437,8 @@ func (c *Client) IPv4() *NetRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) IPv6() *NetRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(IPv6)
 
@@ -429,6 +450,8 @@ func (c *Client) IPv6() *NetRegistry {
 //
 // This function never initiates a network transfer.
 func (c *Client) ServiceProvider() *ServiceProviderRegistry {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	c.init()
 	c.freshenFromCache(ServiceProvider)
 
