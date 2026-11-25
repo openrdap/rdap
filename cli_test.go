@@ -33,11 +33,28 @@ func fixtureServer(t *testing.T) *httptest.Server {
 		_, _ = w.Write(test.LoadFile("rdap/rdap.nic.cz/domain-example.cz.json"))
 	})
 
+	mux.HandleFunc("/autnum/64496", func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/rdap+json")
+		_, _ = w.Write([]byte(autnumFixture))
+	})
+
 	srv := httptest.NewServer(mux)
 	t.Cleanup(srv.Close)
 
 	return srv
 }
+
+// autnumFixture is a minimal autnum response (AS64496 is reserved for
+// documentation, RFC 5398) used to exercise non-domain queries.
+const autnumFixture = `{
+  "rdapConformance": ["rdap_level_0"],
+  "objectClassName": "autnum",
+  "handle": "AS64496",
+  "startAutnum": 64496,
+  "endAutnum": 64496,
+  "name": "EXAMPLE-AS",
+  "type": "DIRECT ALLOCATION"
+}`
 
 func http2FixtureServer(t *testing.T) *httptest.Server {
 	t.Helper()
@@ -99,6 +116,9 @@ func TestRunCLIGolden(t *testing.T) {
 		{"domain-json", withServer("--json", "example.cz")},
 		{"domain-whois", withServer("--whois", "example.cz")},
 		{"domain-raw", withServer("--raw", "example.cz")},
+		{"autnum-text", withServer("AS64496")},
+		{"autnum-whois", withServer("--whois", "AS64496")},
+		{"autnum-whois-json", withServer("--whois", "--json", "AS64496")},
 		{"version", []string{"--version"}},
 		{"no-args", []string{}},
 		{"unknown-type", []string{"--type", "bogus", "example.cz"}},
