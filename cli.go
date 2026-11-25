@@ -542,6 +542,15 @@ func RunCLI(args []string, stdout io.Writer, stderr io.Writer, options CLIOption
 		fmt.Fprintln(stderr, "")
 	}
 
+	// WHOIS style output is only implemented for domains. Fail instead of
+	// printing nothing and exiting successfully for other object types.
+	if *outputFormatWhois {
+		if _, ok := resp.Object.(*Domain); !ok {
+			printError(stderr, "Error: --whois output is only supported for domain queries")
+			return 1
+		}
+	}
+
 	// Output formatting.
 	if !*outputFormatText && !*outputFormatWhois && !*outputFormatJSON && !*outputFormatRaw {
 		*outputFormatText = true

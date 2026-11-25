@@ -1,0 +1,5 @@
+exit: 1
+--- stdout ---
+
+--- stderr ---
+# Error: --whois output is only supported for domain queries

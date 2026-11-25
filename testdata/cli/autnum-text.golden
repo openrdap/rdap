@@ -1,0 +1,11 @@
+exit: 0
+--- stdout ---
+Autnum:
+  Handle: AS64496
+  Name: EXAMPLE-AS
+  Type: DIRECT ALLOCATION
+  StartAutnum: 64496
+  EndAutnum: 64496
+  Conformance: rdap_level_0
+
+--- stderr ---
